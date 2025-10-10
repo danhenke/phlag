@@ -39,3 +39,21 @@
 - Use `set -a; source .env.local; set +a` to load local development variables before running commands.
 - Keep Postgres and Redis internal to the Docker network; expose only the application’s port 80 when troubleshooting.
 - Audit new dependencies for licenses and known CVEs; document security-impacting changes in ADRs.
+
+## Issue Handling Checklist
+- Clarify scope: read linked issues and ADRs, restate objectives, and surface dependencies or blockers before coding.
+- Draft a plan when scope is large or ambiguous; outline major steps and confirm with the requester if needed.
+- Respect conventions by following repo guidelines (PSR-12, env-driven config, ADR updates) and note relevant references in changes.
+- Work on a feature branch named after the issue; avoid committing directly to the default branch.
+- Test and validate: add or update automated tests for new behavior, run `composer test` and other touched tooling, summarize results, and call out gaps if something cannot be executed.
+- Document changes: update README/ADRs/tests whenever workflows or behavior shift, and note follow-up issues when work is deferred.
+- Communicate status clearly by listing touched files, assumptions, risks, and next actions prior to handoff or review.
+- Open a pull request for review once changes are complete, and request feedback from the appropriate domain owner.
+- Mirror the work summary, validation, and notes from handoff back into PR comments (or the issue when no PR exists) so reviewers see the full context.
+- Follow GitHub’s PR best practices (https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/getting-started/helping-others-review-your-changes): clear titles/descriptions, linked issues, testing evidence, screenshots/logs as relevant.
+- Maintain traceability by referencing the issue number in branch names, commits, and PR descriptions.
+- Check for dependency or merge conflicts with other active work before landing changes, and coordinate as needed.
+- Confirm release readiness: validate migrations are idempotent, toggles are set, and rollback paths exist.
+- Surface operational or security impacts (new env vars, secrets, services) in the PR notes.
+- Share knowledge after merge—update docs or post a brief summary to keep the team aligned.
+- Post-merge, monitor CI/CD or runtime logs if possible to verify the change behaves as expected.
