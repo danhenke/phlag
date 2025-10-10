@@ -1,1 +1,260 @@
-# Phlag
+# 🚦 Phlag - Feature Flag Service
+
+A lightweight, developer-focused **Feature Flag & Remote Configuration API** built with **Laravel Zero**, **PostgreSQL**, and **Redis**. The project runs entirely on a local **Docker Compose** stack so you can experiment with feature flag workflows without provisioning any cloud infrastructure.
+
+Please refer to [`doc/adr`](./doc/adr) for [Architecture Decision Records](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) (ADRs) and [`doc/12-factor-compliance.md`](./doc/12-factor-compliance.md) for the 12-Factor alignment checklist.
+
+---
+
+## 🧭 Overview
+
+This service allows developers to **create**, **manage**, and **evaluate feature flags** per project and environment. It demonstrates practical fluency with the PHP ecosystem, including:
+
+-   Laravel-style architecture using Laravel Zero
+-   Validation, caching, and JWT authentication
+-   PostgreSQL migrations and Redis caching managed through Docker Compose
+-   OpenAPI documentation and Postman collection
+-   GitHub Actions CI for linting, static analysis, and tests
+-   Docker Compose runtime for local development and demos
+
+---
+
+## 🧱 Features
+
+| Category                    | Description                                                    |
+| --------------------------- | -------------------------------------------------------------- |
+| **Authentication**          | JWT-based bearer tokens per project/environment                |
+| **Projects / Environments** | CRUD endpoints for logical grouping and context separation     |
+| **Feature Flags**           | CRUD for flags with JSON rule sets                             |
+| **Evaluation**              | Percentage rollouts & user targeting                           |
+| **Audit Logs**              | Track flag changes and actor actions                           |
+| **Redis Caching**           | Cache flag states and evaluations                              |
+| **Documentation**           | OpenAPI 3.1 + Swagger UI                                       |
+| **CLI**                     | Laravel Zero commands for migrations, cache warm, key rotation |
+| **Testing**                 | Pest + PHPUnit for fast, expressive tests                      |
+
+---
+
+## 🧩 Tech Stack
+
+| Layer         | Tool                                       |
+| ------------- | ------------------------------------------ |
+| Framework     | Laravel Zero                               |
+| Language      | PHP 8.4                                    |
+| Database      | PostgreSQL (Docker Compose service)        |
+| Cache         | Redis (Docker Compose service)             |
+| Secrets       | `.env`-style environment variables         |
+| Docs          | OpenAPI 3.1 (via swagger-php)              |
+| Tests         | PestPHP                                    |
+| Hosting       | Docker Compose (app + Postgres + Redis)    |
+| CI/CD         | GitHub Actions (lint, static analysis, CI) |
+| Observability | Application + Docker logs via stdout       |
+| Logging       | Monolog                                    |
+| IaC           | Not required for local-only deployments    |
+
+---
+
+## 📁 Project Structure
+
+```
+phlag/
+├─ app/                 # Commands and application services
+├─ bootstrap/           # Laravel Zero bootstrap
+├─ config/              # Application configuration
+├─ doc/adr/             # Architecture decision records
+├─ public/              # HTTP entrypoint served by Docker
+├─ tests/               # Unit and feature tests
+├─ vendor/              # Composer dependencies
+├─ phlag                # Laravel Zero console binary
+├─ composer.json
+└─ README.md
+```
+
+---
+
+## ⚙️ Installation
+
+### 1. Clone & install dependencies
+
+```bash
+git clone https://github.com/danhenke/phlag.git
+cd phlag
+composer install
+```
+
+### 2. Create a local environment file
+
+Define the runtime configuration expected by the application:
+
+```bash
+cat <<EOF > .env.local
+APP_ENV=local
+APP_DEBUG=true
+POSTGRES_DB=phlag
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+DB_URL=pgsql:host=postgres;port=5432;dbname=${POSTGRES_DB}
+REDIS_URL=redis://redis:6379/0
+JWT_SECRET=$(openssl rand -base64 32)
+EOF
+```
+
+Load the variables into your shell whenever you start a new terminal:
+
+```bash
+set -a
+source .env.local
+set +a
+```
+
+### 3. Start Docker Compose stack
+
+Ensure Docker Desktop (or another Docker engine) is running, then bring up the full stack defined in `compose.yaml`:
+
+```bash
+docker compose up -d --build
+```
+
+This launches three services within an isolated Docker network:
+
+-   `app` — PHP runtime serving HTTP on port 80 and talking to backing services via Docker DNS.
+-   `postgres` — PostgreSQL database available only on the Compose network.
+-   `redis` — Redis cache available only on the Compose network.
+
+Only the application’s port 80 is published to your LAN (`http://localhost/` by default).
+
+### 4. Run migrations and seed data
+
+Execute CLI commands inside the `app` container so they share networking and environment context:
+
+```bash
+docker compose exec app php phlag app:migrate
+docker compose exec app php phlag app:seed
+```
+
+### 5. Verify the HTTP endpoint and CLI
+
+-   Visit `http://localhost/` to confirm the container is serving traffic.
+-   List available console commands from inside the container:
+
+    ```bash
+    docker compose exec app php phlag list
+    ```
+
+---
+
+## 🌐 API Overview
+
+| Endpoint                                    | Description                                     |
+| ------------------------------------------- | ----------------------------------------------- |
+| `POST /v1/auth/token`                       | Exchange API key for JWT                        |
+| `GET /v1/projects`                          | List projects                                   |
+| `POST /v1/projects`                         | Create a project                                |
+| `GET /v1/projects/{project}/flags`          | List flags                                      |
+| `POST /v1/projects/{project}/flags`         | Create flag                                     |
+| `PATCH /v1/projects/{project}/flags/{key}`  | Update flag                                     |
+| `DELETE /v1/projects/{project}/flags/{key}` | Delete flag                                     |
+| `GET /v1/evaluate`                          | Evaluate flag (`?project=&env=&flag=&user_id=`) |
+| `GET /v1/docs/openapi.json`                 | OpenAPI JSON spec                               |
+
+> Full examples are available in `/postman/FeatureFlagService.postman_collection.json`.
+
+---
+
+## 🔐 Authentication
+
+-   JWT bearer tokens issued via `/v1/auth/token` using project API key.
+-   Include header:
+    ```
+    Authorization: Bearer <jwt>
+    ```
+-   Tokens are scoped to project + environment.
+
+---
+
+## 🧰 CLI Commands (Laravel Zero)
+
+| Command                         | Purpose                 |
+| ------------------------------- | ----------------------- |
+| `app:migrate`                   | Run database migrations |
+| `app:seed`                      | Seed demo data          |
+| `projects:key:rotate {project}` | Rotate API key          |
+| `cache:warm {project} {env}`    | Prewarm flag cache      |
+| `audit:tail`                    | Stream audit logs       |
+
+Run commands through the Laravel Zero binary inside the running container:
+
+```bash
+docker compose exec app php phlag app:migrate
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+composer test
+```
+
+Uses [**PestPHP**](https://pestphp.com/) for expressive tests and [PHPStan](https://phpstan.org/) for static analysis.
+
+---
+
+## 📘 API Documentation
+
+-   Auto-generated from annotations (`swagger-php`)
+-   OpenAPI JSON: `/v1/docs/openapi.json`
+-   Swagger UI: `/docs`
+-   Postman Collection: `/postman/FeatureFlagService.postman_collection.json`
+
+Regenerate docs once you have sourced environment variables:
+
+```bash
+php api/swagger.php > docs/openapi.json
+```
+
+---
+
+## 🛠️ Local Deployment
+
+The service is intended for local demonstrations:
+
+1. `docker compose up -d --build` to launch the app, PostgreSQL, and Redis on the shared network.
+2. Export environment variables from `.env.local` (optional when running host-side tooling).
+3. Use `docker compose exec app ...` for Laravel Zero commands so they share the same networking configuration as the HTTP service.
+
+When you are finished experimenting, shut everything down with `docker compose down`.
+
+---
+
+## 🧭 Development Workflow
+
+| Step            | Command                                |
+| --------------- | -------------------------------------- |
+| Lint            | `composer lint`                        |
+| Static analysis | `composer stan`                        |
+| Tests           | `composer test`                        |
+| CI              | GitHub Actions run lint + test on push |
+| Deploy          | `docker compose up -d` (local only)    |
+
+---
+
+## 🧩 Roadmap
+
+-   [ ] Role-based access control (RBAC)
+-   [ ] SDKs (PHP + JS)
+-   [ ] UI dashboard for managing flags
+-   [ ] Rate limiting per project
+-   [ ] User segmentation rules
+
+---
+
+## 📜 License
+
+MIT © 2025 Dan Henke
+
+---
+
+### 🧠 Summary
+
+This project showcases a **real-world PHP architecture** suitable for production-style APIs while remaining lightweight. With the move to Docker Compose, you can spin it up locally in minutes to explore clean design, testing, validation, and deployment discipline without relying on external cloud accounts.

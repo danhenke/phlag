@@ -1,0 +1,47 @@
+name: "phlag"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    command: php -S 0.0.0.0:80 -t public public/index.php
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env.local
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/app
+    networks:
+      - phlag
+
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-phlag}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - phlag
+
+  redis:
+    image: redis:8
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    networks:
+      - phlag
+
+volumes:
+  pgdata:
+
+networks:
+  phlag:
+    driver: bridge
