@@ -58,7 +58,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 
 -   Development and "production" are the same local Docker Compose stack; no drift between environments.
 -   GitHub Actions exercises the same composer/test workflow used locally.
--   **Action:** note required Docker versions or platform-specific caveats for contributors.
+-   Docker Desktop and Engine minimum versions, plus troubleshooting guidance, are tracked in `doc/docker-troubleshooting.md` so contributors can align their setups quickly.
 
 ## XI. Logs
 
@@ -77,5 +77,5 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 
 1. Ensure new Laravel configuration reads from environment variables; avoid embedding defaults that vary per environment.
 2. Provide guidance for building optional Docker images if teammates want to share artifacts.
-3. Capture Docker version/system requirements and troubleshooting steps for local contributors.
+3. ✅ Capture Docker version/system requirements and troubleshooting steps for local contributors (see `doc/docker-troubleshooting.md`).
 4. ✅ Document helper scripts for running one-off admin tasks while Docker Compose services are detached.

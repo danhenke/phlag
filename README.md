@@ -74,6 +74,8 @@ phlag/
 
 ## ⚙️ Installation
 
+Before starting, confirm your Docker Desktop or Engine meets the minimum versions documented in [`doc/docker-troubleshooting.md`](./doc/docker-troubleshooting.md). The guide also covers common fixes if the Compose stack fails to start.
+
 ### 1. Clone & install dependencies
 
 ```bash
