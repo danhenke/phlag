@@ -30,7 +30,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 -   GitHub Actions builds artefacts (Composer install, lint, tests) for every push and pull request.
 -   Releases are manual: developers pull the latest code, export environment variables, and run the stack via `docker compose up`.
 -   Runtime execution is handled by the `app` container’s built-in PHP server communicating with backing services over the internal Docker network.
--   **Action:** document an optional flow for building a local Docker image when sharing artifacts with teammates.
+-   Optional flow for sharing pre-built Docker images is documented in `doc/docker-image-sharing.md`.
 
 ## VI. Processes
 
@@ -75,7 +75,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 ### Next Actions Summary
 
 1. Ensure new Laravel configuration reads from environment variables; avoid embedding defaults that vary per environment.
-2. Provide guidance for building optional Docker images if teammates want to share artifacts.
+2. ✅ Provide guidance for building optional Docker images if teammates want to share artifacts (see `doc/docker-image-sharing.md`).
 3. ✅ Capture Docker version/system requirements and troubleshooting steps for local contributors (see `doc/docker-troubleshooting.md`).
 4. ✅ Capture worker scaling guidance for Docker Compose (see `doc/docker-worker-scaling.md`).
 5. ✅ Document helper scripts for running one-off admin tasks while Docker Compose services are detached.

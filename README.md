@@ -165,6 +165,12 @@ The seeders provision a reusable dataset:
     docker compose exec app php phlag list
     ```
 
+### Optional: Share a pre-built image
+
+If a teammate needs a ready-to-run container, follow the workflows in `doc/docker-image-sharing.md`.
+They cover exporting the locally built `phlag-app` image as a `.tar` archive or publishing it to a registry
+such as GHCR with traceable tags.
+
 ---
 
 ## 🌐 API Overview
