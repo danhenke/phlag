@@ -393,6 +393,11 @@ When you are finished experimenting, shut everything down with `docker compose d
 
 Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the patterns documented in `doc/docker-worker-scaling.md`.
 
+### Container runtime details
+
+-   The `app` image pre-installs the PHP extensions required by Laravel + Redis (`pdo_pgsql`, `zip`, and `redis`) and provides `curl` for internal health probes.
+-   Docker Compose health checks monitor the `app`, `postgres`, and `redis` services; the application container now waits for the data stores to become healthy before starting its HTTP server.
+
 ---
 
 ## 🧭 Development Workflow
