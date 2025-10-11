@@ -25,6 +25,7 @@ Implementation details include:
     -   A link back to the originating issue so automation can sync status.
 -   Validation happens before requesting review: run `composer test` along with any tooling relevant to the change (lint, static analysis, etc.). When tooling cannot run locally (e.g., dependency downloads blocked), call out the limitation and what was attempted.
 -   After merge, the branch is deleted and any follow-up tasks receive their own issue and branch; no long-lived integration branches remain.
+-   Pull request summaries follow `.github/pull_request_template.md` so reviewers consistently receive the linked issue, validation evidence, and operational notes.
 
 ## Consequences
 

@@ -208,7 +208,7 @@ The project follows [GitHub Flow](https://docs.github.com/en/get-started/using-g
 2.  Create a feature branch named `issue/<number>-<slug>` (for example, `issue/16-adopt-github-flow`).
 3.  Implement the change with small, imperative commits that reference the issue in the commit body or pull request description.
 4.  Run validation locally (`composer test`, `composer lint`, `composer stan`, etc.) and capture the output or call out blockers when tooling cannot run (e.g., Composer downloads requiring GitHub tokens).
-5.  Open a pull request summarizing the work, linking the issue, and attaching validation evidence (test logs, screenshots, or notes).
+5.  Open a pull request summarizing the work, linking the issue, and attaching validation evidence (test logs, screenshots, or notes) using the template in `.github/pull_request_template.md`.
 6.  After approval, merge via fast-forward or squash, then delete the branch. Follow-up tasks start their own issue and branch.
 
 PR descriptions should also mention any migrations, environment variables, or operational impacts so reviewers can plan rollouts.
