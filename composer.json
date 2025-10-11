@@ -15,17 +15,21 @@
     ],
     "require": {
         "php": "^8.4",
-        "aws/aws-sdk-php": "*",
         "illuminate/database": "^12.32.5",
         "laravel-zero/framework": "^12.0.2"
     },
     "require-dev": {
         "laravel/pint": "^1.25.1",
         "mockery/mockery": "^1.6.12",
-        "pestphp/pest": "^3.8.4|^4.1.2"
+        "pestphp/pest": "^3.8.4|^4.1.2",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.0"
     },
     "scripts": {
-        "test": "vendor/bin/pest"
+        "test": "vendor/bin/pest",
+        "lint": "vendor/bin/pint --test",
+        "lint:fix": "vendor/bin/pint",
+        "stan": "php vendor/bin/phpstan analyse --configuration=phpstan.neon"
     },
     "autoload": {
         "psr-4": {
@@ -44,7 +48,8 @@
         "sort-packages": true,
         "optimize-autoloader": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
         }
     },
     "minimum-stability": "stable",

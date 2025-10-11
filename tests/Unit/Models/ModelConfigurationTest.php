@@ -9,7 +9,7 @@ use Phlag\Models\Flag;
 use Phlag\Models\Project;
 
 it('configures project model casting and key handling', function (): void {
-    $project = new Project();
+    $project = new Project;
 
     expect($project->incrementing)->toBeFalse()
         ->and($project->getKeyType())->toBe('string')
@@ -17,7 +17,7 @@ it('configures project model casting and key handling', function (): void {
 });
 
 it('configures environment model casting and key handling', function (): void {
-    $environment = new Environment();
+    $environment = new Environment;
 
     expect($environment->incrementing)->toBeFalse()
         ->and($environment->getKeyType())->toBe('string')
@@ -28,7 +28,7 @@ it('configures environment model casting and key handling', function (): void {
 });
 
 it('configures flag model casting and key handling', function (): void {
-    $flag = new Flag();
+    $flag = new Flag;
 
     expect($flag->incrementing)->toBeFalse()
         ->and($flag->getKeyType())->toBe('string')
@@ -40,7 +40,7 @@ it('configures flag model casting and key handling', function (): void {
 });
 
 it('configures evaluation model casting and key handling', function (): void {
-    $evaluation = new Evaluation();
+    $evaluation = new Evaluation;
 
     expect($evaluation->incrementing)->toBeFalse()
         ->and($evaluation->getKeyType())->toBe('string')
@@ -52,7 +52,7 @@ it('configures evaluation model casting and key handling', function (): void {
 });
 
 it('configures audit event model casting and key handling', function (): void {
-    $auditEvent = new AuditEvent();
+    $auditEvent = new AuditEvent;
 
     expect($auditEvent->incrementing)->toBeFalse()
         ->and($auditEvent->getKeyType())->toBe('string')
