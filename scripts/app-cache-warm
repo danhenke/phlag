@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+    echo "Usage: $(basename "$0") <project-key> <environment-key> [options]" >&2
+    echo "Example: $(basename "$0") demo-project production --daemon" >&2
+    exit 1
+fi
+
+PROJECT="$1"
+ENVIRONMENT="$2"
+shift 2 || true
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/app-cli" cache:warm "$PROJECT" "$ENVIRONMENT" "$@"

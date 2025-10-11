@@ -340,6 +340,22 @@ The command drops and recreates the schema before seeding so you always have the
 Database seeding completed.
 ```
 
+### Example: Warm flag caches for a project
+
+```bash
+./scripts/app-cache-warm demo-project production
+```
+
+Provide the project and environment keys to repopulate Redis after changing flag rules. Pass additional options (for example, `--daemon`) and they are forwarded to the underlying `cache:warm` command.
+
+### Example: Tail audit events
+
+```bash
+./scripts/app-audit-tail --project=demo-project --env=production
+```
+
+Use the helper to follow recent audit entries without typing the full `docker compose exec` invocation. All flags are passed directly to the `audit:tail` CLI command.
+
 ### Example: Verify the CLI wiring inside the container
 
 Use the sample `app:hello` command to confirm you can execute Laravel Zero commands through the helper:
