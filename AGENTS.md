@@ -5,7 +5,7 @@
 -   `app/` holds Laravel Zero commands, services, and domain logic; group new features by bounded context under `App\` namespaces.
 -   `config/` stores environment-dependent settings; mirror any new config keys in `doc/adr/` decisions when relevant.
 -   `tests/` contains Pest suites split into `Unit` and `Feature`; co-locate test fixtures under `tests/Support`.
--   `doc/` captures ADRs and reference material; update records whenever architecture or workflows shift.
+-   `doc/` captures ADRs and reference material; update records whenever architecture or workflows shift, and consult `doc/12-factor-compliance.md` for the live 12-Factor checklist.
 -   Docker Compose definitions live alongside the app; keep service names and ports stable to avoid breaking docs or scripts.
 
 ## Build, Test, and Development Commands
@@ -51,6 +51,7 @@
 -   Clarify scope: read linked issues and ADRs, restate objectives, and surface dependencies or blockers before coding.
 -   Draft a plan when scope is large or ambiguous; outline major steps and confirm with the requester if needed.
 -   Respect conventions by following repo guidelines (PSR-12, env-driven config, ADR updates) and note relevant references in changes.
+-   When you need upstream framework or library documentation, prefer fetching it via the Context7 MCP tools before searching elsewhere.
 -   Work on a feature branch named after the issue; avoid committing directly to the default branch.
 -   Test and validate: add or update automated tests for new behavior, run `composer test` and other touched tooling, summarize results, and call out gaps if something cannot be executed.
 -   Document changes: update README/ADRs/tests whenever workflows or behavior shift, and note follow-up issues when work is deferred.
