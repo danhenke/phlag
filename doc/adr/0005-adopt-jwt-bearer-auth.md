@@ -12,7 +12,7 @@ Phlag will expose APIs that need to be consumed by CLI tooling and, eventually, 
 
 ## Decision
 
-Issue JSON Web Tokens (JWT) that clients send in the `Authorization: Bearer <token>` header. Tokens are signed using an asymmetric key pair managed by Doppler, allowing services to verify signatures without contacting a central session store. Tokens will encode minimal identifying claims (subject, issued-at, expiry, roles) and respect short lifetimes; refresh workflows can be handled either by the CLI or future user-facing flows.
+Issue JSON Web Tokens (JWT) that clients send in the `Authorization: Bearer <token>` header. Tokens are signed using an asymmetric key pair provided via environment variables sourced from the deployment platform’s secrets manager, allowing services to verify signatures without contacting a central session store. Tokens will encode minimal identifying claims (subject, issued-at, expiry, roles) and respect short lifetimes; refresh workflows can be handled either by the CLI or future user-facing flows.
 
 ## Consequences
 
