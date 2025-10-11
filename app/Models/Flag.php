@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phlag\Models;
 
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Flag extends Model
 {
+    /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
     public $incrementing = false;
@@ -40,13 +42,25 @@ class Flag extends Model
         'rules' => 'array',
     ];
 
+    /**
+     * @return BelongsTo<Project, static>
+     */
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        /** @var BelongsTo<Project, static> $relation */
+        $relation = $this->belongsTo(Project::class);
+
+        return $relation;
     }
 
+    /**
+     * @return HasMany<Evaluation, static>
+     */
     public function evaluations(): HasMany
     {
-        return $this->hasMany(Evaluation::class);
+        /** @var HasMany<Evaluation, static> $relation */
+        $relation = $this->hasMany(Evaluation::class);
+
+        return $relation;
     }
 }

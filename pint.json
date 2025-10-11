@@ -1,0 +1,9 @@
+{
+    "preset": "laravel",
+    "rules": {},
+    "exclude": [
+        "bootstrap/cache",
+        "storage",
+        "vendor"
+    ]
+}

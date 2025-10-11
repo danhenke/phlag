@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Phlag\Models;
 
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Evaluation extends Model
 {
+    /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
     public $incrementing = false;
@@ -42,18 +44,36 @@ class Evaluation extends Model
         'evaluated_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<Project, static>
+     */
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        /** @var BelongsTo<Project, static> $relation */
+        $relation = $this->belongsTo(Project::class);
+
+        return $relation;
     }
 
+    /**
+     * @return BelongsTo<Environment, static>
+     */
     public function environment(): BelongsTo
     {
-        return $this->belongsTo(Environment::class);
+        /** @var BelongsTo<Environment, static> $relation */
+        $relation = $this->belongsTo(Environment::class);
+
+        return $relation;
     }
 
+    /**
+     * @return BelongsTo<Flag, static>
+     */
     public function flag(): BelongsTo
     {
-        return $this->belongsTo(Flag::class);
+        /** @var BelongsTo<Flag, static> $relation */
+        $relation = $this->belongsTo(Flag::class);
+
+        return $relation;
     }
 }
