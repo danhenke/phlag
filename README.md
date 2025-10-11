@@ -74,7 +74,21 @@ phlag/
 
 ## ⚙️ Installation
 
-Before starting, confirm your Docker Desktop or Engine meets the minimum versions documented in [`doc/docker-troubleshooting.md`](./doc/docker-troubleshooting.md). The guide also covers common fixes if the Compose stack fails to start.
+### Prerequisites
+
+- Docker Desktop 4.32.0+ (Engine 26.1.1, Compose 2.27+) on macOS or Windows with virtualization enabled (HyperKit on Apple Silicon, WSL 2 on Windows).
+- Docker Engine 26.0.0+ with the Compose plugin 2.27+ on Linux; install the `docker-compose-plugin` package provided by your distribution.
+- BuildKit enabled for modern Dockerfile syntax. Add the following to `~/.docker/config.json` (see Docker documentation) or export `DOCKER_BUILDKIT=1` before building:
+
+    ```json
+    {
+        "features": {
+            "buildkit": true
+        }
+    }
+    ```
+
+Need more detail? The troubleshooting guide in [`doc/docker-troubleshooting.md`](./doc/docker-troubleshooting.md) covers version checks, disk space tips, and recovery steps.
 
 ### 1. Clone & install dependencies
 

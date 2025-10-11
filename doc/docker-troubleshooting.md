@@ -20,6 +20,13 @@ docker compose version --short
 
 Both reported versions should meet or exceed the minimums above. If they do not, upgrade Docker Desktop or your Engine/Compose packages.
 
+## Host Requirements Checklist
+
+- Hardware virtualization must be enabled in firmware (BIOS/UEFI) so Docker Desktop can run HyperKit/Hyper-V/WSL 2.
+- Allocate at least 4 CPU cores and 4 GB RAM to Docker Desktop; heavier migrations benefit from 6 GB+.
+- Keep 6 GB of free disk space for images, volumes, and build cache (`docker system df` reports usage).
+- On Windows, confirm WSL 2 is installed and set as the default backend prior to starting the stack.
+
 ## Fast Health Checks
 
 - `docker info` — confirms the engine is running and reports the virtualization backend (WSL 2, HyperKit, etc.).
@@ -36,7 +43,16 @@ Both reported versions should meet or exceed the minimums above. If they do not,
 
 **Fix**
 1. Upgrade to the minimum versions listed above.
-2. Ensure BuildKit is enabled by exporting `DOCKER_BUILDKIT=1` or setting `"features": { "buildkit": true }` in `~/.docker/config.json`.
+2. Ensure BuildKit is enabled by exporting `DOCKER_BUILDKIT=1` or configuring it permanently via `~/.docker/config.json`:
+
+    ```json
+    {
+        "features": {
+            "buildkit": true
+        }
+    }
+    ```
+
 3. Retry `docker compose build app`.
 
 ### `docker compose up` fails because port 80 is already in use
