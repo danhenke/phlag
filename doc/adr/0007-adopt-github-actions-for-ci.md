@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Phlag is hosted in GitHub and relies on automated checks (linting, static analysis, tests) to keep the main branch releasable under a trunk-based workflow. The CI solution must integrate tightly with pull requests, support Docker-based jobs that mirror the local Compose stack, and provide simple ways to share build artifacts (e.g., packaged Composer dependencies or Docker images) without introducing heavy infrastructure.
+Phlag is hosted in GitHub and relies on automated checks (linting, static analysis, tests) to keep the main branch releasable while branches flow through GitHub Flow. The CI solution must integrate tightly with pull requests, support Docker-based jobs that mirror the local Compose stack, and provide simple ways to share build artifacts (e.g., packaged Composer dependencies or Docker images) without introducing heavy infrastructure.
 
 ## Decision
 
