@@ -12,6 +12,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 ## II. Dependencies
 
 -   PHP dependencies are explicitly declared in `composer.json` and installed via Composer.
+-   The `app` container image installs required PHP extensions (`pdo_pgsql`, `zip`, `redis`) so runtime binaries match the code’s expectations.
 -   Container images built in CI ensure consistent dependency versions across environments.
 
 ## III. Config
@@ -51,6 +52,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 ## IX. Disposability
 
 -   Containers are stateless; stopping Docker Compose tears services down cleanly while preserving volumes if configured.
+-   Docker Compose health checks gate readiness for `app`, `postgres`, and `redis`, improving shutdown/startup signalling and reducing flapping during restarts.
 -   CI pipelines ensure rapid spin up of new instances from immutable images.
 
 ## X. Dev/Prod Parity

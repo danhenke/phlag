@@ -189,6 +189,90 @@ such as GHCR with traceable tags.
 
 > Full examples are available in `/postman/FeatureFlagService.postman_collection.json`.
 
+### Example: Exchange an API key for a JWT
+
+```bash
+curl --request POST \
+     --url http://localhost/v1/auth/token \
+     --header 'Content-Type: application/json' \
+     --data '{
+         "project": "demo-project",
+         "environment": "production",
+         "api_key": "<project-api-key>"
+     }'
+```
+
+```json
+{
+    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "expires_in": 3600,
+    "project": "demo-project",
+    "environment": "production"
+}
+```
+
+### Example: List seeded projects and environments
+
+After running the demo seeders you can inspect the REST payloads with a simple `curl`:
+
+```bash
+curl --request GET \
+     --url 'http://localhost/v1/projects' \
+     --header 'Authorization: Bearer <jwt>'
+```
+
+```json
+{
+    "data": [
+        {
+            "id": "11111111-1111-4111-9111-111111111111",
+            "key": "demo-project",
+            "name": "Phlag Demo Project",
+            "description": "Sample project used to showcase feature flag workflows.",
+            "metadata": {
+                "owner": "demo@phlag.test",
+                "timezone": "UTC"
+            },
+            "environments": [
+                {
+                    "id": "22222222-2222-4222-9222-222222222222",
+                    "key": "production",
+                    "name": "Production",
+                    "is_default": true
+                },
+                {
+                    "id": "33333333-3333-4333-9333-333333333333",
+                    "key": "staging",
+                    "name": "Staging",
+                    "is_default": false
+                }
+            ]
+        }
+    ]
+}
+```
+
+### Example: Evaluate a feature flag for a user
+
+```bash
+curl --request GET \
+     --url 'http://localhost/v1/evaluate?project=demo-project&env=production&flag=checkout-redesign&user_id=user-123&country=US&segment=beta-testers' \
+     --header 'Authorization: Bearer <jwt>'
+```
+
+```json
+{
+    "flag": "checkout-redesign",
+    "variant": "variant",
+    "rollout": 75,
+    "reason": "matched_segment_rollout",
+    "request_context": {
+        "country": "US",
+        "segment": "beta-testers"
+    }
+}
+```
+
 ---
 
 ## 🔐 Authentication
@@ -204,18 +288,55 @@ such as GHCR with traceable tags.
 
 ## 🧰 CLI Commands (Laravel Zero)
 
-| Command                         | Purpose                 |
-| ------------------------------- | ----------------------- |
+| Command                          | Purpose                 |
+| -------------------------------- | ----------------------- |
 | `app:migrate [--fresh] [--seed]` | Run database migrations |
 | `app:seed [--fresh]`             | Seed demo data          |
-| `projects:key:rotate {project}` | Rotate API key          |
-| `cache:warm {project} {env}`    | Prewarm flag cache      |
-| `audit:tail`                    | Stream audit logs       |
+| `app:hello`                      | Print a hello message   |
 
 Run commands through the Laravel Zero binary inside the running container via the helper script:
 
 ```bash
 ./scripts/app-cli app:migrate
+```
+
+### Example: Run migrations and seed the demo dataset
+
+Use the helper to execute Laravel Zero commands in the app container and mirror what CI does before tests run:
+
+```bash
+./scripts/app-migrate --seed
+```
+
+This wraps `docker compose exec app php phlag app:migrate --seed` and surfaces the same confirmation messages you would see by running the binary directly:
+
+```
+Database migrations completed.
+Database seeding completed.
+```
+
+### Example: Refresh demo data from a clean schema
+
+```bash
+./scripts/app-seed --fresh
+```
+
+The command drops and recreates the schema before seeding so you always have the canonical records from `database/seeders/DatabaseSeeder.php`:
+
+```
+Database seeding completed.
+```
+
+### Example: Verify the CLI wiring inside the container
+
+Use the sample `app:hello` command to confirm you can execute Laravel Zero commands through the helper:
+
+```bash
+./scripts/app-cli app:hello
+```
+
+```text
+Hello from Phlag!
 ```
 
 ---
@@ -271,6 +392,11 @@ The service is intended for local demonstrations:
 When you are finished experimenting, shut everything down with `docker compose down`.
 
 Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the patterns documented in `doc/docker-worker-scaling.md`.
+
+### Container runtime details
+
+-   The `app` image pre-installs the PHP extensions required by Laravel + Redis (`pdo_pgsql`, `zip`, and `redis`) and provides `curl` for internal health probes.
+-   Docker Compose health checks monitor the `app`, `postgres`, and `redis` services; the application container now waits for the data stores to become healthy before starting its HTTP server.
 
 ---
 
