@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    cat <<'USAGE' >&2
+Usage: docker-build-app [--tag <tag>] [--platform <platform>]
+
+Builds the Phlag application image using docker buildx.
+- If no tag is provided, defaults to phlag-app:local-<git-sha>.
+- The resulting image is also tagged as phlag-app:latest for local compose runs.
+
+Examples:
+  ./scripts/docker-build-app
+  ./scripts/docker-build-app --tag phlag-app:local-main --platform linux/amd64
+USAGE
+}
+
+TAG=""
+PLATFORM="linux/amd64"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --tag)
+            TAG="$2"
+            shift 2
+            ;;
+        --platform)
+            PLATFORM="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -z "$TAG" ]]; then
+    GIT_SHA="$(git rev-parse --short HEAD)"
+    TAG="phlag-app:local-${GIT_SHA}"
+fi
+
+echo "Building docker image with tag: ${TAG} (platform: ${PLATFORM})"
+
+docker buildx build \
+    --load \
+    --platform "${PLATFORM}" \
+    -t "${TAG}" \
+    -t phlag-app:latest \
+    -f docker/app/Dockerfile \
+    .
+
+echo "Image available locally as ${TAG} and phlag-app:latest"

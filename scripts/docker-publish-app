@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    cat <<'USAGE' >&2
+Usage: docker-publish-app --image <registry/repo> --tag <tag> [--source-tag <local-tag>] [--latest]
+
+Publishes the Phlag application image to a remote registry.
+
+Required arguments:
+  --image       Fully qualified image name (e.g. ghcr.io/example/phlag)
+  --tag         Tag to publish (e.g. 1.0.0 or commit sha)
+
+Optional arguments:
+  --source-tag  Local tag to push (defaults to phlag-app:latest)
+  --latest      Also push the 'latest' tag to the remote image
+
+Examples:
+  REGISTRY_IMAGE=ghcr.io/example/phlag ./scripts/docker-publish-app --image "$REGISTRY_IMAGE" --tag 1.2.3
+  ./scripts/docker-publish-app --image ghcr.io/example/phlag --tag $(git rev-parse --short HEAD) --latest
+USAGE
+}
+
+REMOTE_IMAGE=""
+PUBLISH_TAG=""
+SOURCE_TAG="phlag-app:latest"
+PUSH_LATEST="false"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --image)
+            REMOTE_IMAGE="$2"
+            shift 2
+            ;;
+        --tag)
+            PUBLISH_TAG="$2"
+            shift 2
+            ;;
+        --source-tag)
+            SOURCE_TAG="$2"
+            shift 2
+            ;;
+        --latest)
+            PUSH_LATEST="true"
+            shift 1
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -z "$REMOTE_IMAGE" || -z "$PUBLISH_TAG" ]]; then
+    echo "Missing required arguments." >&2
+    usage
+    exit 1
+fi
+
+TARGET="${REMOTE_IMAGE}:${PUBLISH_TAG}"
+
+echo "Tagging ${SOURCE_TAG} as ${TARGET}"
+docker tag "${SOURCE_TAG}" "${TARGET}"
+
+echo "Pushing ${TARGET}"
+docker push "${TARGET}"
+
+if [[ "${PUSH_LATEST}" == "true" ]]; then
+    LATEST_TAG="${REMOTE_IMAGE}:latest"
+    echo "Tagging ${SOURCE_TAG} as ${LATEST_TAG}"
+    docker tag "${SOURCE_TAG}" "${LATEST_TAG}"
+    echo "Pushing ${LATEST_TAG}"
+    docker push "${LATEST_TAG}"
+fi
+
+echo "Publish complete"

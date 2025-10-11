@@ -1,5 +1,7 @@
 # 🚦 Phlag - Feature Flag Service
 
+[![Docker Publish](https://github.com/danhenke/phlag/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/danhenke/phlag/actions/workflows/docker-publish.yml)
+
 A lightweight, developer-focused **Feature Flag & Remote Configuration API** built with **Laravel Zero**, **PostgreSQL**, and **Redis**. The project runs entirely on a local **Docker Compose** stack so you can experiment with feature flag workflows without provisioning any cloud infrastructure.
 
 Please refer to [`doc/adr`](./doc/adr) for [Architecture Decision Records](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) (ADRs) and [`doc/12-factor-compliance.md`](./doc/12-factor-compliance.md) for the 12-Factor alignment checklist.
@@ -426,6 +428,14 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the 
 
 -   The `app` image pre-installs the PHP extensions required by Laravel + Redis (`pdo_pgsql`, `zip`, and `redis`) and provides `curl` for internal health probes.
 -   Docker Compose health checks monitor the `app`, `postgres`, and `redis` services; the application container now waits for the data stores to become healthy before starting its HTTP server.
+
+## 📦 Docker image workflow
+
+-   Build locally with `./scripts/docker-build-app` (defaults to tagging `phlag-app:local-<sha>` and `phlag-app:latest`).
+-   Publish to a registry with `./scripts/docker-publish-app --image ghcr.io/<owner>/phlag --tag <version> [--latest]`.
+-   CI workflow `.github/workflows/docker-publish.yml` publishes images to GHCR. Optionally configure repository secrets:
+    - `GHCR_TOKEN` — personal access token (owned by `${{ github.repository_owner }}` or a dedicated bot account) with `write:packages`. When absent, the workflow falls back to the built-in `GITHUB_TOKEN`.
+-   Detailed sharing instructions live in [`doc/docker-image-sharing.md`](./doc/docker-image-sharing.md).
 
 ---
 
