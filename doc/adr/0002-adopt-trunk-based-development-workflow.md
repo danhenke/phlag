@@ -4,7 +4,7 @@ Date: 2025-10-10
 
 ## Status
 
-Accepted
+Superseded by [ADR-0009](0009-adopt-github-flow-for-codex-cloud-collaboration.md)
 
 ## Context
 
