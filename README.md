@@ -128,9 +128,16 @@ Only the application’s port 80 is published to your LAN (`http://localhost/` b
 Execute CLI commands inside the `app` container so they share networking and environment context:
 
 ```bash
-docker compose exec app php phlag app:migrate
-docker compose exec app php phlag app:seed
+docker compose exec app php phlag app:migrate --seed
+# or when you just need to reload demo data
+docker compose exec app php phlag app:seed --fresh
 ```
+
+The seeders provision a reusable dataset:
+
+-   Project `demo-project` with Production (default) and Staging environments.
+-   Feature flags `checkout-redesign` and `homepage-recommendations`.
+-   Sample evaluation and audit records that exercise the schema.
 
 ### 5. Verify the HTTP endpoint and CLI
 
@@ -176,8 +183,8 @@ docker compose exec app php phlag app:seed
 
 | Command                         | Purpose                 |
 | ------------------------------- | ----------------------- |
-| `app:migrate`                   | Run database migrations |
-| `app:seed`                      | Seed demo data          |
+| `app:migrate [--fresh] [--seed]` | Run database migrations |
+| `app:seed [--fresh]`             | Seed demo data          |
 | `projects:key:rotate {project}` | Rotate API key          |
 | `cache:warm {project} {env}`    | Prewarm flag cache      |
 | `audit:tail`                    | Stream audit logs       |

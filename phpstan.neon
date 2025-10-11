@@ -8,7 +8,7 @@ parameters:
         - database
         - public
     bootstrapFiles:
-        - bootstrap/app.php
+        - bootstrap/phpstan.php
     scanDirectories:
         - bootstrap
         - config

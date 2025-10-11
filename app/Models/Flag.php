@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $project_id
+ * @property string $key
+ */
 class Flag extends Model
 {
     /** @use HasFactory<Factory<static>> */

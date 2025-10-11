@@ -29,7 +29,7 @@
         "test": "vendor/bin/pest",
         "lint": "vendor/bin/pint --test",
         "lint:fix": "vendor/bin/pint",
-        "stan": "php vendor/bin/phpstan analyse --configuration=phpstan.neon"
+        "stan": "php scripts/phpstan.php analyse --configuration=phpstan.neon"
     },
     "autoload": {
         "psr-4": {
