@@ -69,7 +69,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 ## XII. Admin Processes
 
 -   One-off tasks executed via Laravel Zero commands (`php phlag app:migrate`, etc.) inside the `app` container.
--   Documented helper scripts (`./scripts/app-cli`, `./scripts/app-migrate`, `./scripts/app-seed`) wrap `docker compose exec app ...`
+-   Documented helper scripts (`./scripts/app-cli`, `./scripts/app-migrate`, `./scripts/app-seed`, `./scripts/app-cache-warm`, `./scripts/app-audit-tail`) wrap `docker compose exec app ...`
     for detached scenarios.
 
 ---
