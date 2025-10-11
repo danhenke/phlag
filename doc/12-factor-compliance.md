@@ -64,7 +64,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 ## XI. Logs
 
 -   Application logs written to stdout; developers inspect them via `docker compose logs` or `docker compose logs app`.
--   **Action:** decide whether to persist logs to disk volumes for longer local analysis.
+-   Docker Compose uses the `json-file` logging driver with rotation (`max-size=10m`, `max-file=5`) so containers stream logs while retaining a small local buffer without bespoke volumes.
 
 ## XII. Admin Processes
 

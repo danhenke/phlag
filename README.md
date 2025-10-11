@@ -139,6 +139,8 @@ This launches three services within an isolated Docker network:
 
 Only the application’s port 80 is published to your LAN (`http://localhost/` by default).
 
+Logs remain on stdout; tail them with `docker compose logs -f` when debugging. The Compose file configures the `json-file` driver with `max-size=10m` and `max-file=5`, so each container keeps a rotating local buffer without requiring extra volumes.
+
 ### 4. Run migrations and seed data
 
 Execute CLI commands inside the `app` container so they share networking and environment context. Helper scripts wrap
