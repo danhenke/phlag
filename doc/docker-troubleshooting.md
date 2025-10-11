@@ -24,6 +24,7 @@ Both reported versions should meet or exceed the minimums above. If they do not,
 
 - Hardware virtualization must be enabled in firmware (BIOS/UEFI) so Docker Desktop can run HyperKit/Hyper-V/WSL 2.
 - Allocate at least 4 CPU cores and 4 GB RAM to Docker Desktop; heavier migrations benefit from 6 GB+.
+- Budget additional CPU (6 cores) and memory (8 GB+) if you plan to scale PHP workers; see `doc/docker-worker-scaling.md` for guidance.
 - Keep 6 GB of free disk space for images, volumes, and build cache (`docker system df` reports usage).
 - On Windows, confirm WSL 2 is installed and set as the default backend prior to starting the stack.
 
