@@ -292,6 +292,7 @@ curl --request GET \
 
 ## 🗂️ Architecture references
 
+-   [`doc/schema-overview.md`](./doc/schema-overview.md) — Entity relationship diagram for projects, environments, flags, evaluations, and audit events.
 -   [`doc/adr/0010-manage-jwt-signing-keys.md`](./doc/adr/0010-manage-jwt-signing-keys.md) — RSA signing keys with fallback HMAC mode and rotation workflow.
 -   [`doc/adr/0011-invalidate-redis-caches.md`](./doc/adr/0011-invalidate-redis-caches.md) — Redis cache key structure, TTLs, and pub/sub invalidation channel.
 -   [`doc/adr/0012-persist-audit-events-in-postgres.md`](./doc/adr/0012-persist-audit-events-in-postgres.md) — Audit event schema, access patterns, and retention policy.
