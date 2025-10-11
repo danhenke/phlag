@@ -116,6 +116,8 @@ JWT_SECRET=$(openssl rand -base64 32)
 EOF
 ```
 
+For hosted environments configure RSA signing keys via `JWT_KEY_ID`, `JWT_PRIVATE_KEY`, and `JWT_PUBLIC_KEY` according to [`doc/adr/0010-manage-jwt-signing-keys.md`](./doc/adr/0010-manage-jwt-signing-keys.md). The `JWT_SECRET` value above is a local-only fallback so contributors can start without managing PEM files.
+
 Load the variables into your shell whenever you start a new terminal:
 
 ```bash
@@ -286,6 +288,13 @@ curl --request GET \
     Authorization: Bearer <jwt>
     ```
 -   Tokens are scoped to project + environment.
+-   Key rotation expectations and supported environment variables are documented in [`doc/adr/0010-manage-jwt-signing-keys.md`](./doc/adr/0010-manage-jwt-signing-keys.md).
+
+## 🗂️ Architecture references
+
+-   [`doc/adr/0010-manage-jwt-signing-keys.md`](./doc/adr/0010-manage-jwt-signing-keys.md) — RSA signing keys with fallback HMAC mode and rotation workflow.
+-   [`doc/adr/0011-invalidate-redis-caches.md`](./doc/adr/0011-invalidate-redis-caches.md) — Redis cache key structure, TTLs, and pub/sub invalidation channel.
+-   [`doc/adr/0012-persist-audit-events-in-postgres.md`](./doc/adr/0012-persist-audit-events-in-postgres.md) — Audit event schema, access patterns, and retention policy.
 
 ---
 
