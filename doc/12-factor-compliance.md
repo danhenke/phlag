@@ -45,9 +45,8 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 
 ## VIII. Concurrency
 
--   Horizontal scalability for demos is manual—run additional PHP processes if necessary.
+-   Horizontal scalability for demos is manual—run additional PHP processes if necessary (see `doc/docker-worker-scaling.md` for Docker Compose scaling patterns).
 -   PostgreSQL and Redis containers can be reconfigured with Docker Compose overrides when load testing locally.
--   **Action:** capture guidance for running multiple worker processes against the same containers.
 
 ## IX. Disposability
 
@@ -78,4 +77,5 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 1. Ensure new Laravel configuration reads from environment variables; avoid embedding defaults that vary per environment.
 2. Provide guidance for building optional Docker images if teammates want to share artifacts.
 3. ✅ Capture Docker version/system requirements and troubleshooting steps for local contributors (see `doc/docker-troubleshooting.md`).
-4. ✅ Document helper scripts for running one-off admin tasks while Docker Compose services are detached.
+4. ✅ Capture worker scaling guidance for Docker Compose (see `doc/docker-worker-scaling.md`).
+5. ✅ Document helper scripts for running one-off admin tasks while Docker Compose services are detached.

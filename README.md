@@ -264,6 +264,8 @@ The service is intended for local demonstrations:
 
 When you are finished experimenting, shut everything down with `docker compose down`.
 
+Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the patterns documented in `doc/docker-worker-scaling.md`.
+
 ---
 
 ## 🧭 Development Workflow
