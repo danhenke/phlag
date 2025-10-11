@@ -68,7 +68,8 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 ## XII. Admin Processes
 
 -   One-off tasks executed via Laravel Zero commands (`php phlag app:migrate`, etc.) inside the `app` container.
--   Pending: document helper scripts that wrap `docker compose exec app ...` for detached scenarios.
+-   Documented helper scripts (`./scripts/app-cli`, `./scripts/app-migrate`, `./scripts/app-seed`) wrap `docker compose exec app ...`
+    for detached scenarios.
 
 ---
 
@@ -77,4 +78,4 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 1. Ensure new Laravel configuration reads from environment variables; avoid embedding defaults that vary per environment.
 2. Provide guidance for building optional Docker images if teammates want to share artifacts.
 3. Capture Docker version/system requirements and troubleshooting steps for local contributors.
-4. Document helper scripts for running one-off admin tasks while Docker Compose services are detached.
+4. ✅ Document helper scripts for running one-off admin tasks while Docker Compose services are detached.

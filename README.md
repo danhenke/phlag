@@ -125,12 +125,13 @@ Only the application’s port 80 is published to your LAN (`http://localhost/` b
 
 ### 4. Run migrations and seed data
 
-Execute CLI commands inside the `app` container so they share networking and environment context:
+Execute CLI commands inside the `app` container so they share networking and environment context. Helper scripts wrap
+`docker compose exec` for the common admin tasks when your stack is running detached:
 
 ```bash
-docker compose exec app php phlag app:migrate --seed
+./scripts/app-migrate --seed
 # or when you just need to reload demo data
-docker compose exec app php phlag app:seed --fresh
+./scripts/app-seed --fresh
 ```
 
 The seeders provision a reusable dataset:
@@ -189,10 +190,10 @@ The seeders provision a reusable dataset:
 | `cache:warm {project} {env}`    | Prewarm flag cache      |
 | `audit:tail`                    | Stream audit logs       |
 
-Run commands through the Laravel Zero binary inside the running container:
+Run commands through the Laravel Zero binary inside the running container via the helper script:
 
 ```bash
-docker compose exec app php phlag app:migrate
+./scripts/app-cli app:migrate
 ```
 
 ---
