@@ -104,6 +104,7 @@ Define the runtime configuration expected by the application:
 
 ```bash
 cat <<EOF > .env.local
+APP_NAME=Phlag
 APP_ENV=local
 APP_DEBUG=true
 POSTGRES_DB=phlag

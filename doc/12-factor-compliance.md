@@ -19,7 +19,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 
 -   Runtime configuration stored in `.env.local` and exported so PHP reads everything from environment variables.
 -   Docker Compose services load the same file via `env_file`, ensuring containerised processes see identical credentials and service hostnames (e.g., `postgres`, `redis`).
--   No secrets or per-environment configuration committed to the repo. **Action:** audit Laravel config files as features land to ensure they read from `env()` only.
+-   Laravel config files (`config/app.php`, `config/database.php`) exclusively use `env()` for runtime settings such as `APP_NAME`, `APP_ENV`, and database connection details. No exceptions required; defaults only document safe local fallbacks.
 
 ## IV. Backing Services
 
@@ -76,7 +76,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 
 ### Next Actions Summary
 
-1. Ensure new Laravel configuration reads from environment variables; avoid embedding defaults that vary per environment.
+1. ✅ Audit Laravel configuration to ensure runtime values use environment variables (`APP_NAME`, `APP_ENV`, `DB_*`).
 2. ✅ Provide guidance for building optional Docker images if teammates want to share artifacts (see `doc/docker-image-sharing.md`).
 3. ✅ Capture Docker version/system requirements and troubleshooting steps for local contributors (see `doc/docker-troubleshooting.md`).
 4. ✅ Capture worker scaling guidance for Docker Compose (see `doc/docker-worker-scaling.md`).
