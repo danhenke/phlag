@@ -125,19 +125,20 @@ Remember to remove the override file when you return to local development so sub
 
 ## Automated GitHub Actions publish
 
-The workflow in `.github/workflows/docker-publish.yml` builds the application image and pushes it to GitHub Container Registry (GHCR).
+The workflow in `.github/workflows/ci.yml` builds the application image and publishes it to GitHub Container Registry (GHCR).
 
 - Triggers on `workflow_dispatch` (with an optional tag input) and on Git tags that match `v*`.
-- Produces `ghcr.io/<owner>/phlag:<tag>` and `ghcr.io/<owner>/phlag:sha-<git-sha>` each run; tag pushes also refresh the `latest` tag.
+- Builds with `docker buildx` checks enabled, emits SBOMs and provenance attestations (`provenance: mode=max`), and exports deterministic layers by setting `SOURCE_DATE_EPOCH` to the latest commit timestamp.
+- Generates semver (`major`, `major.minor`, `version`) and `sha` tags via `docker/metadata-action`, and applies matching labels/annotations to the image and attestations.
 - Authentication uses the built-in `GITHUB_TOKEN`, which is sufficient for publishing to this repository's GHCR namespace; no additional secrets are required.
 
 To run the workflow manually:
 
-1. Navigate to **Actions → Docker Publish → Run workflow**.
+1. Navigate to **Actions → CI → Run workflow**.
 2. Provide a tag (optional) or accept the default short SHA tag.
 3. Confirm you have permission to publish to the repository namespace (the workflow uses `GITHUB_TOKEN` automatically).
 
-Once published, teammates can pull the image with:
+After the run completes you can download SBOM and provenance artifacts from the workflow summary. The published image is available at:
 
 ```bash
 docker pull ghcr.io/<owner>/phlag:<tag>

@@ -433,7 +433,7 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the 
 
 -   Build locally with `./scripts/docker-build-app` (defaults to tagging `phlag-app:local-<sha>` and `phlag-app:latest`).
 -   Publish to a registry with `./scripts/docker-publish-app --image ghcr.io/<owner>/phlag --tag <version> [--latest]`.
--   CI workflow `.github/workflows/docker-publish.yml` publishes images to GHCR using the built-in `GITHUB_TOKEN`; no additional secrets are required.
+-   CI workflow `.github/workflows/ci.yml` builds and publishes images to GHCR using the built-in `GITHUB_TOKEN`, generates SBOM + provenance attestations, runs `docker buildx` checks, and stamps images with reproducible metadata (labels/annotations/tags driven by `SOURCE_DATE_EPOCH`).
 -   Detailed sharing instructions live in [`doc/docker-image-sharing.md`](./doc/docker-image-sharing.md).
 
 ---
