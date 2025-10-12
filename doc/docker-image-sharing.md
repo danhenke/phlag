@@ -26,6 +26,12 @@ docker compose build app
 
 This produces the image `phlag-app:latest` in your local Docker cache (Compose names the image `<project>-<service>` by default).
 
+Prefer a repeatable build script? Use the helper that wraps `docker buildx` and gives you both a deterministic tag and the `phlag-app:latest` alias for Compose:
+
+```bash
+./scripts/docker-build-app --tag phlag-app:local-$(git rev-parse --short HEAD)
+```
+
 If you prefer to bake a source control revision into the tag before sharing, retag the image after the build:
 
 ```bash
@@ -76,6 +82,12 @@ Publishing allows teammates to pull the image whenever they need it. The example
     docker push "$IMAGE_TAG"
     ```
 
+    Alternatively, reuse the helper to tag and push in one step:
+
+    ```bash
+    ./scripts/docker-publish-app --image "ghcr.io/${GITHUB_USERNAME}/phlag" --tag "$(git rev-parse --short HEAD)" --latest
+    ```
+
 4. Share the tag with teammates. They can pull and keep both the remote tag and the local Compose tag:
 
     ```bash
@@ -110,3 +122,24 @@ docker compose -f compose.yaml -f compose.override.yaml up -d
 ```
 
 Remember to remove the override file when you return to local development so subsequent changes rebuild the image as expected.
+
+## Automated GitHub Actions publish
+
+The workflow in `.github/workflows/docker-publish.yml` builds the application image and pushes it to GitHub Container Registry (GHCR).
+
+- Triggers on `workflow_dispatch` (with an optional tag input) and on Git tags that match `v*`.
+- Produces `ghcr.io/<owner>/phlag:<tag>` and `ghcr.io/<owner>/phlag:sha-<git-sha>` each run; tag pushes also refresh the `latest` tag.
+- Optionally configure a repository secret `GHCR_TOKEN` containing a personal access token with the `write:packages` scope. When provided, the workflow authenticates using `${{ github.repository_owner }}` (or a configured service account). If the secret is omitted the workflow falls back to the built-in `GITHUB_TOKEN`, which is sufficient for publishing to the current repository’s namespace.
+
+To run the workflow manually:
+
+1. Navigate to **Actions → Docker Publish → Run workflow**.
+2. Provide a tag (optional) or accept the default short SHA tag.
+3. Ensure `GHCR_TOKEN` is configured before dispatching.
+
+Once published, teammates can pull the image with:
+
+```bash
+docker pull ghcr.io/<owner>/phlag:<tag>
+docker tag ghcr.io/<owner>/phlag:<tag> phlag-app:latest
+```
