@@ -435,6 +435,7 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the 
 -   Publish to a registry with `./scripts/docker-publish-app --image ghcr.io/<owner>/phlag --tag <version> [--latest]`.
 -   CI workflow `.github/workflows/ci.yml` builds and publishes images to GHCR using the built-in `GITHUB_TOKEN`, generates SBOM + provenance attestations, runs `docker buildx` checks, and stamps images with reproducible metadata (labels/annotations/tags driven by `SOURCE_DATE_EPOCH`).
 -   Detailed sharing instructions live in [`doc/docker-image-sharing.md`](./doc/docker-image-sharing.md).
+-   DevSecOps validation steps (annotations, attestations, SBOM triage, and framework alignment) are captured in [`doc/devsecops.md`](./doc/devsecops.md).
 
 ---
 
