@@ -17,6 +17,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
+      checks: read
     steps:
       - name: Docker metadata
         id: meta
