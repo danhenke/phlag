@@ -16,7 +16,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-      checks: read
+      checks: write
     steps:
       - name: Extract docker metadata
         id: meta
@@ -45,6 +45,8 @@ jobs:
         with:
           push: true
           call: check
+          sbom: true
+          provenance: mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
