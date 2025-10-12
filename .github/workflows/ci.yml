@@ -2,10 +2,6 @@ name: ci
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to publish (defaults to current commit SHA)"
-        required: false
   push:
     tags:
       - 'v*'
