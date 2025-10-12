@@ -13,7 +13,8 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      actions: read
+      contents: write
       packages: write
       checks: write
       attestations: write
@@ -43,9 +44,10 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha
+            type=sha,priority=1000
 
       - name: Build and push
+        id: build-and-push
         uses: docker/build-push-action@v6
         with:
           push: true
@@ -61,4 +63,20 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-path: oci://${{ env.REGISTRY }}/${{ github.repository }}:latest
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}
+          subject-digest: ${{ steps.build-and-push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.version }}
+          output-file: 'sbom.spdx.json'
+
+      - name: Generate SBOM attestation
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}
+          subject-digest: ${{ steps.build-and-push.outputs.digest }}
+          sbom-path: 'sbom.spdx.json'
+          push-to-registry: true
