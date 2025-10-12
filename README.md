@@ -1,6 +1,6 @@
 # 🚦 Phlag - Feature Flag Service
 
-[![Docker Publish](https://github.com/danhenke/phlag/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/danhenke/phlag/actions/workflows/docker-publish.yml)
+[![CI Workflow](https://github.com/danhenke/phlag/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/danhenke/phlag/actions/workflows/docker-publish.yml)
 
 A lightweight, developer-focused **Feature Flag & Remote Configuration API** built with **Laravel Zero**, **PostgreSQL**, and **Redis**. The project runs entirely on a local **Docker Compose** stack so you can experiment with feature flag workflows without provisioning any cloud infrastructure.
 
