@@ -17,6 +17,7 @@ jobs:
       packages: write
       checks: write
       attestations: write
+      id-token: write
     steps:
       - name: Get git commit timestamp
         id: commit_ts
@@ -55,3 +56,8 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
         env:
           SOURCE_DATE_EPOCH: ${{ steps.commit_ts.outputs.timestamp }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: oci://${{ env.REGISTRY }}/${{ github.repository }}

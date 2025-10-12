@@ -12,6 +12,8 @@ RUN apt-get update \
 
 WORKDIR /app
 
+LABEL org.opencontainers.image.description="Phlag feature flag and remote configuration service"
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 EXPOSE 80
