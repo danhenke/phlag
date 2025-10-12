@@ -52,7 +52,7 @@ docker buildx build \
     --platform "${PLATFORM}" \
     -t "${TAG}" \
     -t phlag-app:latest \
-    -f docker/app/Dockerfile \
+    -f Dockerfile \
     .
 
 echo "Image available locally as ${TAG} and phlag-app:latest"

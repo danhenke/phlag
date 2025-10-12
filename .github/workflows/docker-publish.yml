@@ -70,7 +70,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: docker/app/Dockerfile
+          file: Dockerfile
           push: true
           platforms: linux/amd64
           tags: |

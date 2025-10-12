@@ -8,7 +8,7 @@ This guide records the minimum Docker versions supported by Phlag and provides q
 
 | Platform | Minimum Version | Notes |
 | --- | --- | --- |
-| Docker Desktop (macOS / Windows) | 4.32.0 (Engine 26.1.1, Compose 2.27+) | Ships BuildKit 0.12+, required for the `# syntax=docker/dockerfile:1.7` directive used by `docker/app/Dockerfile`. Enable the WSL 2 backend on Windows. |
+| Docker Desktop (macOS / Windows) | 4.32.0 (Engine 26.1.1, Compose 2.27+) | Ships BuildKit 0.12+, required for the `# syntax=docker/dockerfile:1.7` directive used by the project `Dockerfile`. Enable the WSL 2 backend on Windows. |
 | Linux | Docker Engine 26.0.0+ with Compose plugin 2.27+ | Install the `docker-compose-plugin` package so `docker compose` is available. Ensure BuildKit is enabled (`DOCKER_BUILDKIT=1`). |
 
 Verify your installation before running `docker compose up`:

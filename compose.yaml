@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: docker/app/Dockerfile
+      dockerfile: Dockerfile
     command: php -S 0.0.0.0:80 -t public public/index.php
     depends_on:
       postgres:

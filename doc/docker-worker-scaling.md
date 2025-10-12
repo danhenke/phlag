@@ -42,7 +42,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: docker/app/Dockerfile
+      dockerfile: Dockerfile
     command: php phlag <worker-command>
     env_file:
       - .env.local
