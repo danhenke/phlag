@@ -47,16 +47,17 @@ jobs:
             type=sha,priority=1000
 
       - name: Build and push
-        id: build-and-push
+        id: build
         uses: docker/build-push-action@v6
         with:
           push: true
           call: check
-          sbom: true
-          provenance: mode=max
+          sbom: false
+          provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
+          platforms: linux/amd64,linux/arm64
         env:
           SOURCE_DATE_EPOCH: ${{ steps.commit_ts.outputs.timestamp }}
 
@@ -64,19 +65,19 @@ jobs:
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ github.repository }}
-          subject-digest: ${{ steps.build-and-push.outputs.digest }}
+          subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
           image: ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.version }}
-          output-file: 'sbom.spdx.json'
+          output-file: sbom.spdx.json
 
       - name: Generate SBOM attestation
         uses: actions/attest-sbom@v2
         with:
           subject-name: ${{ env.REGISTRY }}/${{ github.repository }}
-          subject-digest: ${{ steps.build-and-push.outputs.digest }}
-          sbom-path: 'sbom.spdx.json'
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: sbom.spdx.json
           push-to-registry: true
