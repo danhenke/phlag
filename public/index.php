@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
 $autoloadPath = __DIR__.'/../vendor/autoload.php';
@@ -22,6 +23,7 @@ if (file_exists($autoloadPath)) {
     }
 }
 
+/** @var Application $app */
 $app = require __DIR__.'/../bootstrap/app.php';
 
 /** @var Kernel $kernel */
