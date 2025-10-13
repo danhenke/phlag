@@ -3,6 +3,7 @@
 
 FROM composer:2 AS vendor
 WORKDIR /app
+ENV COMPOSER_ALLOW_SUPERUSER=1
 COPY composer.json composer.lock ./
 RUN composer install \
     --no-dev \
@@ -15,10 +16,11 @@ RUN composer install \
 FROM php:8.4-cli AS base
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl git unzip libpq-dev libzip-dev \
+    && apt-get install -y --no-install-recommends curl unzip libcap2-bin libpq-dev libpq5 libzip-dev libzip4 \
     && docker-php-ext-install pdo_pgsql zip \
     && pecl install redis \
     && docker-php-ext-enable redis \
+    && apt-get purge -y --auto-remove libpq-dev libzip-dev \
     && rm -rf /var/lib/apt/lists/* /tmp/pear
 
 WORKDIR /app
@@ -34,13 +36,20 @@ RUN composer dump-autoload --optimize --classmap-authoritative \
 
 FROM base AS runtime
 
+RUN useradd --system --create-home phlag \
+    && chown -R phlag:phlag /app
 ENV PHLAG_PHAR=/app/phlag
 
 COPY public ./public
 COPY --from=builder /app/builds/phlag ./phlag
 
 RUN chmod +x /app/phlag \
-    && ln -sf /app/phlag /usr/local/bin/phlag
+    && ln -sf /app/phlag /usr/local/bin/phlag \
+    && chown -R phlag:phlag /app \
+    && chown -h phlag:phlag /usr/local/bin/phlag \
+    && setcap 'cap_net_bind_service=+ep' /usr/local/bin/php
+
+USER phlag
 
 EXPOSE 80
 
