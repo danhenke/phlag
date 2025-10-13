@@ -447,7 +447,7 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the 
 | Static analysis | `composer stan`                        |
 | Tests           | `composer test`                        |
 | QA workflow     | `.github/workflows/qa.yml` (lint, stan, tests) |
-| CI              | GitHub Actions build/publish image on push |
+| CI              | `.github/workflows/ci.yml` (buildx checks, SBOM, provenance attestations, GHCR publish) |
 | Deploy          | `docker compose up -d` (local only)    |
 
 ---
