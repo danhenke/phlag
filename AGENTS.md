@@ -31,6 +31,7 @@
 -   Write Pest tests using descriptive `it()` blocks; mirror production namespaces under `tests/`.
 -   Add regression tests alongside bug fixes; aim for coverage on flag evaluation branches and caching paths.
 -   Run `composer test` locally before pushing; skip relying on CI to reveal deterministic failures.
+-   Run `composer lint` and `composer stan` locally before pushing so CI catches only unexpected regressions.
 
 ## Commit & Pull Request Guidelines
 
