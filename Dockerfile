@@ -1,6 +1,17 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --optimize-autoloader \
+    --classmap-authoritative
+
 FROM php:8.4-cli
 
 RUN apt-get update \
@@ -15,6 +26,10 @@ WORKDIR /app
 LABEL org.opencontainers.image.description="Phlag feature flag and remote configuration service"
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY . .
+COPY --from=vendor /app/vendor ./vendor
+
+RUN composer dump-autoload --optimize --classmap-authoritative
 
 EXPOSE 80
 
