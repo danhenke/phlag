@@ -1,0 +1,14 @@
+.git
+.github
+doc
+tests
+vendor
+node_modules
+docker-compose.yml
+docker-compose.yaml
+compose.yaml
+.env*
+.DS_Store
+.idea
+.vscode
+*.log
