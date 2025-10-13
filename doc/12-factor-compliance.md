@@ -73,11 +73,3 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
     for detached scenarios.
 
 ---
-
-### Next Actions Summary
-
-1. ✅ Audit Laravel configuration to ensure runtime values use environment variables (`APP_NAME`, `APP_ENV`, `DB_*`).
-2. ✅ Provide guidance for building optional Docker images if teammates want to share artifacts (see README sharing notes).
-3. ✅ Capture Docker version/system requirements and troubleshooting steps for local contributors (see `doc/docker-troubleshooting.md`).
-4. ✅ Capture worker scaling guidance for Docker Compose (documented inline in README).
-5. ✅ Document helper scripts for running one-off admin tasks while Docker Compose services are detached.
