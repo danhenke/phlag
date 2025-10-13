@@ -101,6 +101,22 @@ set -a; source .env.local; set +a
 
 3. Re-run the desired Laravel Zero command (e.g., `./scripts/app-migrate`).
 
+### Docker reports a platform mismatch when pulling the app image
+
+**Symptoms**
+- `The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8)` appears during `docker compose up` or `pull`.
+
+**Fix**
+1. The prebuilt image currently targets `linux/amd64`. Either rely on emulation by exporting `PHLAG_APP_PLATFORM=linux/amd64` (the default) or build a native image locally and set `PHLAG_APP_PLATFORM` to your architecture (for example `linux/arm64/v8`).
+2. To build locally on Apple Silicon, run `./scripts/docker-build-app --tag ghcr.io/danhenke/phlag:local-arm64` and export:
+
+    ```bash
+    export PHLAG_APP_IMAGE="ghcr.io/danhenke/phlag:local-arm64"
+    export PHLAG_APP_PLATFORM="linux/arm64/v8"
+    ```
+
+3. Re-run `docker compose pull app && docker compose up -d`.
+
 ## When to Ask for Help
 
 If the guidance above does not resolve the issue, capture:
