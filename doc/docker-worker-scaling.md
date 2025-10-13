@@ -6,7 +6,7 @@ This guide explains how to run additional PHP worker processes alongside the def
 
 ## Prerequisites
 
-- The baseline stack (`docker compose up -d`) is running and healthy. On Apple Silicon or other ARM hosts, ensure `PHLAG_APP_PLATFORM` matches the image architecture (defaults to `linux/amd64` for the published image).
+- The baseline stack (`docker compose up -d`) is running and healthy.
 - `.env.local` contains the credentials referenced by `compose.yaml`, and you have exported them in your shell (`set -a; source .env.local; set +a`) before launching helper scripts.
 
 Verify that all services are running before scaling:

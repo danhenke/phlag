@@ -104,18 +104,17 @@ set -a; source .env.local; set +a
 ### Docker reports a platform mismatch when pulling the app image
 
 **Symptoms**
-- `The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8)` appears during `docker compose up` or `pull`.
+- `The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8)` appears during `docker compose up` or `docker compose pull`.
 
 **Fix**
-1. The prebuilt image currently targets `linux/amd64`. Either rely on emulation by exporting `PHLAG_APP_PLATFORM=linux/amd64` (the default) or build a native image locally and set `PHLAG_APP_PLATFORM` to your architecture (for example `linux/arm64/v8`).
-2. To build locally on Apple Silicon, run `./scripts/docker-build-app --tag ghcr.io/danhenke/phlag:local-arm64` and export:
+1. The GHCR image is published for both `linux/amd64` and `linux/arm64`. Refresh your local cache so Docker sees the manifest list:
 
     ```bash
-    export PHLAG_APP_IMAGE="ghcr.io/danhenke/phlag:local-arm64"
-    export PHLAG_APP_PLATFORM="linux/arm64/v8"
+    docker pull ghcr.io/danhenke/phlag:latest
     ```
 
-3. Re-run `docker compose pull app && docker compose up -d`.
+2. If you override `PHLAG_APP_IMAGE`, confirm the tag you selected includes your architecture. Rebuild it with `./scripts/docker-build-app` on your machine and push with `--platform linux/amd64,linux/arm64` (or let CI publish it automatically).
+3. As a temporary workaround, you can pull a specific architecture manually, for example `docker pull --platform linux/amd64 ghcr.io/danhenke/phlag:latest`, but prefer fixing the tag so Compose can autodetect the right architecture going forward.
 
 ## When to Ask for Help
 

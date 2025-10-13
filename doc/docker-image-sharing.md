@@ -8,7 +8,7 @@ Some contributors prefer receiving pre-built Docker images instead of rebuilding
 - Exporting a locally built image so another teammate can load it.
 - Publishing an image to a container registry (for example GitHub Container Registry).
 
-Both approaches produce an image compatible with the `app` service defined in `compose.yaml`. The stack now pulls `${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}` automatically (requesting `${PHLAG_APP_PLATFORM:-linux/amd64}`), so sharing an image primarily helps teammates who are offline or need to test an unpublished build.
+Both approaches produce an image compatible with the `app` service defined in `compose.yaml`. The stack now pulls `${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}` automatically, so sharing an image primarily helps teammates who are offline or need to test an unpublished build. The CI workflow publishes multi-architecture images (`linux/amd64` and `linux/arm64`), letting Docker Compose choose the right variant for each host without extra configuration.
 
 ## Prerequisites
 
@@ -31,11 +31,10 @@ The helper wraps `docker buildx` and produces both the provided tag and `phlag-a
 docker build -f Dockerfile -t "ghcr.io/danhenke/phlag:${CUSTOM_TAG}" .
 ```
 
-After the build completes, point Compose at your tag by exporting `PHLAG_APP_IMAGE` (and `PHLAG_APP_PLATFORM` if you produced a non-default architecture) before running `docker compose`:
+After the build completes, point Compose at your tag by exporting `PHLAG_APP_IMAGE` before running `docker compose`:
 
 ```bash
 export PHLAG_APP_IMAGE="ghcr.io/danhenke/phlag:${CUSTOM_TAG}"
-# Optional: export PHLAG_APP_PLATFORM="linux/arm64/v8"
 ```
 
 Unset the variable when you want to return to the published `latest` image.
@@ -60,7 +59,6 @@ After loading, export `PHLAG_APP_IMAGE` (or retag to the default `latest`) so Co
 
 ```bash
 export PHLAG_APP_IMAGE="ghcr.io/danhenke/phlag:${CUSTOM_TAG}"
-# Optional: export PHLAG_APP_PLATFORM="linux/arm64/v8"
 docker compose up -d
 ```
 
@@ -98,7 +96,6 @@ Publishing allows teammates to pull the image whenever they need it. The example
     ```bash
     docker pull "$IMAGE_TAG"
     export PHLAG_APP_IMAGE="$IMAGE_TAG"
-    # Optional: export PHLAG_APP_PLATFORM="linux/arm64/v8"
     ```
 
 Keeping an exported `PHLAG_APP_IMAGE` (or retagging to `ghcr.io/danhenke/phlag:latest`) ensures `docker compose up` reuses the shared image.
@@ -109,7 +106,6 @@ Compose reads the app image from the `PHLAG_APP_IMAGE` environment variable. Exp
 
 ```bash
 export PHLAG_APP_IMAGE="ghcr.io/<org>/phlag:<tag>"
-# Optional: export PHLAG_APP_PLATFORM="linux/arm64/v8"
 docker compose up -d
 ```
 

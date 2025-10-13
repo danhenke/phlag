@@ -3,7 +3,6 @@ name: "phlag"
 services:
   app:
     image: ${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}
-    platform: ${PHLAG_APP_PLATFORM:-linux/amd64}
     command: php -S 0.0.0.0:80 -t public public/index.php
     depends_on:
       postgres:

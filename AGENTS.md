@@ -11,7 +11,7 @@
 ## Build, Test, and Development Commands
 
 -   `composer install` — install PHP dependencies with locked versions.
--   `docker compose up -d` — start the application, PostgreSQL, and Redis services (Pulls `${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}` and uses `${PHLAG_APP_PLATFORM:-linux/amd64}` automatically).
+-   `docker compose up -d` — start the application, PostgreSQL, and Redis services (Pulls `${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}` automatically).
 -   `docker compose exec app php phlag app:migrate` — run database migrations through the Laravel Zero binary.
 -   `docker compose exec app php phlag cache:warm {project} {env}` — refresh Redis caches when flag logic changes.
 -   `composer test` — execute the Pest test suites with PHPUnit under the hood.
