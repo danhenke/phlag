@@ -1,8 +1,5 @@
 # syntax=docker/dockerfile:1
 # check=error=true
-ARG BUILDKIT_SBOM_SCAN_CONTEXT=true
-ARG BUILDKIT_SBOM_SCAN_STAGE=true
-ARG SOURCE_DATE_EPOCH
 
 FROM composer:2 AS vendor
 WORKDIR /app
@@ -17,8 +14,6 @@ RUN composer install \
 
 FROM php:8.4-cli AS base
 
-ARG SOURCE_DATE_EPOCH
-
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl git unzip libpq-dev libzip-dev \
     && docker-php-ext-install pdo_pgsql zip \
@@ -30,8 +25,6 @@ WORKDIR /app
 
 FROM base AS builder
 
-ARG SOURCE_DATE_EPOCH
-
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY --from=vendor /app/vendor ./vendor
 COPY . .
@@ -40,10 +33,6 @@ RUN composer dump-autoload --optimize --classmap-authoritative \
     && php phlag app:build phlag
 
 FROM base AS runtime
-
-ARG SOURCE_DATE_EPOCH
-
-LABEL org.opencontainers.image.description="Phlag feature flag and remote configuration service"
 
 ENV PHLAG_PHAR=/app/phlag
 

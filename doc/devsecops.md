@@ -29,13 +29,13 @@ composer stan
 composer test
 ```
 
-Build the runtime image with deterministic settings:
+Build the runtime image with a traceable tag:
 
 ```bash
 ./scripts/docker-build-app --tag "phlag-app:local-$(git rev-parse --short HEAD)"
 ```
 
-The build helper pins `SOURCE_DATE_EPOCH` to the latest commit timestamp so layers remain reproducible across machines. Use `docker inspect phlag-app:latest --format '{{.Id}}'` to capture the resulting image digest if you need to reference it in an ADR or issue.
+Use `docker inspect phlag-app:latest --format '{{.Id}}'` to capture the resulting image digest if you need to reference it in an ADR or issue.
 
 ---
 
