@@ -6,6 +6,7 @@ namespace Phlag\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Phlag\Models\Environment;
 
 /**
  * @mixin \Phlag\Models\Environment
@@ -19,15 +20,18 @@ class EnvironmentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        /** @var Environment $environment */
+        $environment = $this->resource;
+
         return [
-            'id' => $this->id,
-            'key' => $this->key,
-            'name' => $this->name,
-            'description' => $this->description,
-            'is_default' => $this->is_default,
-            'metadata' => $this->metadata,
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'id' => $environment->id,
+            'key' => $environment->key,
+            'name' => $environment->name,
+            'description' => $environment->description,
+            'is_default' => $environment->is_default,
+            'metadata' => $environment->metadata,
+            'created_at' => $environment->created_at?->toISOString(),
+            'updated_at' => $environment->updated_at?->toISOString(),
         ];
     }
 }

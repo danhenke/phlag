@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Phlag\Http\Requests;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Phlag\Models\Project;
+use RuntimeException;
 
 class StoreEnvironmentRequest extends FormRequest
 {
@@ -25,8 +27,11 @@ class StoreEnvironmentRequest extends FormRequest
      */
     public function rules(): array
     {
-        /** @var Project $project */
         $project = $this->route('project');
+
+        if (! $project instanceof Project) {
+            throw new RuntimeException('Project route binding missing.');
+        }
 
         return [
             'key' => [
@@ -35,7 +40,9 @@ class StoreEnvironmentRequest extends FormRequest
                 'max:64',
                 'regex:/^[a-z0-9][a-z0-9-]*$/',
                 Rule::unique('environments', 'key')
-                    ->where(fn ($query) => $query->where('project_id', $project->id)),
+                    ->where(static function (Builder $query) use ($project): Builder {
+                        return $query->where('project_id', $project->id);
+                    }),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Phlag\Http\Requests;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Phlag\Models\Environment;
 use Phlag\Models\Project;
+use RuntimeException;
 
 class UpdateEnvironmentRequest extends FormRequest
 {
@@ -26,11 +28,17 @@ class UpdateEnvironmentRequest extends FormRequest
      */
     public function rules(): array
     {
-        /** @var Project $project */
         $project = $this->route('project');
 
-        /** @var Environment $environment */
         $environment = $this->route('environment');
+
+        if (! $project instanceof Project) {
+            throw new RuntimeException('Project route binding missing.');
+        }
+
+        if (! $environment instanceof Environment) {
+            throw new RuntimeException('Environment route binding missing.');
+        }
 
         return [
             'key' => [
@@ -39,7 +47,9 @@ class UpdateEnvironmentRequest extends FormRequest
                 'max:64',
                 'regex:/^[a-z0-9][a-z0-9-]*$/',
                 Rule::unique('environments', 'key')
-                    ->where(fn ($query) => $query->where('project_id', $project->id))
+                    ->where(static function (Builder $query) use ($project): Builder {
+                        return $query->where('project_id', $project->id);
+                    })
                     ->ignore($environment->id),
             ],
             'name' => ['sometimes', 'string', 'max:255'],

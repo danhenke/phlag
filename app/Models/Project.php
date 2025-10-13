@@ -12,6 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property string $id
  * @property string $key
+ * @property string $name
+ * @property string|null $description
+ * @property array<string, mixed>|null $metadata
+ * @property-read \Illuminate\Support\Carbon|null $created_at
+ * @property-read \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Support\Collection<int, Environment> $environments
  */
 class Project extends Model
 {
@@ -66,7 +72,7 @@ class Project extends Model
     public function environments(): HasMany
     {
         /** @var HasMany<Environment, static> $relation */
-        $relation = $this->hasMany(Environment::class);
+        $relation = $this->hasMany(Environment::class)->orderBy('name');
 
         return $relation;
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phlag\Http\Controllers;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -25,8 +26,10 @@ class ProjectController extends Controller
         $perPage = (int) $request->integer('per_page', 15);
         $perPage = max(1, min($perPage, 100));
 
-        $projects = Project::query()
-            ->with(['environments' => fn ($query) => $query->orderBy('name')])
+        /** @var Builder<Project> $query */
+        $query = Project::query()->with('environments');
+
+        $projects = $query
             ->orderBy('name')
             ->paginate($perPage);
 
@@ -38,6 +41,7 @@ class ProjectController extends Controller
      */
     public function store(StoreProjectRequest $request): JsonResponse
     {
+        /** @var array<string, mixed> $data */
         $data = $request->validated();
 
         $project = Project::query()->create([
@@ -62,7 +66,7 @@ class ProjectController extends Controller
      */
     public function show(Project $project): ProjectResource
     {
-        $project->load(['environments' => fn ($query) => $query->orderBy('name')]);
+        $project->load('environments');
 
         return new ProjectResource($project);
     }
@@ -72,12 +76,13 @@ class ProjectController extends Controller
      */
     public function update(UpdateProjectRequest $request, Project $project): ProjectResource
     {
+        /** @var array<string, mixed> $data */
         $data = $request->validated();
 
         $project->fill($data);
         $project->save();
 
-        $project->load(['environments' => fn ($query) => $query->orderBy('name')]);
+        $project->load('environments');
 
         return new ProjectResource($project);
     }

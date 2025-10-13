@@ -14,6 +14,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $id
  * @property string $project_id
  * @property string $key
+ * @property bool $is_default
+ * @property string $name
+ * @property string|null $description
+ * @property array<string, mixed>|null $metadata
+ * @property-read \Illuminate\Support\Carbon|null $created_at
+ * @property-read \Illuminate\Support\Carbon|null $updated_at
  */
 class Environment extends Model
 {

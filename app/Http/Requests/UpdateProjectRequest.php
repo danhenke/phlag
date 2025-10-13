@@ -7,6 +7,7 @@ namespace Phlag\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Phlag\Models\Project;
+use RuntimeException;
 
 class UpdateProjectRequest extends FormRequest
 {
@@ -25,8 +26,11 @@ class UpdateProjectRequest extends FormRequest
      */
     public function rules(): array
     {
-        /** @var Project $project */
         $project = $this->route('project');
+
+        if (! $project instanceof Project) {
+            throw new RuntimeException('Project route binding missing.');
+        }
 
         return [
             'key' => [

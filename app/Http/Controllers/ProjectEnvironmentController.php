@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phlag\Http\Controllers;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -26,7 +27,10 @@ class ProjectEnvironmentController extends Controller
         $perPage = (int) $request->integer('per_page', 15);
         $perPage = max(1, min($perPage, 100));
 
-        $environments = $project->environments()
+        /** @var HasMany<Environment, Project> $relation */
+        $relation = $project->environments();
+
+        $environments = $relation
             ->orderBy('name')
             ->paginate($perPage);
 
@@ -38,11 +42,11 @@ class ProjectEnvironmentController extends Controller
      */
     public function store(StoreEnvironmentRequest $request, Project $project): JsonResponse
     {
+        /** @var array<string, mixed> $data */
         $data = $request->validated();
 
         $environment = $project->environments()->create([
             'id' => (string) Str::uuid(),
-            'project_id' => $project->id,
             'key' => $data['key'],
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
@@ -52,7 +56,9 @@ class ProjectEnvironmentController extends Controller
 
         $this->syncDefaultEnvironment($project, $environment);
 
-        $resource = new EnvironmentResource($environment->fresh());
+        $environment->refresh();
+
+        $resource = new EnvironmentResource($environment);
 
         return $resource->response()
             ->setStatusCode(HttpResponse::HTTP_CREATED)
@@ -78,18 +84,21 @@ class ProjectEnvironmentController extends Controller
         Project $project,
         Environment $environment
     ): EnvironmentResource {
+        /** @var array<string, mixed> $data */
         $data = $request->validated();
 
         $environment->fill($data);
         $environment->save();
 
         if (array_key_exists('is_default', $data)) {
-            $environment->is_default = (bool) $data['is_default'];
+            $environment->setAttribute('is_default', (bool) $data['is_default']);
         }
 
         $this->syncDefaultEnvironment($project, $environment);
 
-        return new EnvironmentResource($environment->fresh());
+        $environment->refresh();
+
+        return new EnvironmentResource($environment);
     }
 
     /**
@@ -104,7 +113,7 @@ class ProjectEnvironmentController extends Controller
 
     private function syncDefaultEnvironment(Project $project, Environment $environment): void
     {
-        if (! $environment->is_default) {
+        if (! (bool) $environment->getAttribute('is_default')) {
             return;
         }
 
