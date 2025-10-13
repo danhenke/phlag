@@ -51,6 +51,14 @@ class Project extends Model
     ];
 
     /**
+     * Use the project key as the route identifier.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'key';
+    }
+
+    /**
      * Project environments.
      *
      * @return HasMany<Environment, static>

@@ -32,8 +32,6 @@ it('marks API endpoints as not implemented yet', function (string $method, strin
         );
 })->with([
     ['POST', '/v1/auth/token'],
-    ['GET', '/v1/projects'],
-    ['POST', '/v1/projects'],
     ['GET', '/v1/projects/demo-project/flags'],
     ['POST', '/v1/projects/demo-project/flags'],
     ['PATCH', '/v1/projects/demo-project/flags/checkout-redesign'],

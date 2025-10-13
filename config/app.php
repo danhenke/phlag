@@ -56,6 +56,9 @@ return [
     'providers' => [
         Illuminate\Foundation\Providers\FoundationServiceProvider::class,
         Illuminate\Routing\RoutingServiceProvider::class,
+        Illuminate\Translation\TranslationServiceProvider::class,
+        Illuminate\Validation\ValidationServiceProvider::class,
+        Illuminate\Pagination\PaginationServiceProvider::class,
         Phlag\Providers\AppServiceProvider::class,
         Phlag\Providers\RouteServiceProvider::class,
     ],

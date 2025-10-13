@@ -179,6 +179,14 @@ The seeders provision a reusable dataset:
 | `POST /v1/auth/token`                       | Exchange API key for JWT                        |
 | `GET /v1/projects`                          | List projects                                   |
 | `POST /v1/projects`                         | Create a project                                |
+| `GET /v1/projects/{project}`                | Retrieve a single project                       |
+| `PATCH /v1/projects/{project}`              | Update a project                                |
+| `DELETE /v1/projects/{project}`             | Delete a project                                |
+| `GET /v1/projects/{project}/environments`   | List environments for a project                 |
+| `POST /v1/projects/{project}/environments`  | Create a project environment                    |
+| `GET /v1/projects/{project}/environments/{environment}` | Retrieve a project environment        |
+| `PATCH /v1/projects/{project}/environments/{environment}` | Update a project environment          |
+| `DELETE /v1/projects/{project}/environments/{environment}` | Delete a project environment        |
 | `GET /v1/projects/{project}/flags`          | List flags                                      |
 | `POST /v1/projects/{project}/flags`         | Create flag                                     |
 | `PATCH /v1/projects/{project}/flags/{key}`  | Update flag                                     |
