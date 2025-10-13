@@ -53,12 +53,15 @@ The GitHub CLI validates the attestation signature and identity automatically an
 
 ```bash
 TAG=$(git rev-parse --short HEAD)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 cosign verify-attestation ghcr.io/danhenke/phlag:sha-${TAG} \
-  --certificate-identity "https://github.com/danhenke/phlag/.github/workflows/ci.yml@refs/heads/main" \
+  --certificate-identity "https://github.com/danhenke/phlag/.github/workflows/ci.yml@refs/heads/${BRANCH}" \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   --type https://slsa.dev/provenance/v1 \
   --output json | jq -r '.payload' | base64 --decode | jq
 ```
+
+If you are verifying a tagged release rather than a branch head, set `BRANCH=main` (or `refs/tags/<tag>`) before running the command so the certificate identity matches the workflow ref GitHub used when signing.
 
 Expected output includes the BuildKit provenance payload showing:
 
@@ -85,12 +88,15 @@ The CLI downloads the attestation, checks the GitHub-issued certificate, and con
 
 ```bash
 TAG=$(git rev-parse --short HEAD)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 cosign verify-attestation ghcr.io/danhenke/phlag:sha-${TAG} \
-  --certificate-identity "https://github.com/danhenke/phlag/.github/workflows/ci.yml@refs/heads/main" \
+  --certificate-identity "https://github.com/danhenke/phlag/.github/workflows/ci.yml@refs/heads/${BRANCH}" \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   --type https://spdx.dev/Document/v2.3 \
   --output json | jq -r '.payload' | base64 --decode | jq
 ```
+
+For release tags, export `BRANCH=main` (or `refs/tags/<tag>`) so the certificate identity aligns with the workflow ref GitHub used when issuing the signing certificate.
 
 Expect the `subject` array to contain the image digest and the predicate to reference the SPDX document. Treat verification failures as an indication that the SBOM no longer matches the published image.
 

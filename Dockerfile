@@ -18,4 +18,4 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 EXPOSE 80
 
-CMD ["php", "-S", "0.0.0.0:80", "-t", "public", "public/index.php"]
+CMD ["/usr/local/bin/php", "-S", "0.0.0.0:80", "-t", "public", "public/index.php"]

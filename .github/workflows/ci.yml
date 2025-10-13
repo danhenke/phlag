@@ -20,6 +20,9 @@ jobs:
       attestations: write
       id-token: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Get git commit timestamp
         id: commit_ts
         run: echo "timestamp=$(git log -1 --pretty=%ct)" >> "$GITHUB_OUTPUT"
