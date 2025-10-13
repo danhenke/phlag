@@ -3,151 +3,106 @@
 Date: 2025-10-11  
 Related issue: #33
 
-Some contributors prefer receiving pre-built Docker images instead of rebuilding the `app` service locally. This guide explains two supported sharing flows:
-
-- Exporting a locally built image so another teammate can load it.
-- Publishing an image to a container registry (for example GitHub Container Registry).
-
-The multi-stage Dockerfile compiles the Laravel Zero application into a PHAR (`/app/phlag`) and ships only that artifact plus the production `public/` assets in the final image. When you run the container without bind mounts, `public/index.php` automatically boots from the bundled PHAR so the HTTP health endpoint (and any future web entrypoints) stay operational.
-
-Both approaches produce an image compatible with the `app` service defined in `compose.yaml`. The stack now pulls `${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}` automatically, so sharing an image primarily helps teammates who are offline or need to test an unpublished build. The CI workflow publishes multi-architecture images (`linux/amd64` and `linux/arm64`), letting Docker Compose choose the right variant for each host without extra configuration.
+Phlag now ships as a locally built container image. `docker compose up -d --build` compiles the runtime from the Dockerfile and tags the result as `${PHLAG_APP_IMAGE:-phlag-app:latest}`. When teammates cannot rebuild the image themselves—offline travel, limited bandwidth, or a locked-down workstation—you can hand off a build artifact directly. This note captures two lightweight ways to do that without relying on an external registry.
 
 ## Prerequisites
 
 - Docker Engine 26.0+ and Compose plugin 2.27+ (see the main README for installation guidance).
-- A successful `composer install` to ensure vendor assets are present before the image is built.
-- For registry pushes, access to a registry namespace (for example `ghcr.io/<org>/phlag`) and a personal access token with the required scope (`write:packages` for GHCR).
+- A successful `composer install` so vendor assets exist before you build the image.
+- Disk space for temporary archives (expect 250–300 MB per exported image).
 
 ## Build a custom application image (optional)
 
-The default Compose stack pulls `${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}`. When you need to share work-in-progress changes or support offline teammates, build a custom tag from the local Dockerfile:
+Compose already builds `phlag-app:latest` for you, but tagging the image with the commit hash makes handoffs clearer:
 
 ```bash
 CUSTOM_TAG="$(git rev-parse --short HEAD)"
-./scripts/docker-build-app --tag "ghcr.io/danhenke/phlag:${CUSTOM_TAG}"
+./scripts/docker-build-app --tag "phlag-app:local-${CUSTOM_TAG}"
 ```
 
-The helper wraps `docker buildx` and produces both the provided tag and `phlag-app:latest`. Prefer to call Docker directly? Run:
+The helper wraps `docker buildx` and produces both the provided tag and `phlag-app:latest`. Prefer to use Docker directly? Run:
 
 ```bash
-docker build -f Dockerfile -t "ghcr.io/danhenke/phlag:${CUSTOM_TAG}" .
+docker build -f Dockerfile -t "phlag-app:local-${CUSTOM_TAG}" .
+docker tag "phlag-app:local-${CUSTOM_TAG}" phlag-app:latest
 ```
 
-After the build completes, point Compose at your tag by exporting `PHLAG_APP_IMAGE` before running `docker compose`:
+Export the tag so Compose uses it on your machine:
 
 ```bash
-export PHLAG_APP_IMAGE="ghcr.io/danhenke/phlag:${CUSTOM_TAG}"
+export PHLAG_APP_IMAGE="phlag-app:local-${CUSTOM_TAG}"
 ```
 
-Unset the variable when you want to return to the published `latest` image.
+Unset the variable when you want to fall back to the default `phlag-app:latest`.
 
 ## Option 1: Share via image archive
 
-When teammates are working offline or without registry access, export the built image:
+When teammates are working offline or without Docker build tools, export the image and hand them the archive:
 
 ```bash
-docker save "ghcr.io/danhenke/phlag:${CUSTOM_TAG}" -o phlag-app.tar
+docker save "phlag-app:local-${CUSTOM_TAG}" -o "phlag-app-${CUSTOM_TAG}.tar"
 ```
 
-Distribute `phlag-app.tar` (for example via AirDrop or a shared drive). Recipients load the image and can optionally retag it:
+Distribute the tarball via AirDrop, a shared drive, or another secure channel. Recipients load the image and retag it for Compose:
 
 ```bash
-docker load --input phlag-app.tar
-# Optional: align any custom tag shared out-of-band
-docker tag "ghcr.io/danhenke/phlag:${CUSTOM_TAG}" "ghcr.io/danhenke/phlag:latest"
-```
-
-After loading, export `PHLAG_APP_IMAGE` (or retag to the default `latest`) so Compose reuses the shared layers:
-
-```bash
-export PHLAG_APP_IMAGE="ghcr.io/danhenke/phlag:${CUSTOM_TAG}"
+docker load --input "phlag-app-${CUSTOM_TAG}.tar"
+docker tag "phlag-app:local-${CUSTOM_TAG}" phlag-app:latest
+export PHLAG_APP_IMAGE="phlag-app:local-${CUSTOM_TAG}"
 docker compose up -d
 ```
 
-## Option 2: Publish to a registry
+Remind them to remove the archive after loading to reclaim disk space.
 
-Publishing allows teammates to pull the image whenever they need it. The example below uses GitHub Container Registry (GHCR); adjust the registry hostname and scopes as required.
+## Option 2: Share a local registry snapshot
 
-1. Authenticate once per session:
+If you and your teammate are on the same network, you can share the image directly without creating a tarball by using the [Docker registry container](https://hub.docker.com/_/registry):
 
-    ```bash
-    echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GITHUB_USERNAME}" --password-stdin
-    ```
+```bash
+# On the host that already built the image
+docker run -d --name phlag-registry -p 5000:5000 registry:2
+docker tag "phlag-app:local-${CUSTOM_TAG}" localhost:5000/phlag-app:${CUSTOM_TAG}
+docker push localhost:5000/phlag-app:${CUSTOM_TAG}
+```
 
-2. Choose a consistent tag. We recommend including the Git commit for traceability:
+Your teammate pulls from the temporary registry:
 
-    ```bash
-    IMAGE_TAG="ghcr.io/${GITHUB_USERNAME}/phlag:$(git rev-parse --short HEAD)"
-    docker tag phlag-app:latest "$IMAGE_TAG"
-    ```
+```bash
+docker pull localhost:5000/phlag-app:${CUSTOM_TAG}
+docker tag localhost:5000/phlag-app:${CUSTOM_TAG} phlag-app:latest
+export PHLAG_APP_IMAGE="phlag-app:local-${CUSTOM_TAG}"
+```
 
-3. Push the image:
+Stop the registry when the transfer is complete:
 
-    ```bash
-    docker push "$IMAGE_TAG"
-    ```
+```bash
+docker container rm -f phlag-registry
+```
 
-    Alternatively, reuse the helper to tag and push in one step:
-
-    ```bash
-    ./scripts/docker-publish-app --image "ghcr.io/${GITHUB_USERNAME}/phlag" --tag "$(git rev-parse --short HEAD)" --latest
-    ```
-
-4. Share the tag with teammates. They can pull and keep both the remote tag and the local Compose tag:
-
-    ```bash
-    docker pull "$IMAGE_TAG"
-    export PHLAG_APP_IMAGE="$IMAGE_TAG"
-    ```
-
-Keeping an exported `PHLAG_APP_IMAGE` (or retagging to `ghcr.io/danhenke/phlag:latest`) ensures `docker compose up` reuses the shared image.
+The local registry never leaves your machine and avoids publishing to external services.
 
 ## Updating the Compose stack to consume shared images
 
 Compose reads the app image from the `PHLAG_APP_IMAGE` environment variable. Export it in your shell before launching the stack:
 
 ```bash
-export PHLAG_APP_IMAGE="ghcr.io/<org>/phlag:<tag>"
+export PHLAG_APP_IMAGE="phlag-app:local-${CUSTOM_TAG}"
 docker compose up -d
 ```
 
-Unset the variable (or remove it from your shell configuration) to fall back to the published `ghcr.io/danhenke/phlag:latest` image.
-
-Prefer storing the override in version-controlled automation? Create a small Compose overlay that pins the image:
+Prefer storing the override in version-controlled automation? Create a small Compose overlay that pins the tag:
 
 ```yaml
 # compose.override.yaml
 services:
   app:
-    image: ghcr.io/<org>/phlag:<tag>
+    image: phlag-app:local-${CUSTOM_TAG}
 ```
 
-Run Compose with both files when you need the custom image:
+Run Compose with both files whenever you need the shared image:
 
 ```bash
 docker compose -f compose.yaml -f compose.override.yaml up -d
 ```
 
-Remove or ignore the override when returning to the default image.
-
-## Automated GitHub Actions publish
-
-The workflow in `.github/workflows/ci.yml` builds the application image and publishes it to GitHub Container Registry (GHCR).
-
-- Triggers on `workflow_dispatch` (with an optional tag input) and on Git tags that match `v*`.
-- Builds with `docker buildx` checks enabled, emits SBOMs and provenance attestations (`provenance: mode=max`), and exports deterministic layers by setting `SOURCE_DATE_EPOCH` to the latest commit timestamp.
-- Generates semver (`major`, `major.minor`, `version`) and `sha` tags via `docker/metadata-action`, and applies matching labels/annotations to the image and attestations.
-- Authentication uses the built-in `GITHUB_TOKEN`, which is sufficient for publishing to this repository's GHCR namespace; no additional secrets are required.
-
-To run the workflow manually:
-
-1. Navigate to **Actions → CI → Run workflow**.
-2. Provide a tag (optional) or accept the default short SHA tag.
-3. Confirm you have permission to publish to the repository namespace (the workflow uses `GITHUB_TOKEN` automatically).
-
-After the run completes you can download SBOM and provenance artifacts from the workflow summary. The published image is available at:
-
-```bash
-docker pull ghcr.io/<owner>/phlag:<tag>
-docker tag ghcr.io/<owner>/phlag:<tag> phlag-app:latest
-```
+Remove or ignore the override when returning to the default `phlag-app:latest`.

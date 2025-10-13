@@ -101,20 +101,27 @@ set -a; source .env.local; set +a
 
 3. Re-run the desired Laravel Zero command (e.g., `./scripts/app-migrate`).
 
-### Docker reports a platform mismatch when pulling the app image
+### Docker reports a platform mismatch when starting the app
 
 **Symptoms**
 - `The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8)` appears during `docker compose up` or `docker compose pull`.
 
 **Fix**
-1. The GHCR image is published for both `linux/amd64` and `linux/arm64`. Refresh your local cache so Docker sees the manifest list:
+1. Remove any stale tags that were built for a different architecture:
 
     ```bash
-    docker pull ghcr.io/danhenke/phlag:latest
+    docker image rm phlag-app:latest || true
     ```
 
-2. If you override `PHLAG_APP_IMAGE`, confirm the tag you selected includes your architecture. Rebuild it with `./scripts/docker-build-app` on your machine and push with `--platform linux/amd64,linux/arm64` (or let CI publish it automatically).
-3. As a temporary workaround, you can pull a specific architecture manually, for example `docker pull --platform linux/amd64 ghcr.io/danhenke/phlag:latest`, but prefer fixing the tag so Compose can autodetect the right architecture going forward.
+2. Rebuild the image for your host platform:
+
+    ```bash
+    docker compose build app
+    # or
+    ./scripts/docker-build-app --platform "$(docker info --format '{{.Architecture}}')"
+    ```
+
+3. If you override `PHLAG_APP_IMAGE`, make sure the tag you reference was built on the same architecture (or rebuilt using the script above) before starting Compose again.
 
 ## When to Ask for Help
 

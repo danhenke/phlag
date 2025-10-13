@@ -2,7 +2,10 @@ name: "phlag"
 
 services:
   app:
-    image: ${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${PHLAG_APP_IMAGE:-phlag-app:latest}
     command:
       - /usr/local/bin/php
       - -S

@@ -1,6 +1,6 @@
 # 🚦 Phlag - Feature Flag Service
 
-[![CI Workflow](https://github.com/danhenke/phlag/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/danhenke/phlag/actions/workflows/docker-publish.yml)
+[![QA Workflow](https://github.com/danhenke/phlag/actions/workflows/qa.yml/badge.svg)](https://github.com/danhenke/phlag/actions/workflows/qa.yml)
 
 A lightweight, developer-focused **Feature Flag & Remote Configuration API** built with **Laravel Zero**, **PostgreSQL**, and **Redis**. The project runs entirely on a local **Docker Compose** stack so you can experiment with feature flag workflows without provisioning any cloud infrastructure.
 
@@ -16,7 +16,7 @@ This service allows developers to **create**, **manage**, and **evaluate feature
 -   Validation, caching, and JWT authentication
 -   PostgreSQL migrations and Redis caching managed through Docker Compose
 -   OpenAPI documentation and Postman collection
--   GitHub Actions CI for linting, static analysis, and tests
+-   GitHub Actions QA workflow for linting, static analysis, and tests
 -   Docker Compose runtime for local development and demos
 
 ---
@@ -49,7 +49,7 @@ This service allows developers to **create**, **manage**, and **evaluate feature
 | Docs          | OpenAPI 3.1 (via swagger-php)              |
 | Tests         | PestPHP                                    |
 | Hosting       | Docker Compose (app + Postgres + Redis)    |
-| CI/CD         | GitHub Actions (lint, static analysis, CI) |
+| CI/CD         | GitHub Actions QA workflow (lint, static analysis, tests) |
 | Observability | Application + Docker logs via stdout       |
 | Logging       | Monolog                                    |
 | IaC           | Not required for local-only deployments    |
@@ -142,7 +142,7 @@ This launches three services within an isolated Docker network:
 -   `postgres` — PostgreSQL database available only on the Compose network.
 -   `redis` — Redis cache available only on the Compose network.
 
-Only the application’s port 80 is published to your LAN (`http://localhost/` by default). Compose automatically pulls the pre-built app image specified by `PHLAG_APP_IMAGE` (defaults to `ghcr.io/danhenke/phlag:latest`); rerun `docker compose pull app` whenever you need the latest published runtime.
+Only the application’s port 80 is published to your LAN (`http://localhost/` by default). Compose builds the app image from the local Dockerfile the first time you start the stack (tagged as `${PHLAG_APP_IMAGE:-phlag-app:latest}`); rebuild with `docker compose build app` or `./scripts/docker-build-app` whenever you change PHP dependencies or base layers.
 
 Logs remain on stdout; tail them with `docker compose logs -f` when debugging. The Compose file configures the `json-file` driver with `max-size=10m` and `max-file=5`, so each container keeps a rotating local buffer without requiring extra volumes.
 
@@ -175,8 +175,7 @@ The seeders provision a reusable dataset:
 ### Optional: Share a pre-built image
 
 If a teammate needs a ready-to-run container, follow the workflows in `doc/docker-image-sharing.md`.
-They cover exporting the locally built `phlag-app` image as a `.tar` archive or publishing it to a registry
-such as GHCR with traceable tags.
+They cover exporting the locally built `phlag-app` image as a `.tar` archive or sharing it through a temporary local registry when you are on the same network.
 
 ---
 
@@ -416,7 +415,7 @@ php api/swagger.php > docs/openapi.json
 
 The service is intended for local demonstrations:
 
-1. `docker compose up -d` to launch the app, PostgreSQL, and Redis on the shared network (Compose pulls the `PHLAG_APP_IMAGE`, defaulting to `ghcr.io/danhenke/phlag:latest`).
+1. `docker compose up -d --build` to launch the app, PostgreSQL, and Redis on the shared network (Compose builds `${PHLAG_APP_IMAGE:-phlag-app:latest}` from the local Dockerfile).
 2. Export environment variables from `.env.local` (optional when running host-side tooling).
 3. Use `docker compose exec app ...` for Laravel Zero commands so they share the same networking configuration as the HTTP service.
 
@@ -432,11 +431,9 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the 
 ## 📦 Docker image workflow
 
 -   Build locally with `./scripts/docker-build-app` (defaults to tagging `phlag-app:local-<sha>` and `phlag-app:latest`).
--   Publish to a registry with `./scripts/docker-publish-app --image ghcr.io/<owner>/phlag --tag <version> [--latest]`.
--   CI workflow `.github/workflows/ci.yml` builds and publishes images to GHCR using the built-in `GITHUB_TOKEN`, generates SBOM + provenance attestations, runs `docker buildx` checks, and stamps images with reproducible metadata (labels/annotations/tags driven by `SOURCE_DATE_EPOCH`).
--   The published runtime image contains the `phlag` PHAR at `/app/phlag`, plus the production `public/` assets. `public/index.php` falls back to autoloading from the PHAR when the vendor tree is not mounted (for example, when consuming the published GHCR tag directly).
--   Detailed sharing instructions live in [`doc/docker-image-sharing.md`](./doc/docker-image-sharing.md).
--   DevSecOps validation steps (annotations, attestations, SBOM triage, and framework alignment) are captured in [`doc/devsecops.md`](./doc/devsecops.md).
+-   `docker compose up -d --build` performs the same build automatically when the stack starts, ensuring the runtime matches your working tree.
+-   Set `PHLAG_APP_IMAGE` to reuse a previously built tag (for example, when switching between branches or exchanging archives with teammates).
+-   Detailed sharing and offline handoff instructions live in [`doc/docker-image-sharing.md`](./doc/docker-image-sharing.md).
 
 ---
 
@@ -448,8 +445,7 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the 
 | Static analysis | `composer stan`                        |
 | Tests           | `composer test`                        |
 | QA workflow     | `.github/workflows/qa.yml` (lint, stan, tests) |
-| CI              | `.github/workflows/ci.yml` (buildx checks, SBOM, provenance attestations, GHCR publish) |
-| Deploy          | `docker compose up -d` (local only)    |
+| Deploy          | `docker compose up -d --build` (local only)    |
 
 ---
 

@@ -8,7 +8,7 @@ Usage: docker-publish-app --image <registry/repo> --tag <tag> [--source-tag <loc
 Publishes the Phlag application image to a remote registry.
 
 Required arguments:
-  --image       Fully qualified image name (e.g. ghcr.io/example/phlag)
+  --image       Fully qualified image name (e.g. registry.example.com/phlag)
   --tag         Tag to publish (e.g. 1.0.0 or commit sha)
 
 Optional arguments:
@@ -16,8 +16,8 @@ Optional arguments:
   --latest      Also push the 'latest' tag to the remote image
 
 Examples:
-  REGISTRY_IMAGE=ghcr.io/example/phlag ./scripts/docker-publish-app --image "$REGISTRY_IMAGE" --tag 1.2.3
-  ./scripts/docker-publish-app --image ghcr.io/example/phlag --tag $(git rev-parse --short HEAD) --latest
+  REGISTRY_IMAGE=registry.example.com/phlag ./scripts/docker-publish-app --image "$REGISTRY_IMAGE" --tag 1.2.3
+  ./scripts/docker-publish-app --image registry.example.com/phlag --tag $(git rev-parse --short HEAD) --latest
 USAGE
 }
 

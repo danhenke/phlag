@@ -40,7 +40,7 @@ For long-lived CLI workers (queue consumers, cache warmers, schedulers), define 
 # compose.workers.yaml
 services:
   worker:
-    image: ${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}
+    image: ${PHLAG_APP_IMAGE:-phlag-app:latest}
     command: php phlag <worker-command>
     env_file:
       - .env.local

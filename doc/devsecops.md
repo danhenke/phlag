@@ -1,159 +1,95 @@
 # DevSecOps Practices and Verification Guide
 
-Date: 2025-10-11
+Date: 2025-10-11 (updated 2025-02-23)
 
-This guide documents how Phlag’s build pipeline supports modern DevSecOps practices, and how to consume the resulting artifacts (annotations, attestations, and SBOMs). It also maps our controls to industry frameworks such as NIST SSDF (SP 800-218), SLSA, the CIS Docker/Kubernetes Benchmarks, and ISO 27001 change & asset management requirements.
+Phlag’s supply-chain story is now centred on local builds. The GitHub Actions publishing pipeline and its GHCR integrations have been retired, so contributors create, inspect, and distribute container images from their own workstations. This guide captures the controls that remain in place, how to recreate the evidence previously emitted by CI, and the manual checkpoints we expect before sharing a build with teammates or stakeholders.
 
 ---
 
 ## Tooling Requirements
 
--   [`cosign`](https://github.com/sigstore/cosign) (`brew install cosign`)
--   [`jq`](https://stedolan.github.io/jq/) (`brew install jq`)
--   GitHub CLI [`gh`](https://cli.github.com/) (`brew install gh`)
--   [`grype`](https://github.com/anchore/grype) (`brew install grype`)
--   Access to the GitHub Container Registry (GHCR) image `ghcr.io/danhenke/phlag`.
+- Docker Engine 26.0+ with BuildKit enabled.
+- `composer` (managed via `shivammathur/setup-php` for CI, installed locally for developers).
+- `syft` (or `docker sbom`) for Software Bill of Materials generation.
+- `grype` for vulnerability scanning of SBOMs or container images.
+- `jq` for JSON inspection when you need to script checks.
+
+Cosign and GitHub CLI are no longer required for provenance verification because we do not publish signed attestations.
 
 ---
 
-## 1. Accessing GitHub Actions Annotations
+## 1. Local Build Assurance
 
-Build checks surface inline annotations for lint, static analysis, and docker build checks.
+Run the full quality gate locally before exporting or handing off an image:
 
-1. Navigate to **Actions → CI → Latest run**.
-2. Open the failing job (for example **docker**).
-3. Select the step (e.g. “Build and push”) and click **Annotations** in the right rail.
-4. Each annotation links directly to the offending file/line in the commit.
+```bash
+composer install
+composer lint
+composer stan
+composer test
+```
 
-> **Tip:** annotations are only preserved when the workflow runs with `checks: write` permission (already configured in `.github/workflows/ci.yml`).
+Build the runtime image with deterministic settings:
+
+```bash
+./scripts/docker-build-app --tag "phlag-app:local-$(git rev-parse --short HEAD)"
+```
+
+The build helper pins `SOURCE_DATE_EPOCH` to the latest commit timestamp so layers remain reproducible across machines. Use `docker inspect phlag-app:latest --format '{{.Id}}'` to capture the resulting image digest if you need to reference it in an ADR or issue.
 
 ---
 
-## 2. Verifying Provenance Attestations
+## 2. Generating SBOMs and Running Scans
 
-The CI workflow publishes BuildKit provenance attestations alongside each image push.
-
-### Requirements
-
--   [`cosign`](https://github.com/sigstore/cosign) v2.0+ (install via `brew install cosign`)
--   [`jq`](https://stedolan.github.io/jq/)
--   Access to the GitHub Container Registry (GHCR) image `ghcr.io/danhenke/phlag`.
-
-### Steps (GitHub CLI)
+Produce an SBOM directly from Docker or Syft:
 
 ```bash
-gh attestation verify oci://ghcr.io/danhenke/phlag:latest \
-  -R danhenke/phlag \
-  --predicate-type https://slsa.dev/provenance/v1
+docker sbom phlag-app:latest --output syft-json > sbom.syft.json
+# or
+syft phlag-app:latest -o spdx-json > sbom.spdx.json
 ```
 
-The GitHub CLI validates the attestation signature and identity automatically and prints a summary of the predicate and signing certificate.
-
-#### Alternative using `cosign`
+Scan the resulting SBOM (or the image itself) with Grype:
 
 ```bash
-TAG=$(git rev-parse --short HEAD)
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-cosign verify-attestation ghcr.io/danhenke/phlag:sha-${TAG} \
-  --certificate-identity "https://github.com/danhenke/phlag/.github/workflows/ci.yml@refs/heads/${BRANCH}" \
-  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-  --type https://slsa.dev/provenance/v1 \
-  --output json | jq -r '.payload' | base64 --decode | jq
+grype sbom:sbom.spdx.json
+# or
+grype phlag-app:latest
 ```
 
-If you are verifying a tagged release rather than a branch head, set `BRANCH=main` (or `refs/tags/<tag>`) before running the command so the certificate identity matches the workflow ref GitHub used when signing.
-
-Expected output includes the BuildKit provenance payload showing:
-
--   the `buildDefinition` with `command` values that include the Docker build checks (`--call=check`);
--   the `buildStartedOn` / `buildFinishedOn` timestamps derived from `SOURCE_DATE_EPOCH`;
--   the git commit digest listed under `materials`;
--   image metadata (labels/annotations) captured in `invocation.parameters.tags` / `annotations`.
+Record the scan date, tool version, and digest in your change notes so reviewers can reproduce the results.
 
 ---
 
-## 3. Verifying SBOM Attestations
+## 3. Manual Provenance & Change Tracking
 
-Use these commands to validate that the published SBOM matches the pushed image.
+Without automated attestations, we rely on lightweight manual artifacts:
 
-```bash
-gh attestation verify oci://ghcr.io/danhenke/phlag:latest \
-  -R danhenke/phlag \
-  --predicate-type https://spdx.dev/Document/v2.3
-```
+- Capture the image digest and build command in the issue or ADR describing the change.
+- Store exported tarballs alongside a `CHECKSUMS` file generated with `shasum -a 256`.
+- When sharing via a temporary registry, tag images with the short commit hash (`phlag-app:local-<sha>`) to preserve traceability back to source.
+- Link to the QA workflow run (`.github/workflows/qa.yml`) that validated the commit before you cut the image.
 
-The CLI downloads the attestation, checks the GitHub-issued certificate, and confirms the predicate matches the SPDX SBOM.
-
-#### Alternative using `cosign`
-
-```bash
-TAG=$(git rev-parse --short HEAD)
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-cosign verify-attestation ghcr.io/danhenke/phlag:sha-${TAG} \
-  --certificate-identity "https://github.com/danhenke/phlag/.github/workflows/ci.yml@refs/heads/${BRANCH}" \
-  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-  --type https://spdx.dev/Document/v2.3 \
-  --output json | jq -r '.payload' | base64 --decode | jq
-```
-
-For release tags, export `BRANCH=main` (or `refs/tags/<tag>`) so the certificate identity aligns with the workflow ref GitHub used when issuing the signing certificate.
-
-Expect the `subject` array to contain the image digest and the predicate to reference the SPDX document. Treat verification failures as an indication that the SBOM no longer matches the published image.
-
-### Downloading and Scanning the SBOM
-
-```bash
-TAG=$(git rev-parse --short HEAD)
-cosign download sbom ghcr.io/danhenke/phlag:${TAG} > sbom.spdx.json
-jq '.packages[] | {name, versionInfo, supplier}' sbom.spdx.json | head
-```
-
-`grype` understands OCI image references and will report any CVEs affecting the packaged dependencies:
-
-```bash
-grype ghcr.io/danhenke/phlag:${TAG}
-```
-
-The workflow emits SBOMs (in SPDX JSON) during the `docker/build-push-action@v6` run; download and scan them routinely to maintain continuous assurance.
+Maintain these records in the repository (docs or ADRs) so we can audit releases retrospectively.
 
 ---
 
-## 4. Shift-Left Security & Continuous Assurance
+## 4. Framework Alignment
 
-| Practice                               | Implementation                                                                                                                |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **Shift-left linting/static analysis** | `composer lint`, `composer stan`, and `composer test` executed in CI before builds; developers run the same commands locally. |
-| **Immutable & reproducible builds**    | `SOURCE_DATE_EPOCH` set to git commit timestamp; BuildKit produces deterministic layers and provenance.                       |
-| **Dependency transparency**            | SBOM published for every build and stored in GHCR attestations.                                                               |
-| **Policy enforcement**                 | Docker build checks (`call: check`) fail the build if Dockerfile best practices break.                                        |
-| **Continuous assurance**               | GHCR image metadata (labels/annotations) include commit SHA, semver, and OCI description for downstream traceability.         |
-| **Credential minimisation**            | Builds authenticate with `GITHUB_TOKEN`; no long-lived registry credentials are stored.                                       |
-
-### Responding to CVE Events Using the SBOM
-
-1. **Identify affected packages** using the SBOM or a scanner (`grype sbom:sbom.spdx.json`).
-2. **Locate builds** by querying GHCR metadata (`docker buildx imagetools inspect ghcr.io/danhenke/phlag:${TAG}`).
-3. **Patch** dependencies, commit changes, and rerun CI to produce a new SBOM/provenance.
-4. **Document** the response (issue/ADR) and link to the attestation verifying the patched build.
+| Practice / Framework                       | Local Control                                                                                              | Notes                                                                                   |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Shift-left linting & testing**           | `composer lint`, `composer stan`, and `composer test` executed locally and in the QA workflow             | Share command output in issues/PRs; failures block image distribution.                   |
+| **Dependency transparency (NIST SSDF PW.8)** | SBOMs generated on demand via `docker sbom`/`syft` and stored with release notes                           | Attach SBOM artifacts to ADRs or share them alongside exported tarballs.                |
+| **Vulnerability management (RV.1)**        | `grype` scans run against SBOMs or the built image prior to sharing                                       | Document scan date, tool version, and outcome.                                           |
+| **Change management (ISO 27001 / SOC 2)**   | Image digest + commit hash recorded in issues/ADRs; tarball checksums retained for auditability           | Reference QA workflow run IDs and build commands.                                        |
+| **Infrastructure hardening (CIS Docker)**  | Dockerfile linting via BuildKit `--progress=plain` warnings + manual review                               | Consider running `docker/docker-bench-security` periodically against local builds.       |
 
 ---
 
-## 5. Framework Alignment
+## 5. Next Steps
 
-| Framework                                 | Relevant CI/CD Controls                                                                                     | Notes                                                                            |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| **NIST SSDF (SP 800-218)**                | PW.8 (Generate and analyze SBOMs), RV.1 (Perform threat/vuln analysis), PS.3 (Protect build infrastructure) | SBOM + provenance supply chain evidence; BuildKit checks enforce secure builds.  |
-| **SLSA**                                  | Level 2 (automated build, authenticated provenance), progressing toward Level 3                             | Provenance attestations via BuildKit + GitHub OIDC satisfy SLSA 2 attestations.  |
-| **CIS Docker Benchmarks**                 | Lint checks catch Dockerfile anti-patterns; reproducible builds help validate image content                 | Recommend running `docker/docker-bench-security` periodically against the image. |
-| **CIS Kubernetes Benchmarks**             | Not yet in scope; use the SBOM & provenance when deploying to clusters to support admission policies.       |
-| **ISO 27001 (Change & Asset Management)** | OCI labels + provenance act as immutable change records; SBOM documents asset composition                   | Link SBOM artifacts to change tickets to demonstrate controlled rollout.         |
-
----
-
-## 6. Next Steps
-
--   Integrate automated SBOM vulnerability scanning (e.g. `grype`) into CI for continuous monitoring.
--   Consider publishing attestation digests to a transparency log (e.g. Rekor) for additional tamper evidence.
--   Expand metadata annotations to include documentation URLs or hash of infrastructure manifests once available.
+- Automate SBOM and vulnerability scans via a make/composer target to standardise evidence capture.
+- Explore lightweight signing (`cosign sign --key cosign.key phlag-app:local-<sha>`) if we reintroduce shared registries.
+- Introduce a doc template for recording digest, SBOM location, and QA run output whenever we share a build externally.
 
 For questions or updates, create an issue tagged `devsecops` in this repository.

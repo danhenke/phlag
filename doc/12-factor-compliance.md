@@ -7,13 +7,13 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 ## I. Codebase
 
 -   Single Git repository (`phlag`) for application code and documentation.
--   Trunk-based development with GitHub Actions enforcing CI status checks.
+-   Trunk-based development with the GitHub Actions QA workflow enforcing status checks.
 
 ## II. Dependencies
 
 -   PHP dependencies are explicitly declared in `composer.json` and installed via Composer.
 -   The `app` container image installs required PHP extensions (`pdo_pgsql`, `zip`, `redis`) so runtime binaries match the code’s expectations.
--   Container images built in CI ensure consistent dependency versions across environments.
+-   Container images built from the Dockerfile (via Compose or `./scripts/docker-build-app`) ensure consistent dependency versions across machines.
 
 ## III. Config
 
@@ -28,7 +28,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 
 ## V. Build, Release, Run
 
--   GitHub Actions builds artefacts (Composer install, lint, tests) for every push and pull request.
+-   GitHub Actions runs linting, static analysis, and tests for every push and pull request through the QA workflow.
 -   Releases are manual: developers pull the latest code, export environment variables, and run the stack via `docker compose up`.
 -   Runtime execution is handled by the `app` container’s built-in PHP server communicating with backing services over the internal Docker network.
 -   Optional flow for sharing pre-built Docker images is documented in `doc/docker-image-sharing.md`.
@@ -53,7 +53,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 
 -   Containers are stateless; stopping Docker Compose tears services down cleanly while preserving volumes if configured.
 -   Docker Compose health checks gate readiness for `app`, `postgres`, and `redis`, improving shutdown/startup signalling and reducing flapping during restarts.
--   CI pipelines ensure rapid spin up of new instances from immutable images.
+-   Docker builds are reproducible locally, keeping spin-up time for new instances predictable.
 
 ## X. Dev/Prod Parity
 
