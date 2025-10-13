@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
+
 $autoloadPath = __DIR__.'/../vendor/autoload.php';
 
 if (file_exists($autoloadPath)) {
@@ -19,12 +22,14 @@ if (file_exists($autoloadPath)) {
     }
 }
 
-header('Content-Type: application/json');
+$app = require __DIR__.'/../bootstrap/app.php';
 
-http_response_code(200);
+/** @var Kernel $kernel */
+$kernel = $app->make(Kernel::class);
 
-echo json_encode([
-    'service' => 'phlag',
-    'status' => 'ok',
-    'timestamp' => (new DateTimeImmutable)->format(DATE_ATOM),
-]);
+$request = Request::capture();
+$response = $kernel->handle($request);
+
+$response->send();
+
+$kernel->terminate($request, $response);

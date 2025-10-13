@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Testing\Fluent\AssertableJson;
+use Symfony\Component\HttpFoundation\Response;
+
+it('returns a JSON health payload from the HTTP bridge', function (): void {
+    $response = $this->getJson('/');
+
+    $response->assertOk()
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('service', 'Phlag')
+            ->where('status', 'ok')
+            ->has('timestamp')
+        );
+});
+
+it('marks API endpoints as not implemented yet', function (string $method, string $uri): void {
+    $response = match ($method) {
+        'POST' => $this->postJson($uri, []),
+        'PATCH' => $this->patchJson($uri, []),
+        'DELETE' => $this->deleteJson($uri),
+        default => $this->getJson($uri),
+    };
+
+    $response->assertStatus(Response::HTTP_NOT_IMPLEMENTED)
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('error', 'not_implemented')
+            ->where('endpoint', strtoupper($method).' '.$uri)
+            ->has('message')
+        );
+})->with([
+    ['POST', '/v1/auth/token'],
+    ['GET', '/v1/projects'],
+    ['POST', '/v1/projects'],
+    ['GET', '/v1/projects/demo-project/flags'],
+    ['POST', '/v1/projects/demo-project/flags'],
+    ['PATCH', '/v1/projects/demo-project/flags/checkout-redesign'],
+    ['DELETE', '/v1/projects/demo-project/flags/checkout-redesign'],
+    ['GET', '/v1/evaluate'],
+    ['GET', '/v1/docs/openapi.json'],
+]);
