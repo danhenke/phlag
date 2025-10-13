@@ -31,7 +31,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 -   GitHub Actions runs linting, static analysis, and tests for every push and pull request through the QA workflow.
 -   Releases are manual: developers pull the latest code, export environment variables, and run the stack via `docker compose up`.
 -   Runtime execution is handled by the `app` container’s built-in PHP server communicating with backing services over the internal Docker network.
--   Optional flow for sharing pre-built Docker images is documented in `doc/docker-image-sharing.md`.
+-   Optional flow for sharing pre-built Docker images can be handled ad hoc by exporting the locally built `phlag-app` image (`docker save phlag-app:latest`).
 
 ## VI. Processes
 
@@ -46,7 +46,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 
 ## VIII. Concurrency
 
--   Horizontal scalability for demos is manual—run additional PHP processes if necessary (see `doc/docker-worker-scaling.md` for Docker Compose scaling patterns).
+-   Horizontal scalability for demos is manual—run additional PHP processes if necessary using `docker compose up -d --scale app=<count>` or temporary override files.
 -   PostgreSQL and Redis containers can be reconfigured with Docker Compose overrides when load testing locally.
 
 ## IX. Disposability
@@ -77,7 +77,7 @@ This document tracks how the Phlag project aligns with the [12-Factor App](https
 ### Next Actions Summary
 
 1. ✅ Audit Laravel configuration to ensure runtime values use environment variables (`APP_NAME`, `APP_ENV`, `DB_*`).
-2. ✅ Provide guidance for building optional Docker images if teammates want to share artifacts (see `doc/docker-image-sharing.md`).
+2. ✅ Provide guidance for building optional Docker images if teammates want to share artifacts (see README sharing notes).
 3. ✅ Capture Docker version/system requirements and troubleshooting steps for local contributors (see `doc/docker-troubleshooting.md`).
-4. ✅ Capture worker scaling guidance for Docker Compose (see `doc/docker-worker-scaling.md`).
+4. ✅ Capture worker scaling guidance for Docker Compose (documented inline in README).
 5. ✅ Document helper scripts for running one-off admin tasks while Docker Compose services are detached.

@@ -172,13 +172,6 @@ The seeders provision a reusable dataset:
     docker compose exec app php phlag list
     ```
 
-### Optional: Share a pre-built image
-
-If a teammate needs a ready-to-run container, follow the workflows in `doc/docker-image-sharing.md`.
-They cover exporting the locally built `phlag-app` image as a `.tar` archive or sharing it through a temporary local registry when you are on the same network.
-
----
-
 ## 🌐 API Overview
 
 | Endpoint                                    | Description                                     |
@@ -421,7 +414,7 @@ The service is intended for local demonstrations:
 
 When you are finished experimenting, shut everything down with `docker compose down`.
 
-Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the patterns documented in `doc/docker-worker-scaling.md`.
+Need to scale HTTP workers or spawn dedicated CLI worker containers? Scale the `app` service with `docker compose up -d --scale app=<count>` or create a short-lived override file that defines additional services before starting the stack.
 
 ### Container runtime details
 
@@ -433,7 +426,6 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the 
 -   Build locally with `./scripts/docker-build-app` (defaults to tagging `phlag-app:local-<sha>` and `phlag-app:latest`).
 -   `docker compose up -d --build` performs the same build automatically when the stack starts, ensuring the runtime matches your working tree.
 -   Set `PHLAG_APP_IMAGE` to reuse a previously built tag (for example, when switching between branches or exchanging archives with teammates).
--   Detailed sharing and offline handoff instructions live in [`doc/docker-image-sharing.md`](./doc/docker-image-sharing.md).
 
 ---
 
