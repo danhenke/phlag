@@ -434,6 +434,7 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Follow the 
 -   Build locally with `./scripts/docker-build-app` (defaults to tagging `phlag-app:local-<sha>` and `phlag-app:latest`).
 -   Publish to a registry with `./scripts/docker-publish-app --image ghcr.io/<owner>/phlag --tag <version> [--latest]`.
 -   CI workflow `.github/workflows/ci.yml` builds and publishes images to GHCR using the built-in `GITHUB_TOKEN`, generates SBOM + provenance attestations, runs `docker buildx` checks, and stamps images with reproducible metadata (labels/annotations/tags driven by `SOURCE_DATE_EPOCH`).
+-   The published runtime image contains the `phlag` PHAR at `/app/phlag`, plus the production `public/` assets. `public/index.php` falls back to autoloading from the PHAR when the vendor tree is not mounted (for example, when consuming the published GHCR tag directly).
 -   Detailed sharing instructions live in [`doc/docker-image-sharing.md`](./doc/docker-image-sharing.md).
 -   DevSecOps validation steps (annotations, attestations, SBOM triage, and framework alignment) are captured in [`doc/devsecops.md`](./doc/devsecops.md).
 
