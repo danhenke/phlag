@@ -64,7 +64,7 @@ Both reported versions should meet or exceed the minimums above. If they do not,
 **Fix**
 1. Identify the conflicting process: `sudo lsof -i :80`.
 2. Stop the process (local web server, AirPlay, IIS, etc.).
-3. Re-run `docker compose up -d --build`. As a fallback for demos, override the port with `APP_HTTP_PORT=8080 docker compose up` and visit `http://localhost:8080/`.
+3. Re-run `docker compose pull app && docker compose up -d`. As a fallback for demos, override the port with `APP_HTTP_PORT=8080 docker compose up` and visit `http://localhost:8080/`.
 
 ### PostgreSQL refuses to start due to a mismatched schema
 
@@ -74,7 +74,7 @@ Both reported versions should meet or exceed the minimums above. If they do not,
 **Fix**
 1. Stop the stack: `docker compose down`.
 2. Remove the cached volume: `docker volume rm phlag_pgdata`.
-3. Start fresh: `docker compose up -d --build` followed by `./scripts/app-migrate --seed`.
+3. Start fresh: `docker compose up -d` followed by `./scripts/app-migrate --seed`.
 
 ### Windows-specific: WSL 2 backend is disabled
 
@@ -84,7 +84,7 @@ Both reported versions should meet or exceed the minimums above. If they do not,
 **Fix**
 1. From PowerShell (admin), run `wsl --update` followed by `wsl --set-default-version 2`.
 2. Ensure the `Virtual Machine Platform` Windows feature is enabled.
-3. Restart Docker Desktop, then retry `docker compose up -d --build`.
+3. Restart Docker Desktop, then retry `docker compose pull app && docker compose up -d`.
 
 ### Containers start but CLI commands fail to read environment variables
 

@@ -133,7 +133,7 @@ set +a
 Ensure Docker Desktop (or another Docker engine) is running, then bring up the full stack defined in `compose.yaml`:
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 This launches three services within an isolated Docker network:
@@ -142,7 +142,7 @@ This launches three services within an isolated Docker network:
 -   `postgres` — PostgreSQL database available only on the Compose network.
 -   `redis` — Redis cache available only on the Compose network.
 
-Only the application’s port 80 is published to your LAN (`http://localhost/` by default).
+Only the application’s port 80 is published to your LAN (`http://localhost/` by default). Compose automatically pulls the pre-built app image specified by `PHLAG_APP_IMAGE` (defaults to `ghcr.io/danhenke/phlag:latest`); rerun `docker compose pull app` whenever you need the latest published runtime.
 
 Logs remain on stdout; tail them with `docker compose logs -f` when debugging. The Compose file configures the `json-file` driver with `max-size=10m` and `max-file=5`, so each container keeps a rotating local buffer without requiring extra volumes.
 
@@ -416,7 +416,7 @@ php api/swagger.php > docs/openapi.json
 
 The service is intended for local demonstrations:
 
-1. `docker compose up -d --build` to launch the app, PostgreSQL, and Redis on the shared network.
+1. `docker compose up -d` to launch the app, PostgreSQL, and Redis on the shared network (Compose pulls the `PHLAG_APP_IMAGE`, defaulting to `ghcr.io/danhenke/phlag:latest`).
 2. Export environment variables from `.env.local` (optional when running host-side tooling).
 3. Use `docker compose exec app ...` for Laravel Zero commands so they share the same networking configuration as the HTTP service.
 

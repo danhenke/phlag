@@ -6,7 +6,7 @@ This guide explains how to run additional PHP worker processes alongside the def
 
 ## Prerequisites
 
-- The baseline stack (`docker compose up -d --build`) is running and healthy.
+- The baseline stack (`docker compose up -d`) is running and healthy.
 - `.env.local` contains the credentials referenced by `compose.yaml`, and you have exported them in your shell (`set -a; source .env.local; set +a`) before launching helper scripts.
 
 Verify that all services are running before scaling:
@@ -40,9 +40,7 @@ For long-lived CLI workers (queue consumers, cache warmers, schedulers), define 
 # compose.workers.yaml
 services:
   worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}
     command: php phlag <worker-command>
     env_file:
       - .env.local
@@ -62,7 +60,7 @@ Replace `<worker-command>` with the long-running Laravel Zero command you want t
 Launch one or more worker containers with:
 
 ```bash
-docker compose -f compose.yaml -f compose.workers.yaml up -d --build worker
+docker compose -f compose.yaml -f compose.workers.yaml up -d worker
 docker compose -f compose.yaml -f compose.workers.yaml up -d --scale worker=3
 ```
 
