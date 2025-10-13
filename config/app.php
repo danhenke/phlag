@@ -54,6 +54,7 @@ return [
     */
 
     'providers' => [
+        Illuminate\Foundation\Providers\FoundationServiceProvider::class,
         Illuminate\Routing\RoutingServiceProvider::class,
         Phlag\Providers\AppServiceProvider::class,
         Phlag\Providers\RouteServiceProvider::class,
