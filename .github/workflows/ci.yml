@@ -25,7 +25,8 @@ jobs:
 
       - name: Get git commit timestamp
         id: commit_ts
-        run: echo "timestamp=$(git log -1 --pretty=%ct)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "timestamp=$(git log -1 --pretty=%ct)" >> "$GITHUB_OUTPUT"
 
       - name: Login to GitHub container registry
         uses: docker/login-action@v3
@@ -33,6 +34,9 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ github.token }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up docker buildx
         uses: docker/setup-buildx-action@v3
@@ -43,20 +47,20 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,priority=1000
+            type=edge
+            type=sha
 
       - name: Build and push
         id: build
         uses: docker/build-push-action@v6
         with:
+          context: .
           push: true
-          call: check
-          sbom: false
-          provenance: false
+          sbom: true
+          provenance: mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
@@ -64,7 +68,7 @@ jobs:
         env:
           SOURCE_DATE_EPOCH: ${{ steps.commit_ts.outputs.timestamp }}
 
-      - name: Generate artifact attestation
+      - name: Attest build provenance in GitHub
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ github.repository }}
@@ -74,13 +78,11 @@ jobs:
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.version }}
+          path: .
           output-file: sbom.spdx.json
 
-      - name: Generate SBOM attestation
+      - name: Attest SBOM in GitHub
         uses: actions/attest-sbom@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}
-          subject-digest: ${{ steps.build.outputs.digest }}
+          subject-path: ${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build.outputs.digest }}
           sbom-path: sbom.spdx.json
-          push-to-registry: true
