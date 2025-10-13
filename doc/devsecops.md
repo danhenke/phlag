@@ -69,25 +69,9 @@ Expected output includes the BuildKit provenance payload showing:
 
 ---
 
-## 3. Querying the SBOM
+## 3. Verifying SBOM Attestations
 
-The workflow emits SBOMs (in SPDX JSON) during the `docker/build-push-action@v6` run.
-
-### Download SBOM from GHCR Attestations
-
-```bash
-TAG=$(git rev-parse --short HEAD)
-cosign download sbom ghcr.io/danhenke/phlag:${TAG} > sbom.spdx.json
-jq '.packages[] | {name, versionInfo, supplier}' sbom.spdx.json | head
-```
-
-`grype` understands OCI image references and will report any CVEs affecting the packaged dependencies:
-
-```bash
-grype ghcr.io/danhenke/phlag:${TAG}
-```
-
-### Verifying SBOM Attestations
+Use these commands to validate that the published SBOM matches the pushed image.
 
 ```bash
 gh attestation verify oci://ghcr.io/danhenke/phlag:latest \
@@ -109,6 +93,22 @@ cosign verify-attestation ghcr.io/danhenke/phlag:sha-${TAG} \
 ```
 
 Expect the `subject` array to contain the image digest and the predicate to reference the SPDX document. Treat verification failures as an indication that the SBOM no longer matches the published image.
+
+### Downloading and Scanning the SBOM
+
+```bash
+TAG=$(git rev-parse --short HEAD)
+cosign download sbom ghcr.io/danhenke/phlag:${TAG} > sbom.spdx.json
+jq '.packages[] | {name, versionInfo, supplier}' sbom.spdx.json | head
+```
+
+`grype` understands OCI image references and will report any CVEs affecting the packaged dependencies:
+
+```bash
+grype ghcr.io/danhenke/phlag:${TAG}
+```
+
+The workflow emits SBOMs (in SPDX JSON) during the `docker/build-push-action@v6` run; download and scan them routinely to maintain continuous assurance.
 
 ---
 
