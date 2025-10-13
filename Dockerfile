@@ -27,7 +27,7 @@ WORKDIR /app
 
 FROM base AS builder
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=vendor /usr/bin/composer /usr/bin/composer
 COPY --from=vendor /app/vendor ./vendor
 COPY . .
 
