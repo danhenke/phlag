@@ -16,11 +16,10 @@ RUN composer install \
 FROM php:8.4-cli AS base
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl unzip libcap2-bin libpq-dev libpq5 libzip-dev libzip4 \
+    && apt-get install -y --no-install-recommends curl unzip libcap2-bin libpq-dev libzip-dev \
     && docker-php-ext-install pdo_pgsql zip \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && apt-get purge -y --auto-remove libpq-dev libzip-dev \
     && rm -rf /var/lib/apt/lists/* /tmp/pear
 
 WORKDIR /app
