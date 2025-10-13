@@ -8,6 +8,8 @@ Some contributors prefer receiving pre-built Docker images instead of rebuilding
 - Exporting a locally built image so another teammate can load it.
 - Publishing an image to a container registry (for example GitHub Container Registry).
 
+The multi-stage Dockerfile compiles the Laravel Zero application into a PHAR (`/app/phlag`) and ships only that artifact plus the production `public/` assets in the final image. When you run the container without bind mounts, `public/index.php` automatically boots from the bundled PHAR so the HTTP health endpoint (and any future web entrypoints) stay operational.
+
 Both approaches produce an image compatible with the `app` service defined in `compose.yaml`. The stack now pulls `${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}` automatically, so sharing an image primarily helps teammates who are offline or need to test an unpublished build. The CI workflow publishes multi-architecture images (`linux/amd64` and `linux/arm64`), letting Docker Compose choose the right variant for each host without extra configuration.
 
 ## Prerequisites

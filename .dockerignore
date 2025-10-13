@@ -3,6 +3,7 @@
 doc
 tests
 vendor
+builds
 node_modules
 docker-compose.yml
 docker-compose.yaml
