@@ -3,7 +3,13 @@ name: "phlag"
 services:
   app:
     image: ${PHLAG_APP_IMAGE:-ghcr.io/danhenke/phlag:latest}
-    command: php -S 0.0.0.0:80 -t public public/index.php
+    command:
+      - /usr/local/bin/php
+      - -S
+      - 0.0.0.0:80
+      - -t
+      - public
+      - public/index.php
     depends_on:
       postgres:
         condition: service_healthy
