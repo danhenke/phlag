@@ -23,10 +23,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get git commit timestamp
-        id: commit_ts
-        run: |
-          echo "timestamp=$(git log -1 --pretty=%ct)" >> "$GITHUB_OUTPUT"
+      - name: Get commit timestamp
+        id: commit
+        run: echo "timestamp=$(git log -1 --pretty=%ct)" >> $GITHUB_OUTPUT
 
       - name: Login to GitHub container registry
         uses: docker/login-action@v3
@@ -65,8 +64,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           platforms: linux/amd64,linux/arm64
-        env:
-          SOURCE_DATE_EPOCH: ${{ steps.commit_ts.outputs.timestamp }}
+          build-args: SOURCE_DATE_EPOCH=${{ steps.commit.outputs.timestamp }}
 
       - name: Attest build provenance in GitHub
         uses: actions/attest-build-provenance@v1
@@ -79,10 +77,13 @@ jobs:
         uses: anchore/sbom-action@v0
         with:
           path: .
+          image: ${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build.outputs.digest }}
           output-file: sbom.spdx.json
 
       - name: Attest SBOM in GitHub
         uses: actions/attest-sbom@v2
         with:
-          subject-path: ${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build.outputs.digest }}
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}
+          subject-digest: ${{ steps.build.outputs.digest }}
           sbom-path: sbom.spdx.json
+          push-to-registry: true
