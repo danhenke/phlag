@@ -213,6 +213,7 @@ The seeders provision a reusable dataset:
 | `DELETE /v1/projects/{project}/flags/{key}` | Delete flag                                     |
 | `GET /v1/evaluate`                          | Evaluate flag (`?project=&env=&flag=&user_id=`) |
 | `GET /v1/docs/openapi.json`                 | OpenAPI JSON spec                               |
+| `GET /docs`                                 | Swagger UI viewer                               |
 
 > Full examples are available in `/postman/FeatureFlagService.postman_collection.json`.
 

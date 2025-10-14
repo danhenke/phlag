@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phlag\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use OpenApi\Attributes as OA;
 use Phlag\Http\Responses\ApiErrorResponse;
@@ -77,5 +78,68 @@ final class OpenApiController extends Controller
         );
 
         return $response;
+    }
+
+    #[OA\Get(
+        path: '/docs',
+        operationId: 'getSwaggerUi',
+        summary: 'Render Swagger UI backed by the generated OpenAPI spec.',
+        tags: ['Documentation'],
+        responses: [
+            new OA\Response(
+                response: HttpResponse::HTTP_OK,
+                description: 'Swagger UI HTML response.',
+                content: new OA\MediaType(mediaType: 'text/html')
+            ),
+        ]
+    )]
+    public function ui(): Response
+    {
+        $specUrl = htmlspecialchars(
+            url('/v1/docs/openapi.json'),
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
+
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Phlag API Docs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+<script>
+    window.addEventListener('load', function () {
+        window.ui = SwaggerUIBundle({
+            dom_id: '#swagger-ui',
+            url: '{$specUrl}',
+            layout: 'BaseLayout',
+            docExpansion: 'list',
+            defaultModelsExpandDepth: -1,
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIStandalonePreset
+            ]
+        });
+    });
+</script>
+</body>
+</html>
+HTML;
+
+        return response(
+            $html,
+            HttpResponse::HTTP_OK,
+            [
+                'Content-Type' => 'text/html; charset=UTF-8',
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            ]
+        );
     }
 }

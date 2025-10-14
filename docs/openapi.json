@@ -108,6 +108,23 @@
                 }
             }
         },
+        "/docs": {
+            "get": {
+                "tags": [
+                    "Documentation"
+                ],
+                "summary": "Render Swagger UI backed by the generated OpenAPI spec.",
+                "operationId": "getSwaggerUi",
+                "responses": {
+                    "200": {
+                        "description": "Swagger UI HTML response.",
+                        "content": {
+                            "text/html": {}
+                        }
+                    }
+                }
+            }
+        },
         "/v1/projects": {
             "get": {
                 "tags": [

@@ -11,6 +11,7 @@ use Phlag\Http\Controllers\ProjectFlagController;
 use Phlag\Http\Responses\ApiStub;
 
 Route::get('/', HealthCheckController::class);
+Route::get('/docs', [OpenApiController::class, 'ui'])->name('docs.ui');
 
 Route::prefix('v1')
     ->middleware('api')
