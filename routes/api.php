@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Phlag\Http\Controllers\HealthCheckController;
 use Phlag\Http\Controllers\ProjectController;
 use Phlag\Http\Controllers\ProjectEnvironmentController;
+use Phlag\Http\Controllers\ProjectFlagController;
 use Phlag\Http\Responses\ApiStub;
 
 Route::get('/', HealthCheckController::class);
@@ -19,10 +20,7 @@ Route::prefix('v1')
         Route::apiResource('projects', ProjectController::class);
         Route::apiResource('projects.environments', ProjectEnvironmentController::class);
 
-        Route::get('/projects/{project}/flags', fn () => ApiStub::notImplemented('Flag listing'));
-        Route::post('/projects/{project}/flags', fn () => ApiStub::notImplemented('Flag creation'));
-        Route::patch('/projects/{project}/flags/{key}', fn () => ApiStub::notImplemented('Flag update'));
-        Route::delete('/projects/{project}/flags/{key}', fn () => ApiStub::notImplemented('Flag deletion'));
+        Route::apiResource('projects.flags', ProjectFlagController::class);
 
         Route::get('/evaluate', fn () => ApiStub::notImplemented('Flag evaluation'));
 
