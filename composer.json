@@ -19,6 +19,7 @@
         "illuminate/http": "^12.32",
         "illuminate/pagination": "^12.32",
         "illuminate/routing": "^12.32",
+        "illuminate/log": "^12.32",
         "illuminate/validation": "^12.32",
         "laravel-zero/framework": "^12.0.2",
         "zircote/swagger-php": "^4.10"
