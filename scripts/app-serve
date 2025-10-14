@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    cat <<'USAGE' >&2
+Usage: app-serve [--host <host>] [--port <port>] [--env-file <path>]
+
+Spin up the Phlag HTTP entrypoint locally using PHP's built-in web server.
+This bypasses Docker, serving the contents of public/index.php from the
+current working tree. Ideal for quick manual testing without the Compose stack.
+
+Options:
+  --host      Interface to bind (default: 127.0.0.1)
+  --port      Port to expose (default: 8080)
+  --env-file  Path to an environment file to source before serving
+  -h, --help  Show this help message
+
+Examples:
+  ./scripts/app-serve
+  ./scripts/app-serve --port 3000
+  ./scripts/app-serve --host 0.0.0.0 --env-file .env.testing
+USAGE
+}
+
+HOST="127.0.0.1"
+PORT="8080"
+ENV_FILE=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --host)
+            HOST="$2"
+            shift 2
+            ;;
+        --port)
+            PORT="$2"
+            shift 2
+            ;;
+        --env-file)
+            ENV_FILE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+if ! command -v php >/dev/null 2>&1; then
+    echo "PHP is not installed or not on your PATH. Install PHP 8.2+ to run the local server." >&2
+    exit 1
+fi
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PUBLIC_DIR="${PROJECT_ROOT}/public"
+INDEX_FILE="${PUBLIC_DIR}/index.php"
+AUTOLOAD_FILE="${PROJECT_ROOT}/vendor/autoload.php"
+
+if [[ ! -f "${AUTOLOAD_FILE}" ]]; then
+    echo "Missing vendor/autoload.php. Run 'composer install' before starting the local server." >&2
+    exit 1
+fi
+
+if [[ -z "${ENV_FILE}" && -f "${PROJECT_ROOT}/.env.local" ]]; then
+    ENV_FILE="${PROJECT_ROOT}/.env.local"
+fi
+
+if [[ -n "${ENV_FILE}" ]]; then
+    if [[ ! -f "${ENV_FILE}" ]]; then
+        echo "Environment file not found: ${ENV_FILE}" >&2
+        exit 1
+    fi
+
+    # shellcheck disable=SC1090
+    set -a
+    source "${ENV_FILE}"
+    set +a
+fi
+
+echo "Serving Phlag on http://${HOST}:${PORT}"
+echo "Press Ctrl+C to stop."
+
+exec php -S "${HOST}:${PORT}" -t "${PUBLIC_DIR}" "${INDEX_FILE}"
