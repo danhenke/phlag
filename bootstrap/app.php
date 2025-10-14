@@ -5,9 +5,11 @@ declare(strict_types=1);
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
+use Illuminate\Contracts\View\Factory as ViewFactoryContract;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Http\Request;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Routing\RoutingServiceProvider;
 use Illuminate\Validation\ValidationException;
 use LaravelZero\Framework\Application;
@@ -15,6 +17,7 @@ use LaravelZero\Framework\Providers\GitVersion\GitVersionServiceProvider;
 use Phlag\Http\Kernel as HttpKernel;
 use Phlag\Http\Responses\ApiErrorResponse;
 use Phlag\Providers\RouteServiceProvider as PhlagRouteServiceProvider;
+use Phlag\Support\View\NullViewFactory;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -141,6 +144,11 @@ $app = Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->create();
+
+$app->singleton(Filesystem::class, fn () => new Filesystem());
+$app->alias(Filesystem::class, 'files');
+$app->singleton(ViewFactoryContract::class, fn () => new NullViewFactory());
+$app->alias(ViewFactoryContract::class, 'view');
 
 $app->register(RoutingServiceProvider::class);
 $app->register(PhlagRouteServiceProvider::class);
