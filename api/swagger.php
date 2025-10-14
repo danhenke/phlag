@@ -11,6 +11,8 @@ $paths = [
     __DIR__.'/../routes',
 ];
 
+$outputPath = $argv[1] ?? null;
+
 try {
     $openApi = Generator::scan($paths);
 } catch (\Throwable $exception) {
@@ -24,8 +26,26 @@ try {
     exit(1);
 }
 
-echo $openApi->toJson(
+$json = $openApi->toJson(
     JSON_PRETTY_PRINT
     | JSON_UNESCAPED_SLASHES
     | JSON_UNESCAPED_UNICODE
 ).PHP_EOL;
+
+if ($outputPath !== null) {
+    if (@file_put_contents($outputPath, $json) === false) {
+        fwrite(
+            STDERR,
+            sprintf(
+                "Failed to write OpenAPI specification to %s\n",
+                $outputPath
+            )
+        );
+
+        exit(1);
+    }
+
+    exit(0);
+}
+
+echo $json;
