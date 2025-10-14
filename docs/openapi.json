@@ -1526,16 +1526,100 @@
                 }
             }
         },
-        "/v1/auth/token": {
-            "post": {
+        "/v1/evaluate": {
+            "get": {
                 "tags": [
-                    "Authentication"
+                    "Flags"
                 ],
-                "summary": "Issue an authentication token (stub)",
-                "operationId": "issueAuthToken",
+                "summary": "Evaluate a feature flag",
+                "description": "Determines the variant to serve for a project/environment/flag combination using rollout rules and default fallbacks.",
+                "operationId": "evaluateFlag",
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "query",
+                        "description": "Project key that owns the flag.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "env",
+                        "in": "query",
+                        "description": "Environment key within the project.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "flag",
+                        "in": "query",
+                        "description": "Flag key to evaluate.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Optional user identifier used for deterministic rollout bucketing.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "context",
+                        "in": "query",
+                        "description": "Additional evaluation context (pass as repeated query parameters such as `?country=US&segment=beta-testers`).",
+                        "required": false,
+                        "style": "deepObject",
+                        "explode": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        }
+                    }
+                ],
                 "responses": {
-                    "501": {
-                        "description": "Endpoint not implemented yet.",
+                    "200": {
+                        "description": "Evaluation completed successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlagEvaluationResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Project, environment, or flag not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed for the evaluation request.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1547,13 +1631,13 @@
                 }
             }
         },
-        "/v1/evaluate": {
-            "get": {
+        "/v1/auth/token": {
+            "post": {
                 "tags": [
-                    "Flags"
+                    "Authentication"
                 ],
-                "summary": "Evaluate a feature flag (stub)",
-                "operationId": "evaluateFlag",
+                "summary": "Issue an authentication token (stub)",
+                "operationId": "issueAuthToken",
                 "responses": {
                     "501": {
                         "description": "Endpoint not implemented yet.",
@@ -2112,6 +2196,151 @@
                             "$ref": "#/components/schemas/FlagRule"
                         },
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "FlagEvaluationResult": {
+                "description": "Outcome details for a flag evaluation.",
+                "required": [
+                    "variant",
+                    "reason",
+                    "rollout"
+                ],
+                "properties": {
+                    "variant": {
+                        "description": "Variant key returned by evaluation.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reason": {
+                        "description": "Why the variant was selected.",
+                        "type": "string"
+                    },
+                    "rollout": {
+                        "description": "Rollout percentage used for the decision.",
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 0
+                    },
+                    "payload": {
+                        "description": "Optional payload attached to the chosen variant.",
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {}
+                    },
+                    "bucket": {
+                        "description": "Deterministic bucket assigned when a rollout rule applies.",
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 1,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "FlagEvaluation": {
+                "description": "Resource returned after evaluating a flag.",
+                "required": [
+                    "id",
+                    "project",
+                    "environment",
+                    "flag",
+                    "context",
+                    "result",
+                    "evaluated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "project": {
+                        "required": [
+                            "id",
+                            "key"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "key": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "environment": {
+                        "required": [
+                            "id",
+                            "key"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "key": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "flag": {
+                        "required": [
+                            "id",
+                            "key",
+                            "is_enabled"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "key": {
+                                "type": "string"
+                            },
+                            "is_enabled": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "user": {
+                        "properties": {
+                            "identifier": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "context": {
+                        "description": "Evaluation context echoed from the request. Values may be strings or arrays in practice.",
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "result": {
+                        "$ref": "#/components/schemas/FlagEvaluationResult"
+                    },
+                    "evaluated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "FlagEvaluationResponse": {
+                "description": "Response envelope for flag evaluation results.",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/FlagEvaluation"
                     }
                 },
                 "type": "object"

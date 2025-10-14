@@ -302,4 +302,81 @@ use OpenApi\Attributes as OA;
     ],
     description: 'Payload for updating a flag.'
 )]
+#[OA\Schema(
+    schema: 'FlagEvaluationResult',
+    required: ['variant', 'reason', 'rollout'],
+    properties: [
+        new OA\Property(property: 'variant', type: 'string', nullable: true, description: 'Variant key returned by evaluation.'),
+        new OA\Property(property: 'reason', type: 'string', description: 'Why the variant was selected.'),
+        new OA\Property(property: 'rollout', type: 'integer', minimum: 0, maximum: 100, description: 'Rollout percentage used for the decision.'),
+        new OA\Property(
+            property: 'payload',
+            type: 'object',
+            nullable: true,
+            additionalProperties: new OA\AdditionalProperties,
+            description: 'Optional payload attached to the chosen variant.'
+        ),
+        new OA\Property(property: 'bucket', type: 'integer', minimum: 1, maximum: 100, nullable: true, description: 'Deterministic bucket assigned when a rollout rule applies.'),
+    ],
+    description: 'Outcome details for a flag evaluation.'
+)]
+#[OA\Schema(
+    schema: 'FlagEvaluation',
+    required: ['id', 'project', 'environment', 'flag', 'context', 'result', 'evaluated_at'],
+    properties: [
+        new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+        new OA\Property(
+            property: 'project',
+            type: 'object',
+            required: ['id', 'key'],
+            properties: [
+                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                new OA\Property(property: 'key', type: 'string'),
+            ]
+        ),
+        new OA\Property(
+            property: 'environment',
+            type: 'object',
+            required: ['id', 'key'],
+            properties: [
+                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                new OA\Property(property: 'key', type: 'string'),
+            ]
+        ),
+        new OA\Property(
+            property: 'flag',
+            type: 'object',
+            required: ['id', 'key', 'is_enabled'],
+            properties: [
+                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                new OA\Property(property: 'key', type: 'string'),
+                new OA\Property(property: 'is_enabled', type: 'boolean'),
+            ]
+        ),
+        new OA\Property(
+            property: 'user',
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'identifier', type: 'string', nullable: true),
+            ]
+        ),
+        new OA\Property(
+            property: 'context',
+            type: 'object',
+            additionalProperties: new OA\AdditionalProperties(type: 'string'),
+            description: 'Evaluation context echoed from the request. Values may be strings or arrays in practice.'
+        ),
+        new OA\Property(property: 'result', ref: '#/components/schemas/FlagEvaluationResult'),
+        new OA\Property(property: 'evaluated_at', type: 'string', format: 'date-time'),
+    ],
+    description: 'Resource returned after evaluating a flag.'
+)]
+#[OA\Schema(
+    schema: 'FlagEvaluationResponse',
+    required: ['data'],
+    properties: [
+        new OA\Property(property: 'data', ref: '#/components/schemas/FlagEvaluation'),
+    ],
+    description: 'Response envelope for flag evaluation results.'
+)]
 final class DomainSchemas {}

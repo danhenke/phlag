@@ -14,6 +14,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $project_id
  * @property string $environment_id
  * @property string $flag_id
+ * @property string $flag_key
+ * @property string|null $variant
+ * @property string|null $evaluation_reason
+ * @property string|null $user_identifier
+ * @property array<string, mixed>|null $request_context
+ * @property array<string, mixed>|null $evaluation_payload
+ * @property \Illuminate\Support\Carbon|null $evaluated_at
  */
 class Evaluation extends Model
 {
