@@ -35,7 +35,8 @@
         "test": "vendor/bin/pest",
         "lint": "vendor/bin/pint --test",
         "lint:fix": "vendor/bin/pint",
-        "stan": "php scripts/phpstan.php analyse --configuration=phpstan.neon"
+        "stan": "php scripts/phpstan.php analyse --configuration=phpstan.neon",
+        "openapi:generate": "@php api/swagger.php docs/openapi.json"
     },
     "autoload": {
         "psr-4": {

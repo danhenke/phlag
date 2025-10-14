@@ -458,7 +458,7 @@ PR descriptions should also mention any migrations, environment variables, or op
 Regenerate docs once you have sourced environment variables:
 
 ```bash
-php api/swagger.php > docs/openapi.json
+composer openapi:generate
 ```
 
 ---
