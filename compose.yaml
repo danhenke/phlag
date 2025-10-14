@@ -2,9 +2,6 @@ name: "phlag"
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: ${PHLAG_APP_IMAGE:-phlag-app:latest}
     command:
       - /usr/local/bin/php
