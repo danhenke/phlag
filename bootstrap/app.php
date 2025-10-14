@@ -8,14 +8,20 @@ use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Http\Request;
+use Illuminate\Routing\RoutingServiceProvider;
 use Illuminate\Validation\ValidationException;
 use LaravelZero\Framework\Application;
+use LaravelZero\Framework\Providers\GitVersion\GitVersionServiceProvider;
 use Phlag\Http\Kernel as HttpKernel;
 use Phlag\Http\Responses\ApiErrorResponse;
+use Phlag\Providers\RouteServiceProvider as PhlagRouteServiceProvider;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 $app = Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        api: dirname(__DIR__).'/routes/api.php',
+    )
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(static fn (Request $request, \Throwable $exception): bool => true);
 
@@ -135,6 +141,10 @@ $app = Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->create();
+
+$app->register(RoutingServiceProvider::class);
+$app->register(PhlagRouteServiceProvider::class);
+(new GitVersionServiceProvider($app))->register();
 
 $app->singleton(HttpKernelContract::class, HttpKernel::class);
 
