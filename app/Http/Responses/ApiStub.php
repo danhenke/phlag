@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phlag\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 final class ApiStub
 {
@@ -24,10 +24,14 @@ final class ApiStub
 
         $label ??= $endpoint;
 
-        return response()->json([
-            'endpoint' => $endpoint,
-            'error' => 'not_implemented',
-            'message' => sprintf('%s is not available yet.', $label),
-        ], Response::HTTP_NOT_IMPLEMENTED);
+        return ApiErrorResponse::make(
+            'not_implemented',
+            sprintf('%s is not available yet.', $label),
+            HttpResponse::HTTP_NOT_IMPLEMENTED,
+            context: [
+                'endpoint' => $endpoint,
+            ],
+            detail: sprintf('%s remains under development.', $label)
+        );
     }
 }
