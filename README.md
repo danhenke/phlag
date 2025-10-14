@@ -146,6 +146,16 @@ Only the application’s port 80 is published to your LAN (`http://localhost/` b
 
 Logs remain on stdout; tail them with `docker compose logs -f` when debugging. The Compose file configures the `json-file` driver with `max-size=10m` and `max-file=5`, so each container keeps a rotating local buffer without requiring extra volumes.
 
+#### Quick smoke tests without Docker
+
+Need to hit the HTTP bridge without the full Compose stack? Use the helper script to spin up PHP’s built-in server directly against your working tree:
+
+```bash
+./scripts/app-serve --port 8080
+```
+
+The script sources `.env.local` automatically (or a custom file via `--env-file`) and serves `public/index.php` from the current checkout. It’s handy for verifying basic routes like the health check, but any endpoint that relies on PostgreSQL or Redis will still expect those services to be available locally.
+
 ### 4. Run migrations and seed data
 
 Execute CLI commands inside the `app` container so they share networking and environment context. Helper scripts wrap
