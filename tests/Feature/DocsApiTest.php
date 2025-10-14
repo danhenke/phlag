@@ -43,3 +43,13 @@ it('returns a standardized error when the OpenAPI artifact is missing', function
         }
     }
 });
+
+it('renders Swagger UI backed by the generated spec', function (): void {
+    $response = $this->get('/docs');
+
+    $response->assertOk();
+    $response->assertSee('/v1/docs/openapi.json', false);
+
+    expect($response->headers->get('Content-Type'))
+        ->toContain('text/html');
+});
