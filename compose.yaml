@@ -3,13 +3,7 @@ name: "phlag"
 services:
   app:
     image: ${PHLAG_APP_IMAGE:-phlag-app:latest}
-    command:
-      - /usr/local/bin/php
-      - -S
-      - 0.0.0.0:80
-      - -t
-      - public
-      - public/index.php
+    platform: linux/amd64
     depends_on:
       postgres:
         condition: service_healthy
@@ -21,8 +15,6 @@ services:
       APP_ENV: ${APP_ENV:-local}
     ports:
       - "80:80"
-    volumes:
-      - ./:/app
     logging:
       driver: json-file
       options:

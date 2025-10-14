@@ -39,7 +39,13 @@ RUN useradd --system --create-home phlag \
     && chown -R phlag:phlag /app
 ENV PHLAG_PHAR=/app/phlag
 
-COPY public ./public
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/bootstrap ./bootstrap
+COPY --from=builder /app/config ./config
+COPY --from=builder /app/routes ./routes
+COPY --from=builder /app/app ./app
+COPY --from=builder /app/vendor ./vendor
+COPY --from=builder /app/database ./database
 COPY --from=builder /app/builds/phlag ./phlag
 
 RUN chmod +x /app/phlag \
@@ -48,8 +54,10 @@ RUN chmod +x /app/phlag \
     && chown -h phlag:phlag /usr/local/bin/phlag \
     && setcap 'cap_net_bind_service=+ep' /usr/local/bin/php
 
+WORKDIR /app
+
 USER phlag
 
 EXPOSE 80
 
-CMD ["/usr/local/bin/php", "-S", "0.0.0.0:80", "-t", "public", "public/index.php"]
+CMD ["/usr/local/bin/php", "-S", "0.0.0.0:80", "-t", "/app/public", "/app/public/index.php"]
