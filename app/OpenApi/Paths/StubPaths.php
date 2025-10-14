@@ -21,20 +21,8 @@ final class StubPaths
             ),
         ]
     )]
-    public function token(): void {}
-
-    #[OA\Get(
-        path: '/v1/evaluate',
-        operationId: 'evaluateFlag',
-        summary: 'Evaluate a feature flag (stub)',
-        tags: ['Flags'],
-        responses: [
-            new OA\Response(
-                response: 501,
-                description: 'Endpoint not implemented yet.',
-                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
-            ),
-        ]
-    )]
-    public function evaluate(): void {}
+    public function token(): void
+    {
+        // Intentionally empty; route defined via OpenAPI annotations.
+    }
 }

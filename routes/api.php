@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Phlag\Http\Controllers\EvaluateFlagController;
 use Phlag\Http\Controllers\HealthCheckController;
 use Phlag\Http\Controllers\OpenApiController;
 use Phlag\Http\Controllers\ProjectController;
@@ -23,7 +24,8 @@ Route::prefix('v1')
 
         Route::apiResource('projects.flags', ProjectFlagController::class);
 
-        Route::get('/evaluate', fn () => ApiStub::notImplemented('Flag evaluation'));
+        Route::get('/evaluate', EvaluateFlagController::class)
+            ->name('flags.evaluate');
 
         Route::get('/docs/openapi.json', [OpenApiController::class, 'show'])
             ->name('docs.openapi');
