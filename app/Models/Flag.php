@@ -48,6 +48,14 @@ class Flag extends Model
     ];
 
     /**
+     * Use the flag key as the route identifier.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'key';
+    }
+
+    /**
      * @return BelongsTo<Project, static>
      */
     public function project(): BelongsTo
