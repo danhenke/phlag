@@ -130,7 +130,15 @@ set +a
 
 ### 3. Start Docker Compose stack
 
-Ensure Docker Desktop (or another Docker engine) is running, then bring up the full stack defined in `compose.yaml`:
+Ensure Docker Desktop (or another Docker engine) is running. Build (or pull) the application image that Compose will use:
+
+```bash
+./scripts/docker-build-app
+```
+
+Set `PHLAG_APP_IMAGE` if you want to reuse a different prebuilt tag.
+
+With the image available locally, bring up the full stack defined in `compose.yaml`:
 
 ```bash
 docker compose up -d
@@ -142,7 +150,7 @@ This launches three services within an isolated Docker network:
 -   `postgres` — PostgreSQL database available only on the Compose network.
 -   `redis` — Redis cache available only on the Compose network.
 
-Only the application’s port 80 is published to your LAN (`http://localhost/` by default). Compose builds the app image from the local Dockerfile the first time you start the stack (tagged as `${PHLAG_APP_IMAGE:-phlag-app:latest}`); rebuild with `docker compose build app` or `./scripts/docker-build-app` whenever you change PHP dependencies or base layers.
+Only the application’s port 80 is published to your LAN (`http://localhost/` by default). Re-run `./scripts/docker-build-app` whenever you change PHP dependencies or base layers so the `${PHLAG_APP_IMAGE:-phlag-app:latest}` tag stays in sync with your working tree.
 
 Logs remain on stdout; tail them with `docker compose logs -f` when debugging. The Compose file configures the `json-file` driver with `max-size=10m` and `max-file=5`, so each container keeps a rotating local buffer without requiring extra volumes.
 
@@ -457,9 +465,10 @@ php api/swagger.php > docs/openapi.json
 
 The service is intended for local demonstrations:
 
-1. `docker compose up -d --build` to launch the app, PostgreSQL, and Redis on the shared network (Compose builds `${PHLAG_APP_IMAGE:-phlag-app:latest}` from the local Dockerfile).
-2. Export environment variables from `.env.local` (optional when running host-side tooling).
-3. Use `docker compose exec app ...` for Laravel Zero commands so they share the same networking configuration as the HTTP service.
+1. `./scripts/docker-build-app` to build or refresh the `${PHLAG_APP_IMAGE:-phlag-app:latest}` image (skip if you are pointing `PHLAG_APP_IMAGE` at a prebuilt tag).
+2. `docker compose up -d` to launch the app, PostgreSQL, and Redis on the shared network.
+3. Export environment variables from `.env.local` (optional when running host-side tooling).
+4. Use `docker compose exec app ...` for Laravel Zero commands so they share the same networking configuration as the HTTP service.
 
 When you are finished experimenting, shut everything down with `docker compose down`.
 
@@ -473,7 +482,7 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Scale the `
 ## 📦 Docker image workflow
 
 -   Build locally with `./scripts/docker-build-app` (defaults to tagging `phlag-app:local-<sha>` and `phlag-app:latest`).
--   `docker compose up -d --build` performs the same build automatically when the stack starts, ensuring the runtime matches your working tree.
+-   Re-run `./scripts/docker-build-app` whenever you change dependencies or base layers so the local image reflects your working tree.
 -   Set `PHLAG_APP_IMAGE` to reuse a previously built tag (for example, when switching between branches or exchanging archives with teammates).
 
 ---
@@ -486,7 +495,7 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Scale the `
 | Static analysis | `composer stan`                        |
 | Tests           | `composer test`                        |
 | QA workflow     | `.github/workflows/qa.yml` (lint, stan, tests) |
-| Deploy          | `docker compose up -d --build` (local only)    |
+| Deploy          | `./scripts/docker-build-app && docker compose up -d` |
 
 ---
 

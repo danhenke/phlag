@@ -54,7 +54,7 @@ Both reported versions should meet or exceed the minimums above. If they do not,
     }
     ```
 
-3. Retry `docker compose build app`.
+3. Re-run `./scripts/docker-build-app`.
 
 ### `docker compose up` fails because port 80 is already in use
 
@@ -116,8 +116,6 @@ set -a; source .env.local; set +a
 2. Rebuild the image for your host platform:
 
     ```bash
-    docker compose build app
-    # or
     ./scripts/docker-build-app --platform "$(docker info --format '{{.Architecture}}')"
     ```
 
