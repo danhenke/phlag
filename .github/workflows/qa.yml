@@ -16,6 +16,11 @@ jobs:
       actions: write
     env:
       COMPOSER_ALLOW_SUPERUSER: 1
+      APP_NAME: Phlag
+      APP_ENV: testing
+      APP_DEBUG: false
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ":memory:"
 
     steps:
       - name: Checkout repository
