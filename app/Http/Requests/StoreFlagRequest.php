@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phlag\Http\Requests;
 
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Phlag\Models\Project;
@@ -38,7 +39,9 @@ class StoreFlagRequest extends FormRequest
                 'string',
                 'max:64',
                 'regex:/^[a-z0-9][a-z0-9-]*$/',
-                Rule::unique('flags', 'key')->where(fn ($query) => $query->where('project_id', $project->id)),
+                Rule::unique('flags', 'key')->where(
+                    fn (QueryBuilder $query) => $query->where('project_id', $project->id)
+                ),
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],

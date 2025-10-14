@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phlag\Http\Requests;
 
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Phlag\Models\Flag;
@@ -45,7 +46,7 @@ class UpdateFlagRequest extends FormRequest
                 'max:64',
                 'regex:/^[a-z0-9][a-z0-9-]*$/',
                 Rule::unique('flags', 'key')
-                    ->where(fn ($query) => $query->where('project_id', $project->id))
+                    ->where(fn (QueryBuilder $query) => $query->where('project_id', $project->id))
                     ->ignore($flag->id),
             ],
             'name' => ['sometimes', 'string', 'max:255'],

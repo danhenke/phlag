@@ -17,4 +17,4 @@ parameters:
     inferPrivatePropertyTypeFromConstructor: true
     treatPhpDocTypesAsCertain: false
     parallel:
-        maximumNumberOfProcesses: 1
+        maximumNumberOfProcesses: 0
