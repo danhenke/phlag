@@ -109,10 +109,19 @@ cat <<EOF > .env.local
 APP_NAME=Phlag
 APP_ENV=local
 APP_DEBUG=true
+
 POSTGRES_DB=phlag
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
-DB_URL=pgsql:host=postgres;port=5432;dbname=${POSTGRES_DB}
+
+DB_CONNECTION=pgsql
+DB_HOST=postgres
+DB_PORT=5432
+DB_DATABASE=phlag
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DATABASE_URL=pgsql://postgres:postgres@postgres:5432/phlag
+
 REDIS_URL=redis://redis:6379/0
 JWT_SECRET=$(openssl rand -base64 32)
 EOF
