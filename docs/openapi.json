@@ -1,0 +1,166 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Phlag API",
+        "description": "API for managing feature flags, environments, and evaluations within Phlag.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost",
+            "description": "Local development server"
+        }
+    ],
+    "paths": {
+        "/": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Retrieve service health status.",
+                "operationId": "getHealthCheck",
+                "responses": {
+                    "200": {
+                        "description": "Service is available.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "description": "Health check payload.",
+                                    "required": [
+                                        "service",
+                                        "status",
+                                        "timestamp"
+                                    ],
+                                    "properties": {
+                                        "service": {
+                                            "description": "Service identifier.",
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "description": "Service availability status.",
+                                            "type": "string",
+                                            "enum": [
+                                                "ok"
+                                            ]
+                                        },
+                                        "timestamp": {
+                                            "description": "ISO-8601 timestamp when the health check was evaluated.",
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ErrorViolation": {
+                "description": "Details of a single validation violation.",
+                "required": [
+                    "field",
+                    "message"
+                ],
+                "properties": {
+                    "field": {
+                        "description": "Field path that failed validation.",
+                        "type": "string"
+                    },
+                    "message": {
+                        "description": "Human-readable description of the validation error.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorEnvelope": {
+                "description": "Standardized error payload returned by the Phlag API.",
+                "required": [
+                    "code",
+                    "message",
+                    "status"
+                ],
+                "properties": {
+                    "code": {
+                        "description": "Machine-readable error identifier.",
+                        "type": "string",
+                        "enum": [
+                            "bad_request",
+                            "conflict",
+                            "forbidden",
+                            "http_error",
+                            "method_not_allowed",
+                            "not_implemented",
+                            "rate_limited",
+                            "resource_not_found",
+                            "server_error",
+                            "unauthorized",
+                            "validation_failed"
+                        ]
+                    },
+                    "message": {
+                        "description": "Concise, human-readable explanation of the error.",
+                        "type": "string"
+                    },
+                    "status": {
+                        "description": "HTTP status code associated with the error.",
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "detail": {
+                        "description": "Optional detail for debugging when debug mode is enabled.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "context": {
+                        "description": "Optional key-value pairs providing additional context for the error.",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "violations": {
+                        "description": "List of validation violations when the error represents validation failures.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ErrorViolation"
+                        },
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "description": "Envelope for all error responses returned by the Phlag API.",
+                "required": [
+                    "error"
+                ],
+                "properties": {
+                    "error": {
+                        "$ref": "#/components/schemas/ErrorEnvelope"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "System",
+            "description": "System"
+        }
+    ]
+}
