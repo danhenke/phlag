@@ -105,4 +105,3 @@ class ProjectFlagController extends Controller
         return response()->noContent();
     }
 }
-
