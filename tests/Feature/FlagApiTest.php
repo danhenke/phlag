@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Phlag\Models\Flag;
 use Phlag\Models\Project;
+use Symfony\Component\HttpFoundation\Response;
 
 beforeEach(function (): void {
     $this->artisan('migrate:fresh')->assertExitCode(0);
@@ -177,10 +178,12 @@ it('validates uniqueness constraints for flag keys per project', function (): vo
     ];
 
     $this->postJson("/v1/projects/{$projectA->key}/flags", $payload)
-        ->assertStatus(422)
+        ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
         ->assertJson(fn (AssertableJson $json) => $json
-            ->has('message')
-            ->has('errors.key')
+            ->where('error.code', 'validation_failed')
+            ->where('error.status', Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->where('error.violations', fn ($violations): bool => collect($violations)
+                ->contains(fn (array $violation): bool => ($violation['field'] ?? null) === 'key'))
             ->etc()
         );
 
@@ -212,12 +215,16 @@ it('validates rule schema and rollout bounds', function (): void {
         ],
     ]);
 
-    $response->assertStatus(422);
+    $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
 
-    $errors = $response->json('errors');
+    $violations = $response->json('error.violations');
 
-    expect($errors)
-        ->toHaveKey('rules.0.match.country')
-        ->toHaveKey('rules.0.variant')
-        ->toHaveKey('rules.0.rollout');
+    expect($violations)->toBeArray();
+
+    $fields = collect($violations)->pluck('field')->all();
+
+    expect($fields)
+        ->toContain('rules.0.match.country')
+        ->toContain('rules.0.variant')
+        ->toContain('rules.0.rollout');
 });

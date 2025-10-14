@@ -196,6 +196,37 @@ The seeders provision a reusable dataset:
 
 > Full examples are available in `/postman/FeatureFlagService.postman_collection.json`.
 
+### Error responses
+
+All API errors return a consistent envelope so clients can display human-friendly messages and branch on machine-readable codes:
+
+```json
+{
+    "error": {
+        "code": "validation_failed",
+        "message": "Validation failed for the submitted payload.",
+        "status": 422,
+        "violations": [
+            {
+                "field": "key",
+                "message": "The key field is required."
+            }
+        ],
+        "context": {
+            "endpoint": "POST /v1/projects"
+        }
+    }
+}
+```
+
+Common `code` values include:
+
+- `validation_failed` – payload validation errors (see `violations`)
+- `resource_not_found` – missing models or routes
+- `method_not_allowed` – unsupported HTTP verbs on the endpoint
+- `unauthorized` / `forbidden` – authentication or authorization failures
+- `server_error` – unexpected exceptions (original message returns in `detail` only when `APP_DEBUG=true`)
+
 ### Example: Exchange an API key for a JWT
 
 ```bash

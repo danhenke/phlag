@@ -26,9 +26,11 @@ it('marks API endpoints as not implemented yet', function (string $method, strin
 
     $response->assertStatus(Response::HTTP_NOT_IMPLEMENTED)
         ->assertJson(fn (AssertableJson $json) => $json
-            ->where('error', 'not_implemented')
-            ->where('endpoint', strtoupper($method).' '.$uri)
-            ->has('message')
+            ->where('error.code', 'not_implemented')
+            ->where('error.status', Response::HTTP_NOT_IMPLEMENTED)
+            ->where('error.context.endpoint', strtoupper($method).' '.$uri)
+            ->where('error.message', fn (string $message) => str_contains($message, 'not available yet'))
+            ->has('error.detail')
         );
 })->with([
     ['POST', '/v1/auth/token'],

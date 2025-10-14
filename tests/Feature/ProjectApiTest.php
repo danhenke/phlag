@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Phlag\Models\Environment;
 use Phlag\Models\Project;
+use Symfony\Component\HttpFoundation\Response;
 
 beforeEach(function (): void {
     $this->artisan('migrate:fresh')->assertExitCode(0);
@@ -89,10 +90,12 @@ it('validates uniqueness constraints for project keys', function (): void {
     $this->postJson('/v1/projects', [
         'key' => 'analytics',
         'name' => 'Duplicate Analytics',
-    ])->assertStatus(422)
+    ])->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
         ->assertJson(fn (AssertableJson $json) => $json
-            ->has('message')
-            ->has('errors.key')
+            ->where('error.code', 'validation_failed')
+            ->where('error.status', Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->where('error.violations', fn ($violations): bool => collect($violations)
+                ->contains(fn (array $violation): bool => ($violation['field'] ?? null) === 'key'))
         );
 });
 
@@ -151,4 +154,15 @@ it('manages environments for a project', function (): void {
         ->assertNoContent();
 
     expect(Environment::query()->where('project_id', $project->id)->count())->toBe(1);
+});
+
+it('returns a standardized envelope when a project is missing', function (): void {
+    $response = $this->getJson('/v1/projects/missing-project');
+
+    $response->assertStatus(Response::HTTP_NOT_FOUND)
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('error.code', 'resource_not_found')
+            ->where('error.status', Response::HTTP_NOT_FOUND)
+            ->where('error.message', 'The requested resource could not be found.')
+        );
 });
