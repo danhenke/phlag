@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use LaravelZero\Framework\Application;
+use Phlag\Http\Kernel as HttpKernel;
 use Phlag\Http\Responses\ApiErrorResponse;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(static fn (Request $request, \Throwable $exception): bool => true);
 
@@ -133,3 +135,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->create();
+
+$app->singleton(HttpKernelContract::class, HttpKernel::class);
+
+return $app;
