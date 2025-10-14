@@ -166,3 +166,21 @@ it('returns a standardized envelope when a project is missing', function (): voi
             ->where('error.message', 'The requested resource could not be found.')
         );
 });
+
+it('preserves protocol headers for method not allowed responses', function (): void {
+    $response = $this->patchJson('/v1/projects', []);
+
+    $response->assertStatus(Response::HTTP_METHOD_NOT_ALLOWED)
+        ->assertHeader('Allow')
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('error.code', 'method_not_allowed')
+            ->where('error.status', Response::HTTP_METHOD_NOT_ALLOWED)
+            ->where('error.context.endpoint', 'PATCH /v1/projects')
+        );
+
+    $allow = $response->headers->get('Allow');
+
+    expect($allow)->not->toBeNull()
+        ->and($allow)->toContain('GET')
+        ->and($allow)->toContain('POST');
+});

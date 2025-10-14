@@ -96,10 +96,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 );
             }
 
-            if ($status === HttpResponse::HTTP_TOO_MANY_REQUESTS && method_exists($exception, 'getHeaders')) {
-                /** @var array<string, mixed> $headers */
-                $headers = $exception->getHeaders();
+            $headers = method_exists($exception, 'getHeaders') ? $exception->getHeaders() : [];
 
+            if ($status === HttpResponse::HTTP_TOO_MANY_REQUESTS && $headers !== []) {
                 if (isset($headers['Retry-After'])) {
                     $context['retry_after'] = $headers['Retry-After'];
                 }
@@ -110,7 +109,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 $message,
                 $status,
                 $context,
-                detail: $detail
+                detail: $detail,
+                headers: $headers
             );
         });
 

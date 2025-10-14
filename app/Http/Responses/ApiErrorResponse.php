@@ -14,6 +14,7 @@ final class ApiErrorResponse
      *
      * @param  array<string, mixed>  $context
      * @param  array<int, array<string, mixed>>|null  $violations
+     * @param  array<string, string>  $headers
      */
     public static function make(
         string $code,
@@ -22,6 +23,7 @@ final class ApiErrorResponse
         array $context = [],
         ?array $violations = null,
         ?string $detail = null,
+        array $headers = [],
     ): JsonResponse {
         $error = [
             'code' => $code,
@@ -41,7 +43,7 @@ final class ApiErrorResponse
             $error['violations'] = $violations;
         }
 
-        return response()->json(['error' => $error], $status);
+        return response()->json(['error' => $error], $status, $headers);
     }
 
     /**
