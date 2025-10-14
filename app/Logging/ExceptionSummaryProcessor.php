@@ -44,6 +44,10 @@ final class ExceptionSummaryProcessor
         }
 
         $record['message'] = $summary;
+        $contextWithoutException = $context;
+        unset($contextWithoutException['exception']);
+
+        $record['context'] = $contextWithoutException;
 
         return $record;
     }

@@ -34,3 +34,26 @@ it('appends original message when different from exception message', function ()
         ->toContain('RuntimeException: Explosion')
         ->toContain('Processing payment failed');
 });
+
+it('drops the exception from context after summarizing', function (): void {
+    $processor = new ExceptionSummaryProcessor;
+
+    $exception = new RuntimeException('Out of memory');
+
+    $record = $processor([
+        'message' => 'Processing payload',
+        'context' => [
+            'exception' => $exception,
+            'job_id' => 42,
+        ],
+    ]);
+
+    expect($record)->toHaveKey('context');
+
+    expect($record['context'])
+        ->toBeArray()
+        ->not->toHaveKey('exception')
+        ->toHaveKey('job_id');
+
+    expect($record['context']['job_id'])->toBe(42);
+});
