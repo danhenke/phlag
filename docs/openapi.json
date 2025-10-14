@@ -67,6 +67,47 @@
                 }
             }
         },
+        "/v1/docs/openapi.json": {
+            "get": {
+                "tags": [
+                    "Documentation"
+                ],
+                "summary": "Retrieve the OpenAPI specification JSON.",
+                "operationId": "getOpenApiDocument",
+                "responses": {
+                    "200": {
+                        "description": "OpenAPI document as JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Specification artifact is not available.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Specification artifact could not be parsed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/projects": {
             "get": {
                 "tags": [
@@ -2163,6 +2204,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Documentation",
+            "description": "Documentation"
+        },
         {
             "name": "Projects",
             "description": "Projects"

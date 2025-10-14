@@ -35,5 +35,4 @@ it('marks API endpoints as not implemented yet', function (string $method, strin
 })->with([
     ['POST', '/v1/auth/token'],
     ['GET', '/v1/evaluate'],
-    ['GET', '/v1/docs/openapi.json'],
 ]);

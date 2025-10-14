@@ -455,7 +455,7 @@ PR descriptions should also mention any migrations, environment variables, or op
 -   Swagger UI: `/docs`
 -   Postman Collection: `/postman/FeatureFlagService.postman_collection.json`
 
-Regenerate docs once you have sourced environment variables:
+Regenerate docs once you have sourced environment variables; the API endpoint will serve the generated artifact and returns a 404 if it is missing:
 
 ```bash
 composer openapi:generate
