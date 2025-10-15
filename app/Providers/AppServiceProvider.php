@@ -52,11 +52,15 @@ class AppServiceProvider extends ServiceProvider
 
             $snapshotTtl = config('flag_cache.snapshot_ttl');
             $evaluationTtl = config('flag_cache.evaluation_ttl');
+            $snapshotsEnabled = (bool) config('flag_cache.snapshots_enabled', true);
+            $evaluationsEnabled = (bool) config('flag_cache.evaluations_enabled', true);
 
             return new FlagCacheRepository(
                 redis: $client,
                 snapshotTtlSeconds: is_numeric($snapshotTtl) ? (int) $snapshotTtl : null,
-                evaluationTtlSeconds: is_numeric($evaluationTtl) ? (int) $evaluationTtl : null
+                evaluationTtlSeconds: is_numeric($evaluationTtl) ? (int) $evaluationTtl : null,
+                snapshotsEnabled: $snapshotsEnabled,
+                evaluationsEnabled: $evaluationsEnabled
             );
         });
     }

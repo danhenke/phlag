@@ -63,6 +63,10 @@ Invalidation payloads are JSON objects containing `project` and `environment`. L
 -   Evaluation caches couple TTL with pub/sub invalidations so missed events have a bounded blast radius. Audit metrics should monitor key age and hit rates to refine TTL values over time.
 -   Operators can temporarily lower TTLs during large rollouts or flag migrations to guarantee faster recovery while leaving the invalidation pipeline intact. Restoring the default keeps Redis churn manageable once the rollout stabilises.
 
+### Operational toggles
+
+-   Local troubleshooting can disable snapshot or evaluation caching entirely by setting `FLAG_CACHE_SNAPSHOTS_ENABLED=false` or `FLAG_CACHE_EVALUATIONS_ENABLED=false`. When disabled the application skips reads/writes but still supports invalidation so other workers keep behaving correctly.
+
 ## Consequences
 
 Positive

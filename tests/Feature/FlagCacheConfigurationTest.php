@@ -27,3 +27,50 @@ it('falls back to default TTLs when invalid values are provided', function (): v
     expect($snapshotTtl)->toBe(300);
     expect($evaluationTtl)->toBe(300);
 });
+
+it('skips snapshot caching when disabled', function (): void {
+    $repository = new FlagCacheRepository(
+        redis: null,
+        snapshotTtlSeconds: 300,
+        evaluationTtlSeconds: 300,
+        snapshotsEnabled: false,
+        evaluationsEnabled: true
+    );
+
+    $repository->storeSnapshot('project', 'production', ['example' => 'value']);
+
+    expect($repository->getSnapshot('project', 'production'))->toBeNull();
+});
+
+it('skips evaluation caching when disabled', function (): void {
+    $repository = new FlagCacheRepository(
+        redis: null,
+        snapshotTtlSeconds: 300,
+        evaluationTtlSeconds: 300,
+        snapshotsEnabled: true,
+        evaluationsEnabled: false
+    );
+
+    $repository->storeEvaluation(
+        'project',
+        'production',
+        'flag',
+        'user-123',
+        ['country' => ['US']],
+        [
+            'variant' => 'enabled',
+            'reason' => 'test',
+            'rollout' => 100,
+        ],
+        'signature'
+    );
+
+    expect($repository->getEvaluation(
+        'project',
+        'production',
+        'flag',
+        'user-123',
+        ['country' => ['US']],
+        'signature'
+    ))->toBeNull();
+});

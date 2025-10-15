@@ -41,6 +41,7 @@ class EvaluateFlagController extends Controller
         $project = null;
         $environment = null;
         $flag = null;
+        $flagSnapshotData = null;
         $shouldRefreshSnapshot = $snapshot === null;
 
         if ($snapshot !== null) {
@@ -61,6 +62,9 @@ class EvaluateFlagController extends Controller
 
                 if (! is_array($flagData)) {
                     $shouldRefreshSnapshot = true;
+                } else {
+                    $flagSnapshotData = $flagData;
+                    $flag = $this->snapshotFactory->hydrateFlag($flagData);
                 }
             } else {
                 $shouldRefreshSnapshot = true;
@@ -114,6 +118,24 @@ class EvaluateFlagController extends Controller
                     'flag' => $flagKey,
                 ]
             );
+        }
+
+        if (! $shouldRefreshSnapshot && $flagSnapshotData !== null) {
+            $snapshotEnabled = (bool) ($flagSnapshotData['is_enabled'] ?? false);
+            $snapshotVariants = $flagSnapshotData['variants'] ?? null;
+            $snapshotRules = $flagSnapshotData['rules'] ?? null;
+            $snapshotUpdatedAt = is_string($flagSnapshotData['updated_at'] ?? null)
+                ? $flagSnapshotData['updated_at']
+                : null;
+
+            if (
+                $snapshotEnabled !== (bool) $flagRecord->is_enabled
+                || $snapshotVariants !== $flagRecord->variants
+                || $snapshotRules !== $flagRecord->rules
+                || ($snapshotUpdatedAt !== $flagRecord->updated_at?->toISOString())
+            ) {
+                $shouldRefreshSnapshot = true;
+            }
         }
 
         $flag = $flagRecord;
