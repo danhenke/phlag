@@ -7,6 +7,7 @@ namespace Phlag\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Phlag\Evaluations\Cache\FlagCacheRepository;
+use Phlag\Evaluations\Cache\FlagSignatureHasher;
 use Phlag\Evaluations\Cache\FlagSnapshotFactory;
 use Phlag\Evaluations\EvaluationContext;
 use Phlag\Evaluations\EvaluationResult;
@@ -25,7 +26,8 @@ class EvaluateFlagController extends Controller
     public function __construct(
         private readonly FlagEvaluator $evaluator,
         private readonly FlagCacheRepository $cacheRepository,
-        private readonly FlagSnapshotFactory $snapshotFactory
+        private readonly FlagSnapshotFactory $snapshotFactory,
+        private readonly FlagSignatureHasher $signatureHasher
     ) {}
 
     public function __invoke(EvaluateFlagRequest $request): JsonResponse
@@ -149,7 +151,7 @@ class EvaluateFlagController extends Controller
             $this->cacheRepository->storeSnapshot($project->key, $environment->key, $snapshotPayload);
         }
 
-        $flagSignature = $this->flagSignature($flag);
+        $flagSignature = $this->signatureHasher->hash($flag);
 
         $context = new EvaluationContext(
             project: $project,
@@ -237,23 +239,5 @@ class EvaluateFlagController extends Controller
             ->setStatusCode(HttpResponse::HTTP_OK)
             ->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0')
             ->header('Vary', 'Authorization, Accept-Encoding');
-    }
-
-    private function flagSignature(Flag $flag): string
-    {
-        $payload = [
-            'updated_at' => $flag->updated_at?->toISOString(),
-            'is_enabled' => (bool) $flag->is_enabled,
-            'variants' => $flag->variants,
-            'rules' => $flag->rules,
-        ];
-
-        try {
-            $encoded = json_encode($payload, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
-            return hash('sha1', serialize($payload));
-        }
-
-        return hash('sha1', $encoded);
     }
 }
