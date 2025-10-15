@@ -4,6 +4,9 @@ namespace Phlag\Providers;
 
 use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Support\ServiceProvider;
+use Phlag\Auth\Jwt\Configuration as JwtConfiguration;
+use Phlag\Auth\Jwt\JwtTokenIssuer;
+use Phlag\Auth\Jwt\JwtTokenVerifier;
 use Phlag\Evaluations\Cache\FlagCacheRepository;
 use Phlag\Http\Kernel as HttpKernel;
 use Phlag\Models\Environment;
@@ -13,6 +16,8 @@ use Phlag\Observers\EnvironmentObserver;
 use Phlag\Observers\FlagObserver;
 use Phlag\Observers\ProjectObserver;
 use Phlag\Redis\RedisClient;
+use Phlag\Support\Clock\Clock;
+use Phlag\Support\Clock\SystemClock;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +39,29 @@ class AppServiceProvider extends ServiceProvider
         if (! $this->app->bound(HttpKernelContract::class)) {
             $this->app->singleton(HttpKernelContract::class, HttpKernel::class);
         }
+
+        $this->app->singleton(JwtConfiguration::class, function () {
+            /** @var array<string, mixed> $config */
+            $config = config('jwt', []);
+
+            return JwtConfiguration::fromArray($config);
+        });
+
+        $this->app->singleton(Clock::class, static fn (): Clock => new SystemClock);
+
+        $this->app->singleton(JwtTokenIssuer::class, function (): JwtTokenIssuer {
+            return new JwtTokenIssuer(
+                configuration: $this->app->make(JwtConfiguration::class),
+                clock: $this->app->make(Clock::class)
+            );
+        });
+
+        $this->app->singleton(JwtTokenVerifier::class, function (): JwtTokenVerifier {
+            return new JwtTokenVerifier(
+                configuration: $this->app->make(JwtConfiguration::class),
+                clock: $this->app->make(Clock::class)
+            );
+        });
 
         $this->app->singleton(FlagCacheRepository::class, function () {
             $config = config('database.redis.cache');

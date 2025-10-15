@@ -58,16 +58,34 @@ This service allows developers to **create**, **manage**, and **evaluate feature
 
 ## 📁 Project Structure
 
+Core directories follow the Laravel Zero conventions documented in [`doc/adr`](./doc/adr) and the repo guidelines: organize new code by bounded context under `App\`, drive configuration from files in `config/`, and mirror production namespaces in the Pest suites.
+
 ```
 phlag/
-├─ app/                 # Commands and application services
-├─ bootstrap/           # Laravel Zero bootstrap
-├─ config/              # Application configuration
-├─ doc/adr/             # Architecture decision records
-├─ public/              # HTTP entrypoint served by Docker
-├─ tests/               # Unit and feature tests
-├─ vendor/              # Composer dependencies
-├─ phlag                # Laravel Zero console binary
+├─ app/
+│  ├─ Commands/          # Laravel Zero CLI commands grouped by bounded context
+│  ├─ Evaluations/       # Flag evaluation services and domain logic
+│  ├─ Http/              # API controllers, middleware, and request validation
+│  ├─ OpenApi/           # swagger-php definitions for documentation
+│  └─ Support/           # Shared helpers, value objects, and factories
+├─ api/                  # swagger-php bootstrap script for OpenAPI generation
+├─ bootstrap/            # Laravel Zero bootstrap files
+├─ builds/               # PHAR artifacts built via Box
+├─ config/               # Environment-driven configuration (synced with ADRs)
+├─ database/
+│  ├─ migrations/        # PostgreSQL schema migrations
+│  └─ seeders/           # Test and demo seeders
+├─ doc/                  # ADRs, 12-Factor checklist, and operational guides
+├─ docs/                 # Generated OpenAPI JSON for tooling
+├─ public/               # HTTP entrypoint served behind Docker
+├─ routes/
+│  └─ api.php            # API route declarations
+├─ scripts/              # Docker and app helper scripts (migrate, cache warm, etc.)
+├─ tests/
+│  ├─ Feature/           # Pest feature suites mirroring App\ namespaces
+│  ├─ Unit/              # Pest unit suites for smaller components
+│  └─ Support/           # Test fixtures and factories
+├─ phlag                 # Laravel Zero console binary
 ├─ composer.json
 └─ README.md
 ```
@@ -128,7 +146,7 @@ JWT_SECRET=$(openssl rand -base64 32)
 EOF
 ```
 
-For hosted environments configure RSA signing keys via `JWT_KEY_ID`, `JWT_PRIVATE_KEY`, and `JWT_PUBLIC_KEY` according to [`doc/adr/0010-manage-jwt-signing-keys.md`](./doc/adr/0010-manage-jwt-signing-keys.md). The `JWT_SECRET` value above is a local-only fallback so contributors can start without managing PEM files.
+For hosted environments configure RSA signing keys via `JWT_KEY_ID`, `JWT_PRIVATE_KEY`, and `JWT_PUBLIC_KEY` according to [`doc/adr/0010-manage-jwt-signing-keys.md`](./doc/adr/0010-manage-jwt-signing-keys.md). The `JWT_SECRET` value above is a local-only fallback so contributors can start without managing PEM files. Tune token lifetimes with `JWT_TTL` (seconds, default `3600`) and adjust clock drift tolerance using `JWT_CLOCK_SKEW` (seconds, default `60`).
 
 Load the variables into your shell whenever you start a new terminal:
 

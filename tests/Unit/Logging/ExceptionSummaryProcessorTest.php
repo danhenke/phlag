@@ -57,3 +57,38 @@ it('drops the exception from context after summarizing', function (): void {
 
     expect($record['context']['job_id'])->toBe(42);
 });
+
+it('adds a trimmed stack trace to the context', function (): void {
+    $processor = new ExceptionSummaryProcessor;
+
+    $exception = null;
+
+    try {
+        (function (): void {
+            (function (): void {
+                throw new RuntimeException('Stack failure');
+            })();
+        })();
+    } catch (RuntimeException $caught) {
+        $exception = $caught;
+    }
+
+    expect($exception)->not->toBeNull();
+
+    $record = $processor([
+        'message' => 'Something exploded',
+        'context' => ['exception' => $exception],
+    ]);
+
+    expect($record['context'])->toHaveKey('stack_trace');
+
+    $trace = $record['context']['stack_trace'];
+
+    expect($trace)->toBeString();
+
+    $lines = explode(PHP_EOL, $trace);
+
+    foreach ($lines as $line) {
+        expect($line)->toBe(trim($line))->not->toBe('');
+    }
+});
