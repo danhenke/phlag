@@ -74,10 +74,23 @@ erDiagram
         timestamptz updated_at
     }
 
+    API_CREDENTIALS {
+        uuid id PK
+        uuid project_id FK
+        uuid environment_id FK
+        string key_hash UK
+        boolean is_active
+        timestamptz expires_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     PROJECTS ||--o{ ENVIRONMENTS : hosts
     PROJECTS ||--o{ FLAGS : owns
     PROJECTS ||--o{ EVALUATIONS : records
+    PROJECTS ||--o{ API_CREDENTIALS : authenticates
     ENVIRONMENTS ||--o{ EVALUATIONS : scopes
+    ENVIRONMENTS ||--o{ API_CREDENTIALS : secures
     FLAGS ||--o{ EVALUATIONS : produces
     PROJECTS ||--o{ AUDIT_EVENTS : audits
     ENVIRONMENTS }o..o{ AUDIT_EVENTS : contextualizes
@@ -89,6 +102,7 @@ erDiagram
 - `environments`, `flags`, and `evaluations` cascade on project deletion; derived records disappear with the parent project.
 - Evaluations belong to a single environment/flag pair and capture request metadata for debugging.
 - Audit events may reference a project, environment, and/or flag (all optional) to describe the scope of the change.
+- API credentials store SHA-256 hashes of project/environment API keys so only hashed material lands in Postgres. Seeders mint demo credentials only when `PHLAG_DEMO_API_KEY` is defined. Tokens cannot be issued when a credential is inactive or past its optional expiration.
 
 ## Keeping the Diagram Updated
 

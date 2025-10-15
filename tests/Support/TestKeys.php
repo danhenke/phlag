@@ -4,93 +4,89 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use const OPENSSL_KEYTYPE_RSA;
+
+use RuntimeException;
+
+use function openssl_pkey_export;
+use function openssl_pkey_get_details;
+use function openssl_pkey_new;
+
 final class TestKeys
 {
     public const ACTIVE_KEY_ID = 'kid-active';
 
     public const PREVIOUS_KEY_ID = 'kid-previous';
 
-    public const RSA_PRIVATE_KEY = <<<'PEM'
------BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEAypsAXhIe4Kq8Wy+RJhJ5eH2TWz9/TbUOmYFz448+xsLYhtbO
-KPZIMDumTwy2ZrcuV7Es7juG3wR7xI8DOE9BL9dVeXftea0aTErgW2tWItn1oriv
-Msh9xx2k/zHwXxjw3eZOm6/Jmtz4AN9stBrvCczVGa0tlrYUjaZVtqbRrW391oKP
-38hNuYgW7iBSnpsW/be1jYAqtvuRXAah7s6YrvyUAJkLckB0WuPcPlXHcaDACbKt
-6L8xCeL9noAAgJzW9INY/egPtHdXAZLrLnswvHL+ds8R2ZH0pps9HAfw0RQ8m4iZ
-b9rCmvy62bh6NRg4F0J0e64AaDIsgTEdngH8PQIDAQABAoIBAQDHiSAzhWUjnwMi
-SxaIiGlZYVNe6opV3ZsjU3rvAoSw+/SD18nyTZuK5TRFZh+9yWq6sqOtfLK3sZKz
-YqWpL2Tj2Q81MgePbgwYVyXe4zdR25cvSvRA73PwRiHZszUoc0fFQqzoZ5gGDNmz
-AlfsiRoibLjzMLtVUr2rQ8XmvSSDx66M7aBbXV/EzWds7WzFFdIpCC50nAqD1/fj
-7MY2TaWyOXOhbrFg5BP0QXskY8T3HYBroIj7NHXFfSOhKvrXPqtmghP1ZA8wsaos
-JaxBd4E4Uf1s6ioZq8Ap9+7SuX7IO+s6y9grRtSyTokiXBqDuabmij9kcvd4TWAx
-igbvdn+BAoGBAPDPDAGhjBxqUyPp1P8aRg761CSf33ZZ7Bhfv7cfhK2MfwyXRhuJ
-Bx/wS2hRX4P0hi7c+yIuqlUzRDkPQCxA41VajZxBg8Bsft4vqB9O8O8RwlQKIlpl
-AMmUJzDdm8r6f9hBcsmnl49ydY1asRArTAf416Fz05qsvUStv8N9z7M/AoGBANdi
-/QoVHyWfv+EktA+q5+nvfhAdsHI88IVQJ0YNyDiOoWymvp5dpwisw2sEktjlK1qw
-dRWUheDP8f3vRU1zJ0hW5F75mXizuSidTxgf38pszaT4o3ys9ddYSpK87guvgkrA
-KkwzQtG1x0p+gCDurvQ2FWIDNgz4O5Ekob0mbP2DAoGBAKnOBjRcOxWKcCgB6j0c
-xMwpWVCeH5AwJoilc+XoZsGOMcSqIzilbo25/yKHRugglEIVd00KRPghV3k45NKP
-yv5UBUlq9UHJ/8gjKNUy8DhUeIiUQNcnI+ABBYWyrvn5nA7dT9kcwYXYe0X67qJt
-NYbllP/3Uf5e0nPMZU2vuLc3AoGAJqphjI7QIZv1AUDqhimDKo7QzanWxBtGflgu
-RLgyqlyIhA3HCHz9gGQrTKnshr1VNBmbWz1nbz1FTvXGNiom8iiPJLGgKHfzFGRx
-D36hWSCBJk1wY/BUzczOzlrWTQi71hl7PmSxaR494ZSmAcN3auXOnuK+sENbximS
-U3dzd2sCgYB9tjCxBCV4bSO0P2CcEhCtbzy+caFbUCqkbAPY0cmPfnKk0QgQzuQw
-ZAGTW7qTepotbcMa39dUb7EC4NrEtet/Ob16WhxC2IDn3nVGqYsTj7UcLOF+5/Xx
-gqyri4GKM6aHh95HB6qBk8nGOWB7rS6zFS8wC+w1HJtCc9oy1wPPsg==
------END RSA PRIVATE KEY-----
-PEM;
+    /** @var array{private: string, public: string}|null */
+    private static ?array $activePair = null;
 
-    public const RSA_PUBLIC_KEY = <<<'PEM'
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAypsAXhIe4Kq8Wy+RJhJ5
-eH2TWz9/TbUOmYFz448+xsLYhtbOKPZIMDumTwy2ZrcuV7Es7juG3wR7xI8DOE9B
-L9dVeXftea0aTErgW2tWItn1orivMsh9xx2k/zHwXxjw3eZOm6/Jmtz4AN9stBrv
-CczVGa0tlrYUjaZVtqbRrW391oKP38hNuYgW7iBSnpsW/be1jYAqtvuRXAah7s6Y
-rvyUAJkLckB0WuPcPlXHcaDACbKt6L8xCeL9noAAgJzW9INY/egPtHdXAZLrLnsw
-vHL+ds8R2ZH0pps9HAfw0RQ8m4iZb9rCmvy62bh6NRg4F0J0e64AaDIsgTEdngH8
-PQIDAQAB
------END PUBLIC KEY-----
-PEM;
+    /** @var array{private: string, public: string}|null */
+    private static ?array $previousPair = null;
 
-    public const PREVIOUS_RSA_PRIVATE_KEY = <<<'PEM'
------BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEA0LclbrWYV6lrn2OUleFhj8zNUndGcLLGtIDvh4hI7rSC6j0k
-Jm/T8MTzMujLaLmexNFY1LL/ayYEpqJ2B4b2k5QAIV0tHtHtRbjOYgQtlQ1Z/Lzx
-RN5v45qpagf+DNIzMZXoJunwGCI3ytE/PZTjvVL8njuqF2+eyBjVXQTTfPhddYIf
-2sGEqT3egoQOp7/udk4dMPxbDYjqL7EBqDcdzpocb5C6dOKqrEn7A7x/mG+0A4cl
-g2h1cLCzc5rCZYxpVix70jR2g0wrqNIoSw4O9iDNGHUBThwxVDQh59XepSgw71EP
-kSSLipm/w0yrM8ABRCYS8Mqf85pbNYBBfAO5bwIDAQABAoIBAE0cbTsC4p74nCeO
-LfZWB6qOOwmNwbufgWRtApIrWu6+SGPsZO/CfyZETanwcj5l3e/PfKdQ3qciq7M4
-8KyFQ5Jwqr+o4iOx4ZzR04ZJDuIzxZxn3ifYmrQXjyH6g/UOsBVQ0i2WXrs74SsQ
-tfG1kZKAF48KciQofBxneGTehJh1qwCXNhSZGiN05U9lChUid7BH2Vgyz2AQpvmH
-VaYlc1v9FQRsiIpzQZCg+oY0bJPO2bRulhyg31QhtZytat6GH3ZzFd9XbE9vr0cb
-09hzcJqoJqttcL3C39pdBoWHHwvSHR3wOTSYFsrRIxUp4tNVbbF898TXINxG16nu
-MW8RhrECgYEA+39YTsYDDKxuf7wVe5wUmLzYDeuEe89TdrKis/HkEWsxWoBaF0bC
-mXjgT7sjfYkTeMcyMoEXrD92XOJC6RTl0/7FnLQ6avcWtmvgYwHn3Oyejb3wvHQS
-4Jn06uGdax1dpq/2pGXIdx1USdr8+934nZecJraH5eIFglYrisnZXJcCgYEA1HO5
-W2LiygbdTA7iRJJ6R16Ev9DmsL64piQadd+RZtAoHX1kHI503HRFd1DwsNuyZ7Zs
-f/FQiw5DXAehtypYbds9QOPgOtzTpCF5nxf+OsTvnAH9Ox9giONNcnrlP2LGJHOh
-25TnuMA0k6q0Jeg1vNtRCcfaZbQpvALN5UbvrOkCgYAir+KvIrJi+hlXdsqDvPg+
-RLWL3fLs3KCHW4YDSZaKLH2nHNLQKQtH/Zr6hDYV52UPIHI08wcf07TwhKhz21UD
-kz0QKu9vt1qjmGdfYHDpUJ1hsVPVujCsV6+nAa0ji+5Rwi1DaWJnw1zPvutrlabn
-nXSFBmHh+/WEj3v77XEUSwKBgQC34tZ78BJmVRy0WWmlerdWEMyMDm+uadX/D97L
-SdBbki42oDLHuNITgpwh0zARlIdN14sADsntIlJRVNW3aXKS26GgCd0qdbrGJKdV
-efn1ukG+4cXip5zxvvRo81B71a21HVTqb29F7S9U5Pr6mIvyxE3XTmGNiCxbbH30
-RrrrCQKBgQCuR4CXsHSpmGMrwjIz17q9qpYvTPvzP4NDFfxZADmqmHiGypR1KXvW
-XXDwGUal/Lk9aeJAqdTSxTUMDMxpOVko7kYDNaR9YKCIqX+6a7A8snvuEp3INhJ6
-EQzPhJtvXrEHwBsQAxvgOkdT1l+57ubxPJbVEY1CGZsxEbLLFw6lVA==
------END RSA PRIVATE KEY-----
-PEM;
+    public static function activePrivateKey(): string
+    {
+        return self::keyPair(self::$activePair)['private'];
+    }
 
-    public const PREVIOUS_PUBLIC_KEY = <<<'PEM'
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0LclbrWYV6lrn2OUleFh
-j8zNUndGcLLGtIDvh4hI7rSC6j0kJm/T8MTzMujLaLmexNFY1LL/ayYEpqJ2B4b2
-k5QAIV0tHtHtRbjOYgQtlQ1Z/LzxRN5v45qpagf+DNIzMZXoJunwGCI3ytE/PZTj
-vVL8njuqF2+eyBjVXQTTfPhddYIf2sGEqT3egoQOp7/udk4dMPxbDYjqL7EBqDcd
-zpocb5C6dOKqrEn7A7x/mG+0A4clg2h1cLCzc5rCZYxpVix70jR2g0wrqNIoSw4O
-9iDNGHUBThwxVDQh59XepSgw71EPkSSLipm/w0yrM8ABRCYS8Mqf85pbNYBBfAO5
-bwIDAQAB
------END PUBLIC KEY-----
-PEM;
+    public static function activePublicKey(): string
+    {
+        return self::keyPair(self::$activePair)['public'];
+    }
+
+    public static function previousPrivateKey(): string
+    {
+        return self::keyPair(self::$previousPair)['private'];
+    }
+
+    public static function previousPublicKey(): string
+    {
+        return self::keyPair(self::$previousPair)['public'];
+    }
+
+    /**
+     * @param  array{private: string, public: string}|null  $pair
+     * @return array{private: string, public: string}
+     */
+    private static function keyPair(?array &$pair): array
+    {
+        if ($pair === null) {
+            $pair = self::generateKeyPair();
+        }
+
+        return $pair;
+    }
+
+    /**
+     * @return array{private: string, public: string}
+     */
+    private static function generateKeyPair(): array
+    {
+        $resource = openssl_pkey_new([
+            'private_key_bits' => 2048,
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        ]);
+
+        if ($resource === false) {
+            throw new RuntimeException('Unable to generate RSA key pair for tests.');
+        }
+
+        if (! openssl_pkey_export($resource, $privateKey)) {
+            throw new RuntimeException('Unable to export RSA private key for tests.');
+        }
+
+        $details = openssl_pkey_get_details($resource);
+
+        if ($details === false || ! isset($details['key'])) {
+            throw new RuntimeException('Unable to extract RSA public key for tests.');
+        }
+
+        /** @var string $publicKey */
+        $publicKey = $details['key'];
+
+        return [
+            'private' => $privateKey,
+            'public' => $publicKey,
+        ];
+    }
 }

@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array<string, mixed>|null $metadata
  * @property-read \Illuminate\Support\Carbon|null $created_at
  * @property-read \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Support\Collection<int, ApiCredential> $apiCredentials
  */
 class Environment extends Model
 {
@@ -77,6 +78,17 @@ class Environment extends Model
     {
         /** @var HasMany<Evaluation, static> $relation */
         $relation = $this->hasMany(Evaluation::class);
+
+        return $relation;
+    }
+
+    /**
+     * @return HasMany<ApiCredential, static>
+     */
+    public function apiCredentials(): HasMany
+    {
+        /** @var HasMany<ApiCredential, static> $relation */
+        $relation = $this->hasMany(ApiCredential::class);
 
         return $relation;
     }

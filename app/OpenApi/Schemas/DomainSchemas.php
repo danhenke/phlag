@@ -379,4 +379,32 @@ use OpenApi\Attributes as OA;
     ],
     description: 'Response envelope for flag evaluation results.'
 )]
+#[OA\Schema(
+    schema: 'AuthTokenRequest',
+    required: ['project', 'environment', 'api_key'],
+    properties: [
+        new OA\Property(property: 'project', type: 'string', example: 'demo-project', maxLength: 255),
+        new OA\Property(property: 'environment', type: 'string', example: 'production', maxLength: 255),
+        new OA\Property(property: 'api_key', type: 'string', example: '<project-environment-api-key>'),
+    ],
+    description: 'Payload for exchanging a project/environment API key for a JWT.'
+)]
+#[OA\Schema(
+    schema: 'AuthTokenResponse',
+    required: ['token', 'token_type', 'expires_in', 'project', 'environment', 'roles'],
+    properties: [
+        new OA\Property(property: 'token', type: 'string', description: 'Signed JWT bearer token.'),
+        new OA\Property(property: 'token_type', type: 'string', example: 'Bearer'),
+        new OA\Property(property: 'expires_in', type: 'integer', minimum: 0, example: 3600, description: 'Token lifetime in seconds.'),
+        new OA\Property(property: 'project', type: 'string', example: 'demo-project'),
+        new OA\Property(property: 'environment', type: 'string', example: 'production'),
+        new OA\Property(
+            property: 'roles',
+            type: 'array',
+            items: new OA\Items(type: 'string'),
+            example: ['projects.read', 'environments.read', 'flags.read', 'flags.evaluate', 'cache.warm']
+        ),
+    ],
+    description: 'JWT issuance response payload.'
+)]
 final class DomainSchemas {}

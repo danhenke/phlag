@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \Illuminate\Support\Carbon|null $created_at
  * @property-read \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Support\Collection<int, Environment> $environments
+ * @property-read \Illuminate\Support\Collection<int, ApiCredential> $apiCredentials
  */
 class Project extends Model
 {
@@ -86,6 +87,19 @@ class Project extends Model
     {
         /** @var HasMany<Flag, static> $relation */
         $relation = $this->hasMany(Flag::class);
+
+        return $relation;
+    }
+
+    /**
+     * Project API credentials.
+     *
+     * @return HasMany<ApiCredential, static>
+     */
+    public function apiCredentials(): HasMany
+    {
+        /** @var HasMany<ApiCredential, static> $relation */
+        $relation = $this->hasMany(ApiCredential::class);
 
         return $relation;
     }

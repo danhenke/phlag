@@ -7,11 +7,16 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Phlag\Auth\ApiKeys\ApiCredentialHasher;
+use Phlag\Models\ApiCredential;
 use Phlag\Models\AuditEvent;
 use Phlag\Models\Environment;
 use Phlag\Models\Evaluation;
 use Phlag\Models\Flag;
 use Phlag\Models\Project;
+
+use function is_string;
+use function trim;
 
 class DatabaseSeeder extends Seeder
 {
@@ -33,6 +38,8 @@ class DatabaseSeeder extends Seeder
 
     private const PROJECT_AUDIT_ID = '99999999-9999-4999-9999-999999999999';
 
+    private const PRODUCTION_API_CREDENTIAL_ID = 'aaaa1111-aaaa-4aaa-9aaa-aaaaaaaaaaaa';
+
     /**
      * Seed the application's database.
      */
@@ -41,6 +48,7 @@ class DatabaseSeeder extends Seeder
         DB::transaction(function (): void {
             $project = $this->seedProject();
             $environments = $this->seedEnvironments($project);
+            $this->seedApiCredentials($project, $environments);
             $flags = $this->seedFlags($project);
 
             $this->seedEvaluations($project, $environments, $flags);
@@ -194,6 +202,42 @@ class DatabaseSeeder extends Seeder
             'checkout' => $checkout,
             'recommendations' => $recommendations,
         ];
+    }
+
+    /**
+     * @param  array<string, Environment>  $environments
+     */
+    private function seedApiCredentials(Project $project, array $environments): void
+    {
+        $production = $environments['production'] ?? null;
+
+        if (! $production instanceof Environment) {
+            return;
+        }
+
+        $credential = ApiCredential::query()->firstOrNew([
+            'id' => self::PRODUCTION_API_CREDENTIAL_ID,
+        ]);
+
+        if (! $credential->exists) {
+            $credential->id = self::PRODUCTION_API_CREDENTIAL_ID;
+        }
+
+        $apiKey = env('PHLAG_DEMO_API_KEY');
+
+        if (! is_string($apiKey) || trim($apiKey) === '') {
+            return;
+        }
+
+        $credential->fill([
+            'project_id' => $project->id,
+            'environment_id' => $production->id,
+            'key_hash' => ApiCredentialHasher::make($apiKey),
+            'is_active' => true,
+            'expires_at' => null,
+        ]);
+
+        $credential->save();
     }
 
     /**

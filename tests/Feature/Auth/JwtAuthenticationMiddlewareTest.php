@@ -15,12 +15,12 @@ beforeEach(function (): void {
         'keys' => [
             'active' => [
                 'id' => TestKeys::ACTIVE_KEY_ID,
-                'private_key' => TestKeys::RSA_PRIVATE_KEY,
-                'public_key' => TestKeys::RSA_PUBLIC_KEY,
+                'private_key' => TestKeys::activePrivateKey(),
+                'public_key' => TestKeys::activePublicKey(),
             ],
             'previous' => [
                 'id' => TestKeys::PREVIOUS_KEY_ID,
-                'public_key' => TestKeys::PREVIOUS_PUBLIC_KEY,
+                'public_key' => TestKeys::previousPublicKey(),
             ],
             'secret' => null,
         ],
