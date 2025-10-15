@@ -44,12 +44,18 @@ class EvaluateFlagController extends Controller
         $shouldRefreshSnapshot = $snapshot === null;
 
         if ($snapshot !== null) {
+            /** @var array<string, mixed> $snapshot */
             $projectData = $snapshot['project'] ?? null;
             $environmentData = $snapshot['environment'] ?? null;
 
             if (is_array($projectData) && is_array($environmentData)) {
-                $project = $this->snapshotFactory->hydrateProject($projectData);
-                $environment = $this->snapshotFactory->hydrateEnvironment($environmentData);
+                /** @var array<string, mixed> $projectPayload */
+                $projectPayload = $projectData;
+                /** @var array<string, mixed> $environmentPayload */
+                $environmentPayload = $environmentData;
+
+                $project = $this->snapshotFactory->hydrateProject($projectPayload);
+                $environment = $this->snapshotFactory->hydrateEnvironment($environmentPayload);
 
                 $flagData = $this->snapshotFactory->findFlag($snapshot, $flagKey);
 
@@ -141,6 +147,13 @@ class EvaluateFlagController extends Controller
         );
 
         if ($cachedEvaluation !== null) {
+            /** @var array{
+             *     variant: string|null,
+             *     reason: string,
+             *     rollout: int,
+             *     payload?: array<string, mixed>,
+             *     bucket?: int
+             * } $cachedEvaluation */
             $result = new EvaluationResult(
                 variant: $cachedEvaluation['variant'],
                 reason: $cachedEvaluation['reason'],

@@ -8,8 +8,6 @@ final class RedisClient
 {
     private const DEFAULT_TIMEOUT = 5.0;
 
-    private ?\Socket $socket = null;
-
     /**
      * @var resource|null
      */
@@ -37,27 +35,30 @@ final class RedisClient
                 throw new \InvalidArgumentException(sprintf('Unable to parse Redis URL [%s].', $config['url']));
             }
 
-            $host = $parts['host'] ?? '127.0.0.1';
-            $port = isset($parts['port']) ? (int) $parts['port'] : 6379;
-            $password = isset($parts['pass']) ? (string) $parts['pass'] : null;
-            $path = $parts['path'] ?? '';
-            $database = $path !== '' ? (int) ltrim($path, '/') : (int) ($config['database'] ?? 0);
+            $host = isset($parts['host']) && is_string($parts['host']) ? $parts['host'] : '127.0.0.1';
+            $port = self::intFromConfig($parts['port'] ?? null, 6379);
+            $password = isset($parts['pass']) && is_string($parts['pass']) ? $parts['pass'] : null;
+            $path = isset($parts['path']) && is_string($parts['path']) ? $parts['path'] : '';
+            $pathDatabase = ltrim($path, '/');
+            $database = $pathDatabase !== '' && is_numeric($pathDatabase)
+                ? (int) $pathDatabase
+                : self::intFromConfig($config['database'] ?? null, 0);
 
             return new self(
                 host: $host,
                 port: $port,
                 password: $password ?? (is_string($config['password'] ?? null) ? $config['password'] : null),
                 database: $database,
-                timeout: isset($config['timeout']) ? (float) $config['timeout'] : self::DEFAULT_TIMEOUT
+                timeout: self::floatFromConfig($config['timeout'] ?? null, self::DEFAULT_TIMEOUT)
             );
         }
 
         return new self(
             host: is_string($config['host'] ?? null) ? $config['host'] : '127.0.0.1',
-            port: isset($config['port']) ? (int) $config['port'] : 6379,
+            port: self::intFromConfig($config['port'] ?? null, 6379),
             password: is_string($config['password'] ?? null) ? $config['password'] : null,
-            database: isset($config['database']) ? (int) $config['database'] : 0,
-            timeout: isset($config['timeout']) ? (float) $config['timeout'] : self::DEFAULT_TIMEOUT
+            database: self::intFromConfig($config['database'] ?? null, 0),
+            timeout: self::floatFromConfig($config['timeout'] ?? null, self::DEFAULT_TIMEOUT)
         );
     }
 
@@ -139,7 +140,15 @@ final class RedisClient
             return [];
         }
 
-        return array_values(array_map(static fn ($value): string => (string) $value, $response));
+        $members = [];
+
+        foreach ($response as $value) {
+            if (is_string($value)) {
+                $members[] = $value;
+            }
+        }
+
+        return $members;
     }
 
     public function expire(string $key, int $ttl): void
@@ -152,6 +161,40 @@ final class RedisClient
         $this->execute('PUBLISH', [$channel, $message]);
     }
 
+    private static function intFromConfig(mixed $value, int $default): int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_float($value)) {
+            return (int) $value;
+        }
+
+        if (is_string($value) && is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return $default;
+    }
+
+    private static function floatFromConfig(mixed $value, float $default): float
+    {
+        if (is_float($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return (float) $value;
+        }
+
+        if (is_string($value) && is_numeric($value)) {
+            return (float) $value;
+        }
+
+        return $default;
+    }
+
     /**
      * @param  array<int, string>  $arguments
      */
@@ -159,9 +202,15 @@ final class RedisClient
     {
         $this->ensureConnection();
 
+        $stream = $this->stream;
+
+        if (! is_resource($stream)) {
+            throw new \RuntimeException('Redis stream not established.');
+        }
+
         $payload = $this->formatCommand($command, $arguments);
 
-        $written = fwrite($this->stream, $payload);
+        $written = fwrite($stream, $payload);
 
         if ($written === false || $written !== strlen($payload)) {
             throw new \RuntimeException(sprintf('Failed to write Redis command [%s].', $command));
@@ -177,6 +226,9 @@ final class RedisClient
         }
 
         $address = sprintf('tcp://%s:%d', $this->host, $this->port);
+
+        $errno = 0;
+        $errstr = '';
 
         $stream = @stream_socket_client(
             $address,
@@ -217,8 +269,7 @@ final class RedisClient
         $segments = sprintf('*%d', count($parts));
 
         foreach ($parts as $part) {
-            $segment = (string) $part;
-            $segments .= sprintf("\r\n$%d\r\n%s", strlen($segment), $segment);
+            $segments .= sprintf("\r\n$%d\r\n%s", strlen($part), $part);
         }
 
         return $segments."\r\n";
@@ -266,14 +317,17 @@ final class RedisClient
             return null;
         }
 
-        if (! is_resource($this->stream)) {
+        $stream = $this->stream;
+
+        if (! is_resource($stream)) {
             throw new \RuntimeException('Redis connection not established.');
         }
 
         $data = '';
 
         while (strlen($data) < $length) {
-            $chunk = fread($this->stream, $length - strlen($data));
+            $remaining = max(1, $length - strlen($data));
+            $chunk = fread($stream, $remaining);
 
             if ($chunk === false || $chunk === '') {
                 throw new \RuntimeException('Failed to read Redis bulk string.');
@@ -283,7 +337,11 @@ final class RedisClient
         }
 
         // Consume trailing CRLF.
-        fread($this->stream, 2);
+        $terminator = fread($stream, 2);
+
+        if ($terminator === false) {
+            throw new \RuntimeException('Failed to read Redis bulk string terminator.');
+        }
 
         return $data;
     }

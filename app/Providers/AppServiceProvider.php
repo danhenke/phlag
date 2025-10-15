@@ -35,13 +35,16 @@ class AppServiceProvider extends ServiceProvider
             $this->app->singleton(HttpKernelContract::class, HttpKernel::class);
         }
 
-        $this->app->singleton(FlagCacheRepository::class, function ($app) {
-            $config = config('database.redis.cache', []);
+        $this->app->singleton(FlagCacheRepository::class, function () {
+            $config = config('database.redis.cache');
             $client = null;
 
             if (is_array($config) && $config !== []) {
+                /** @var array<string, mixed> $cacheConfig */
+                $cacheConfig = $config;
+
                 try {
-                    $client = RedisClient::fromConfig($config);
+                    $client = RedisClient::fromConfig($cacheConfig);
                 } catch (\Throwable) {
                     $client = null;
                 }

@@ -62,7 +62,7 @@ final class FlagSnapshotFactory
                 'is_default' => (bool) $environment->is_default,
             ],
             'flags' => $flagItems,
-            'generated_at' => Carbon::now()->toISOString(),
+            'generated_at' => Carbon::now()->toIso8601String(),
         ];
     }
 
@@ -145,6 +145,7 @@ final class FlagSnapshotFactory
             }
 
             if (($flag['key'] ?? null) === $flagKey) {
+                /** @var array<string, mixed> $flag */
                 return $flag;
             }
         }

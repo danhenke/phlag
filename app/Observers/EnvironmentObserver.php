@@ -24,9 +24,17 @@ final class EnvironmentObserver
 
     private function invalidate(Environment $environment): void
     {
-        $project = $environment->project;
+        $project = null;
 
-        if (! $project instanceof Project) {
+        if ($environment->relationLoaded('project')) {
+            $related = $environment->getRelation('project');
+
+            if ($related instanceof Project) {
+                $project = $related;
+            }
+        }
+
+        if ($project === null) {
             $project = Project::query()->find($environment->project_id);
         }
 

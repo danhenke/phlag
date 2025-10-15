@@ -6,6 +6,15 @@ namespace Phlag\Evaluations\Cache;
 
 use Phlag\Redis\RedisClient;
 
+/**
+ * @phpstan-type EvaluationCachePayload array{
+ *     variant: string|null,
+ *     reason: string,
+ *     rollout: int,
+ *     payload?: array<string, mixed>,
+ *     bucket?: int
+ * }
+ */
 final class FlagCacheRepository
 {
     private const SNAPSHOT_TTL_SECONDS = 300;
@@ -24,7 +33,7 @@ final class FlagCacheRepository
     private array $arraySnapshots = [];
 
     /**
-     * @var array<string, array{payload: array<string, mixed>, expires_at: int}>
+     * @var array<string, array{payload: EvaluationCachePayload, expires_at: int}>
      */
     private array $arrayEvaluations = [];
 
@@ -54,14 +63,16 @@ final class FlagCacheRepository
      */
     public function getSnapshot(string $projectKey, string $environmentKey): ?array
     {
-        if ($this->arrayFallback || $this->redis === null) {
+        $redis = $this->redis;
+
+        if ($this->arrayFallback || $redis === null) {
             $this->enableFallback();
 
             return $this->getSnapshotFromArray($projectKey, $environmentKey);
         }
 
         try {
-            $payload = $this->redis?->get($this->snapshotKey($projectKey, $environmentKey));
+            $payload = $redis->get($this->snapshotKey($projectKey, $environmentKey));
         } catch (\Throwable) {
             $this->enableFallback();
 
@@ -73,7 +84,7 @@ final class FlagCacheRepository
         }
 
         try {
-            /** @var array<string, mixed>|null $decoded */
+            /** @var EvaluationCachePayload|null $decoded */
             $decoded = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
             $this->forgetSnapshot($projectKey, $environmentKey);
@@ -81,7 +92,12 @@ final class FlagCacheRepository
             return null;
         }
 
-        return is_array($decoded) ? $decoded : null;
+        if (! is_array($decoded)) {
+            return null;
+        }
+
+        /** @var array<string, mixed> $decoded */
+        return $decoded;
     }
 
     /**
@@ -89,7 +105,9 @@ final class FlagCacheRepository
      */
     public function storeSnapshot(string $projectKey, string $environmentKey, array $snapshot): void
     {
-        if ($this->arrayFallback || $this->redis === null) {
+        $redis = $this->redis;
+
+        if ($this->arrayFallback || $redis === null) {
             $this->enableFallback();
             $this->storeSnapshotInArray($projectKey, $environmentKey, $snapshot);
 
@@ -103,7 +121,7 @@ final class FlagCacheRepository
         }
 
         try {
-            $this->redis?->setex(
+            $redis->setex(
                 $this->snapshotKey($projectKey, $environmentKey),
                 self::SNAPSHOT_TTL_SECONDS,
                 $encoded
@@ -116,7 +134,9 @@ final class FlagCacheRepository
 
     public function forgetSnapshot(string $projectKey, string $environmentKey): void
     {
-        if ($this->arrayFallback || $this->redis === null) {
+        $redis = $this->redis;
+
+        if ($this->arrayFallback || $redis === null) {
             $this->enableFallback();
             $this->forgetSnapshotFromArray($projectKey, $environmentKey);
 
@@ -124,7 +144,7 @@ final class FlagCacheRepository
         }
 
         try {
-            $this->redis?->del([$this->snapshotKey($projectKey, $environmentKey)]);
+            $redis->del([$this->snapshotKey($projectKey, $environmentKey)]);
         } catch (\Throwable) {
             $this->enableFallback();
             $this->forgetSnapshotFromArray($projectKey, $environmentKey);
@@ -133,7 +153,7 @@ final class FlagCacheRepository
 
     /**
      * @param  array<string, array<int, string>>  $attributes
-     * @return array<string, mixed>|null
+     * @return EvaluationCachePayload|null
      */
     public function getEvaluation(
         string $projectKey,
@@ -143,14 +163,16 @@ final class FlagCacheRepository
         array $attributes,
         ?string $flagSignature = null
     ): ?array {
-        if ($this->arrayFallback || $this->redis === null) {
+        $redis = $this->redis;
+
+        if ($this->arrayFallback || $redis === null) {
             $this->enableFallback();
 
             return $this->getEvaluationFromArray($projectKey, $environmentKey, $flagKey, $userIdentifier, $attributes, $flagSignature);
         }
 
         try {
-            $payload = $this->redis?->get(
+            $payload = $redis->get(
                 $this->evaluationKey($projectKey, $environmentKey, $flagKey, $userIdentifier, $attributes, $flagSignature)
             );
         } catch (\Throwable) {
@@ -198,11 +220,13 @@ final class FlagCacheRepository
             return null;
         }
 
+        /** @var EvaluationCachePayload $decoded */
         return $decoded;
     }
 
     /**
      * @param  array<string, array<int, string>>  $attributes
+     * @param  EvaluationCachePayload  $payload
      */
     public function storeEvaluation(
         string $projectKey,
@@ -213,7 +237,9 @@ final class FlagCacheRepository
         array $payload,
         ?string $flagSignature = null
     ): void {
-        if ($this->arrayFallback || $this->redis === null) {
+        $redis = $this->redis;
+
+        if ($this->arrayFallback || $redis === null) {
             $this->enableFallback();
             $this->storeEvaluationInArray($projectKey, $environmentKey, $flagKey, $userIdentifier, $attributes, $payload, $flagSignature);
 
@@ -229,7 +255,7 @@ final class FlagCacheRepository
         $evaluationKey = $this->evaluationKey($projectKey, $environmentKey, $flagKey, $userIdentifier, $attributes, $flagSignature);
 
         try {
-            $this->redis?->setex(
+            $redis->setex(
                 $evaluationKey,
                 self::EVALUATION_TTL_SECONDS,
                 $encoded
@@ -237,8 +263,8 @@ final class FlagCacheRepository
 
             $indexKey = $this->evaluationIndexKey($projectKey, $environmentKey);
 
-            $this->redis?->sadd($indexKey, [$evaluationKey]);
-            $this->redis?->expire($indexKey, self::EVALUATION_TTL_SECONDS);
+            $redis->sadd($indexKey, [$evaluationKey]);
+            $redis->expire($indexKey, self::EVALUATION_TTL_SECONDS);
         } catch (\Throwable) {
             $this->enableFallback();
             $this->storeEvaluationInArray($projectKey, $environmentKey, $flagKey, $userIdentifier, $attributes, $payload, $flagSignature);
@@ -247,7 +273,9 @@ final class FlagCacheRepository
 
     public function forgetEvaluations(string $projectKey, string $environmentKey): void
     {
-        if ($this->arrayFallback || $this->redis === null) {
+        $redis = $this->redis;
+
+        if ($this->arrayFallback || $redis === null) {
             $this->enableFallback();
             $this->forgetEvaluationsFromArray($projectKey, $environmentKey);
 
@@ -257,14 +285,13 @@ final class FlagCacheRepository
         $indexKey = $this->evaluationIndexKey($projectKey, $environmentKey);
 
         try {
-            /** @var array<int, string> $members */
-            $members = $this->redis?->smembers($indexKey) ?? [];
+            $members = $redis->smembers($indexKey);
 
             if ($members !== []) {
-                $this->redis?->del($members);
+                $redis->del($members);
             }
 
-            $this->redis?->del([$indexKey]);
+            $redis->del([$indexKey]);
         } catch (\Throwable) {
             $this->enableFallback();
             $this->forgetEvaluationsFromArray($projectKey, $environmentKey);
@@ -273,7 +300,9 @@ final class FlagCacheRepository
 
     public function publishInvalidation(string $projectKey, string $environmentKey): void
     {
-        if ($this->arrayFallback || $this->redis === null) {
+        $redis = $this->redis;
+
+        if ($this->arrayFallback || $redis === null) {
             return;
         }
 
@@ -289,7 +318,7 @@ final class FlagCacheRepository
         }
 
         try {
-            $this->redis?->publish(self::INVALIDATION_CHANNEL, $payload);
+            $redis->publish(self::INVALIDATION_CHANNEL, $payload);
         } catch (\Throwable) {
             $this->enableFallback();
         }
@@ -373,6 +402,9 @@ final class FlagCacheRepository
         $this->redis = null;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     private function getSnapshotFromArray(string $projectKey, string $environmentKey): ?array
     {
         $key = $this->snapshotKey($projectKey, $environmentKey);
@@ -387,7 +419,10 @@ final class FlagCacheRepository
             return null;
         }
 
-        return $this->arraySnapshots[$key]['payload'];
+        /** @var array<string, mixed> $payload */
+        $payload = $this->arraySnapshots[$key]['payload'];
+
+        return $payload;
     }
 
     /**
@@ -410,7 +445,7 @@ final class FlagCacheRepository
 
     /**
      * @param  array<string, array<int, string>>  $attributes
-     * @return array<string, mixed>|null
+     * @return EvaluationCachePayload|null
      */
     private function getEvaluationFromArray(
         string $projectKey,
@@ -435,12 +470,15 @@ final class FlagCacheRepository
             return null;
         }
 
-        return $this->arrayEvaluations[$key]['payload'];
+        /** @var EvaluationCachePayload $payload */
+        $payload = $this->arrayEvaluations[$key]['payload'];
+
+        return $payload;
     }
 
     /**
      * @param  array<string, array<int, string>>  $attributes
-     * @param  array<string, mixed>  $payload
+     * @param  EvaluationCachePayload  $payload
      */
     private function storeEvaluationInArray(
         string $projectKey,
