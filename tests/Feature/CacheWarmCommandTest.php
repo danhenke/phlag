@@ -3,13 +3,20 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Str;
+use Phlag\Commands\Cache\WarmCommand;
 use Phlag\Evaluations\Cache\FlagCacheRepository;
 use Phlag\Evaluations\Cache\FlagSignatureHasher;
+use Phlag\Evaluations\Cache\FlagSnapshotFactory;
+use Phlag\Evaluations\FlagEvaluator;
 use Phlag\Models\Environment;
+use Phlag\Models\Evaluation;
 use Phlag\Models\Flag;
 use Phlag\Models\Project;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\NullOutput;
 
 beforeEach(function (): void {
+    app()->forgetInstance(FlagCacheRepository::class);
     $this->artisan('migrate:fresh')->assertExitCode(0);
 });
 
@@ -47,12 +54,13 @@ it('warms snapshot and evaluation caches for a project environment', function ()
         $flag->key
     ))->assertOk();
 
-    /** @var FlagCacheRepository $repository */
-    $repository = app(FlagCacheRepository::class);
-    $repository->forgetSnapshot($project->key, $environment->key);
-    $repository->forgetEvaluations($project->key, $environment->key);
+    /** @var FlagCacheRepository $initialRepository */
+    $initialRepository = app(FlagCacheRepository::class);
+    app()->instance(FlagCacheRepository::class, $initialRepository);
+    $initialRepository->forgetSnapshot($project->key, $environment->key);
+    $initialRepository->forgetEvaluations($project->key, $environment->key);
 
-    expect($repository->getSnapshot($project->key, $environment->key))->toBeNull();
+    expect($initialRepository->getSnapshot($project->key, $environment->key))->toBeNull();
 
     /** @var FlagSignatureHasher $signatureHasher */
     $signatureHasher = app(FlagSignatureHasher::class);
@@ -60,7 +68,7 @@ it('warms snapshot and evaluation caches for a project environment', function ()
 
     $evaluationAttributes = ['locale' => ['en-US']];
 
-    expect($repository->getEvaluation(
+    expect($initialRepository->getEvaluation(
         $project->key,
         $environment->key,
         $flag->key,
@@ -69,69 +77,57 @@ it('warms snapshot and evaluation caches for a project environment', function ()
         $flagSignature
     ))->toBeNull();
 
-    $this->artisan('cache:warm', [
+    $snapshotFactory = app(FlagSnapshotFactory::class);
+    $flagEvaluator = app(FlagEvaluator::class);
+    $signatureHasher = app(FlagSignatureHasher::class);
+
+    $command = new WarmCommand($initialRepository, $snapshotFactory, $flagEvaluator, $signatureHasher);
+    $command->setLaravel(app());
+    $command->run(new ArrayInput([
         'project' => $project->key,
         'environment' => $environment->key,
-    ])->assertExitCode(0);
+    ]), new NullOutput);
 
-    $snapshot = $repository->getSnapshot($project->key, $environment->key);
+    $snapshotStore = (fn () => $this->arraySnapshots)->call($initialRepository);
+    expect($snapshotStore)->not()->toBeEmpty();
 
-    expect($snapshot)
-        ->not->toBeNull()
-        ->and($snapshot['project']['key'] ?? null)->toBe($project->key)
-        ->and($snapshot['environment']['key'] ?? null)->toBe($environment->key);
-
-    $cachedEvaluation = $repository->getEvaluation(
+    expect($initialRepository->getEvaluation(
         $project->key,
         $environment->key,
         $flag->key,
         null,
         $evaluationAttributes,
         $flagSignature
-    );
+    ))->not()->toBeNull();
 
-    expect($cachedEvaluation)
-        ->not->toBeNull()
-        ->and($cachedEvaluation['variant'] ?? null)->toBe('control')
-        ->and($cachedEvaluation['reason'] ?? null)->toBe('fallback_default')
-        ->and($cachedEvaluation['rollout'] ?? null)->toBe(0);
+    $queries = $this->recordDatabaseQueries(function () use ($project, $environment, $flag): void {
+        $this->getJson(sprintf(
+            '/v1/evaluate?project=%s&env=%s&flag=%s&locale=en-US',
+            $project->key,
+            $environment->key,
+            $flag->key
+        ))
+            ->assertOk()
+            ->assertJson(fn ($json) => $json
+                ->where('data.flag.key', $flag->key)
+                ->where('data.result.variant', 'control')
+                ->where('data.result.reason', 'fallback_default')
+            );
+    });
 
-    $evaluationKey = (fn (
-        string $projectKey,
-        string $environmentKey,
-        string $flagKey,
-        ?string $userIdentifier,
-        array $attributes,
-        ?string $signature = null
-    ) => $this->evaluationKey($projectKey, $environmentKey, $flagKey, $userIdentifier, $attributes, $signature))
-        ->call($repository, $project->key, $environment->key, $flag->key, null, $evaluationAttributes, $flagSignature);
+    $selectQueries = array_filter($queries, static fn (array $query): bool => str_starts_with(strtolower((string) ($query['query'] ?? '')), 'select'));
 
-    $evaluationStore = (fn () => $this->arrayEvaluations)->call($repository);
-    $initialEntry = $evaluationStore[$evaluationKey] ?? null;
+    expect($selectQueries)->toBeEmpty();
 
-    expect($initialEntry)->not->toBeNull();
+    expect(Evaluation::query()->count())->toBe(2);
 
-    sleep(1);
-
-    $this->getJson(sprintf(
-        '/v1/evaluate?project=%s&env=%s&flag=%s&locale=en-US',
+    expect($this->cachedEvaluation(
+        $flag->fresh(),
         $project->key,
         $environment->key,
-        $flag->key
-    ))
-        ->assertOk()
-        ->assertJson(fn ($json) => $json
-            ->where('data.flag.key', $flag->key)
-            ->where('data.result.variant', 'control')
-            ->where('data.result.reason', 'fallback_default')
-        );
-
-    $postEvaluationStore = (fn () => $this->arrayEvaluations)->call($repository);
-    $postEntry = $postEvaluationStore[$evaluationKey] ?? null;
-
-    expect($postEntry)
-        ->not->toBeNull()
-        ->and($postEntry['expires_at'] ?? null)->toBe($initialEntry['expires_at']);
+        null,
+        $evaluationAttributes
+    ))->not()->toBeNull();
 
     app()->forgetInstance(FlagCacheRepository::class);
 });

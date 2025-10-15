@@ -11,7 +11,11 @@
 |
 */
 
-uses(Tests\TestCase::class)->in('Feature');
+uses(
+    Tests\TestCase::class,
+    Tests\Support\InteractsWithFlagCache::class,
+    Tests\Support\RecordsDatabaseQueries::class
+)->in('Feature');
 
 /*
 |--------------------------------------------------------------------------

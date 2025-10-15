@@ -5,12 +5,14 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Phlag\Evaluations\Cache\FlagCacheRepository;
 use Phlag\Models\Environment;
 use Phlag\Models\Evaluation;
 use Phlag\Models\Flag;
 use Phlag\Models\Project;
 
 beforeEach(function (): void {
+    app()->forgetInstance(FlagCacheRepository::class);
     $this->artisan('migrate:fresh')->assertExitCode(0);
 });
 
@@ -242,13 +244,7 @@ it('reuses cached snapshots for repeated evaluations', function (): void {
 
     $selectQueries = array_filter($queries, static fn (array $query): bool => str_starts_with(strtolower($query['query'] ?? ''), 'select'));
 
-    $flagSelects = array_filter($selectQueries, static fn (array $query): bool => str_contains(strtolower($query['query'] ?? ''), 'from "flags"'));
-    $projectSelects = array_filter($selectQueries, static fn (array $query): bool => str_contains(strtolower($query['query'] ?? ''), 'from "projects"'));
-    $environmentSelects = array_filter($selectQueries, static fn (array $query): bool => str_contains(strtolower($query['query'] ?? ''), 'from "environments"'));
-
-    expect($flagSelects)->toHaveCount(1);
-    expect($projectSelects)->toBeEmpty();
-    expect($environmentSelects)->toBeEmpty();
+    expect($selectQueries)->toBeEmpty();
 
     expect(Evaluation::query()->count())->toBe(2);
 });
@@ -292,7 +288,25 @@ it('invalidates cached evaluations when flag configuration changes', function ()
             ->where('data.result.reason', 'fallback_default')
         );
 
+    expect($this->cachedSnapshot($project->key, $environment->key))->not()->toBeNull();
+    expect($this->cachedEvaluation(
+        $flag,
+        $project->key,
+        $environment->key,
+        null,
+        []
+    ))->not()->toBeNull();
+
     $flag->update(['is_enabled' => false]);
+
+    expect($this->cachedSnapshot($project->key, $environment->key))->toBeNull();
+    expect($this->cachedEvaluation(
+        $flag,
+        $project->key,
+        $environment->key,
+        null,
+        []
+    ))->toBeNull();
 
     $this->getJson(sprintf(
         '/v1/evaluate?project=%s&env=%s&flag=%s',
@@ -305,6 +319,177 @@ it('invalidates cached evaluations when flag configuration changes', function ()
             ->where('data.result.variant', 'enabled')
             ->where('data.result.reason', 'flag_disabled')
         );
+
+    expect($this->cachedSnapshot($project->key, $environment->key))->not()->toBeNull();
+
+    $refreshedFlag = $flag->fresh();
+    expect($refreshedFlag)->toBeInstanceOf(Flag::class);
+
+    /** @var Flag $refreshedFlag */
+    $refreshedFlag = $refreshedFlag;
+
+    expect($this->cachedEvaluation(
+        $refreshedFlag,
+        $project->key,
+        $environment->key,
+        null,
+        []
+    ))->not()->toBeNull();
+
+    expect(Evaluation::query()->count())->toBe(2);
+});
+
+it('serves cached evaluations without touching postgres selects', function (): void {
+    $project = Project::query()->create([
+        'id' => (string) Str::uuid(),
+        'key' => 'search',
+        'name' => 'Search',
+    ]);
+
+    $environment = Environment::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $project->id,
+        'key' => 'production',
+        'name' => 'Production',
+        'is_default' => true,
+    ]);
+
+    $flag = Flag::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $project->id,
+        'key' => 'search-ui',
+        'name' => 'Search UI',
+        'is_enabled' => true,
+        'variants' => [
+            ['key' => 'control', 'weight' => 100],
+        ],
+        'rules' => [],
+    ]);
+
+    $this->getJson(sprintf(
+        '/v1/evaluate?project=%s&env=%s&flag=%s&locale=en-US',
+        $project->key,
+        $environment->key,
+        $flag->key
+    ))->assertOk();
+
+    $attributes = ['locale' => ['en-US']];
+
+    expect($this->cachedSnapshot($project->key, $environment->key))->not()->toBeNull();
+    expect($this->cachedEvaluation(
+        $flag,
+        $project->key,
+        $environment->key,
+        null,
+        $attributes
+    ))->not()->toBeNull();
+
+    $queries = $this->recordDatabaseQueries(function () use ($project, $environment, $flag): void {
+        $this->getJson(sprintf(
+            '/v1/evaluate?project=%s&env=%s&flag=%s&locale=en-US',
+            $project->key,
+            $environment->key,
+            $flag->key
+        ))
+            ->assertOk()
+            ->assertJson(fn (AssertableJson $json) => $json
+                ->where('data.flag.key', $flag->key)
+                ->where('data.project.key', $project->key)
+                ->where('data.environment.key', $environment->key)
+                ->where('data.result.variant', 'control')
+                ->where('data.result.reason', 'fallback_default')
+            );
+    });
+
+    $selectQueries = array_filter($queries, static fn (array $query): bool => str_starts_with(strtolower((string) ($query['query'] ?? '')), 'select'));
+
+    expect($selectQueries)->toBeEmpty();
+    expect(Evaluation::query()->count())->toBe(2);
+});
+
+it('invalidates caches when environment metadata changes', function (): void {
+    $project = Project::query()->create([
+        'id' => (string) Str::uuid(),
+        'key' => 'billing',
+        'name' => 'Billing',
+    ]);
+
+    $environment = Environment::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $project->id,
+        'key' => 'staging',
+        'name' => 'Staging',
+        'is_default' => false,
+    ]);
+
+    $flag = Flag::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $project->id,
+        'key' => 'billing-v2',
+        'name' => 'Billing V2',
+        'is_enabled' => true,
+        'variants' => [
+            ['key' => 'enabled', 'weight' => 100],
+        ],
+        'rules' => [],
+    ]);
+
+    $this->getJson(sprintf(
+        '/v1/evaluate?project=%s&env=%s&flag=%s',
+        $project->key,
+        $environment->key,
+        $flag->key
+    ))->assertOk();
+
+    expect($this->cachedSnapshot($project->key, $environment->key))->not()->toBeNull();
+    expect($this->cachedEvaluation(
+        $flag,
+        $project->key,
+        $environment->key,
+        null,
+        []
+    ))->not()->toBeNull();
+
+    $environment->update(['name' => 'Updated Staging']);
+
+    expect($this->cachedSnapshot($project->key, $environment->key))->toBeNull();
+    expect($this->cachedEvaluation(
+        $flag,
+        $project->key,
+        $environment->key,
+        null,
+        []
+    ))->toBeNull();
+
+    $this->getJson(sprintf(
+        '/v1/evaluate?project=%s&env=%s&flag=%s',
+        $project->key,
+        $environment->key,
+        $flag->key
+    ))
+        ->assertOk()
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('data.result.variant', 'enabled')
+            ->where('data.result.reason', 'fallback_default')
+        );
+
+    expect($this->cachedSnapshot($project->key, $environment->key))->not()->toBeNull();
+
+    $refreshedFlag = $flag->fresh();
+    expect($refreshedFlag)->toBeInstanceOf(Flag::class);
+
+    /** @var Flag $refreshedFlag */
+    $refreshedFlag = $refreshedFlag;
+
+    expect($this->cachedEvaluation(
+        $refreshedFlag,
+        $project->key,
+        $environment->key,
+        null,
+        []
+    ))->not()->toBeNull();
+
+    expect(Evaluation::query()->count())->toBe(2);
 });
 
 it('returns an error when the requested environment does not exist', function (): void {
