@@ -96,14 +96,16 @@ final class WarmCommand extends Command
         $snapshot = $this->snapshotFactory->make($project, $environment, $flags);
         $this->cacheRepository->storeSnapshot($project->key, $environment->key, $snapshot);
 
-        $evaluations = Evaluation::query()
+        $evaluationQuery = Evaluation::query()
             ->where('project_id', $project->id)
             ->where('environment_id', $environment->id)
-            ->orderBy('evaluated_at')
-            ->get();
+            ->orderBy('evaluated_at');
 
         $flagsById = $flags->keyBy('id');
         $warmedEvaluations = 0;
+
+        /** @var \Illuminate\Support\LazyCollection<int, Evaluation> $evaluations */
+        $evaluations = $evaluationQuery->lazy();
 
         foreach ($evaluations as $evaluation) {
             if (! is_string($evaluation->flag_id) || $evaluation->flag_id === '') {
