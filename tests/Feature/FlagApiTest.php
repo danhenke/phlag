@@ -10,6 +10,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 beforeEach(function (): void {
     $this->artisan('migrate:fresh')->assertExitCode(0);
+    $this->authHeaders = jwtHeaders();
+});
+
+it('rejects unauthenticated flag API access', function (): void {
+    $project = Project::query()->create([
+        'id' => (string) Str::uuid(),
+        'key' => 'unauth-project',
+        'name' => 'Unauth Project',
+    ]);
+
+    $this->getJson("/v1/projects/{$project->key}/flags")
+        ->assertStatus(Response::HTTP_UNAUTHORIZED)
+        ->assertJsonPath('error.code', 'unauthenticated');
 });
 
 it('creates a flag for a project', function (): void {
@@ -37,7 +50,7 @@ it('creates a flag for a project', function (): void {
         ],
     ];
 
-    $response = $this->postJson("/v1/projects/{$project->key}/flags", $payload);
+    $response = $this->postJson("/v1/projects/{$project->key}/flags", $payload, $this->authHeaders);
 
     $response->assertCreated()
         ->assertHeader('Location', route('projects.flags.show', [
@@ -80,7 +93,7 @@ it('lists flags for a project with pagination metadata', function (): void {
         ]);
     });
 
-    $response = $this->getJson("/v1/projects/{$project->key}/flags?per_page=2");
+    $response = $this->getJson("/v1/projects/{$project->key}/flags?per_page=2", $this->authHeaders);
 
     $response->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
@@ -128,18 +141,18 @@ it('updates and deletes an existing flag', function (): void {
                 'rollout' => 50,
             ],
         ],
-    ]);
+    ], $this->authHeaders);
 
     $updateResponse->assertOk()
         ->assertJsonPath('data.name', 'Billing GA')
         ->assertJsonPath('data.is_enabled', false)
         ->assertJsonPath('data.rules.0.rollout', 50);
 
-    $this->getJson("/v1/projects/{$project->key}/flags/{$flag->key}")
+    $this->getJson("/v1/projects/{$project->key}/flags/{$flag->key}", $this->authHeaders)
         ->assertOk()
         ->assertJsonPath('data.name', 'Billing GA');
 
-    $this->deleteJson("/v1/projects/{$project->key}/flags/{$flag->key}")
+    $this->deleteJson("/v1/projects/{$project->key}/flags/{$flag->key}", [], $this->authHeaders)
         ->assertNoContent();
 
     expect(Flag::query()->where('project_id', $project->id)->exists())->toBeFalse();
@@ -177,7 +190,7 @@ it('validates uniqueness constraints for flag keys per project', function (): vo
         'rules' => [],
     ];
 
-    $this->postJson("/v1/projects/{$projectA->key}/flags", $payload)
+    $this->postJson("/v1/projects/{$projectA->key}/flags", $payload, $this->authHeaders)
         ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
         ->assertJson(fn (AssertableJson $json) => $json
             ->where('error.code', 'validation_failed')
@@ -187,7 +200,7 @@ it('validates uniqueness constraints for flag keys per project', function (): vo
             ->etc()
         );
 
-    $this->postJson("/v1/projects/{$projectB->key}/flags", $payload)
+    $this->postJson("/v1/projects/{$projectB->key}/flags", $payload, $this->authHeaders)
         ->assertCreated();
 
     expect(Flag::query()->where('project_id', $projectB->id)->where('key', 'shared-flag')->exists())->toBeTrue();
@@ -213,7 +226,7 @@ it('validates rule schema and rollout bounds', function (): void {
                 'rollout' => 200,
             ],
         ],
-    ]);
+    ], $this->authHeaders);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
 

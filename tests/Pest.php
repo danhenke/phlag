@@ -43,7 +43,36 @@ expect()->extend('toBeOne', function () {
 |
 */
 
+use Phlag\Auth\Jwt\JwtTokenIssuer;
+
 function something(): void
 {
     // ..
+}
+
+/**
+ * @param  array<string, mixed>  $claims
+ * @return array<string, string>
+ */
+function jwtHeaders(array $claims = []): array
+{
+    /** @var JwtTokenIssuer $issuer */
+    $issuer = app(JwtTokenIssuer::class);
+
+    $defaultClaims = [
+        'sub' => 'test-suite',
+        'roles' => [
+            'projects.read',
+            'environments.read',
+            'flags.read',
+            'flags.evaluate',
+            'cache.warm',
+        ],
+    ];
+
+    $token = $issuer->issue(array_merge($defaultClaims, $claims));
+
+    return [
+        'Authorization' => 'Bearer '.$token->value(),
+    ];
 }

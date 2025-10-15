@@ -21,13 +21,15 @@ Route::prefix('v1')
         Route::post('/auth/token', [AuthTokenController::class, 'store'])
             ->name('auth.token');
 
-        Route::apiResource('projects', ProjectController::class);
-        Route::apiResource('projects.environments', ProjectEnvironmentController::class);
+        Route::middleware('auth.jwt')->group(function (): void {
+            Route::apiResource('projects', ProjectController::class);
+            Route::apiResource('projects.environments', ProjectEnvironmentController::class);
 
-        Route::apiResource('projects.flags', ProjectFlagController::class);
+            Route::apiResource('projects.flags', ProjectFlagController::class);
 
-        Route::get('/evaluate', EvaluateFlagController::class)
-            ->name('flags.evaluate');
+            Route::get('/evaluate', EvaluateFlagController::class)
+                ->name('flags.evaluate');
+        });
 
         Route::get('/docs/openapi.json', [OpenApiController::class, 'show'])
             ->name('docs.openapi');

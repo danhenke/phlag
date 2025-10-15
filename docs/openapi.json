@@ -11,6 +11,11 @@
             "description": "Local development server"
         }
     ],
+    "security": [
+        {
+            "BearerAuth": []
+        }
+    ],
     "paths": {
         "/": {
             "get": {
@@ -19,6 +24,7 @@
                 ],
                 "summary": "Retrieve service health status.",
                 "operationId": "getHealthCheck",
+                "security": [],
                 "responses": {
                     "200": {
                         "description": "Service is available.",
@@ -75,6 +81,7 @@
                 "summary": "Issue JWT from API key",
                 "description": "Exchange a project/environment API key for a JWT bearer token.",
                 "operationId": "exchangeApiKeyForJwt",
+                "security": [],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -166,6 +173,7 @@
                 ],
                 "summary": "Retrieve the OpenAPI specification JSON.",
                 "operationId": "getOpenApiDocument",
+                "security": [],
                 "responses": {
                     "200": {
                         "description": "OpenAPI document as JSON.",
@@ -1832,6 +1840,14 @@
         }
     },
     "components": {
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "JWT issued via POST /v1/auth/token."
+            }
+        },
         "schemas": {
             "Project": {
                 "description": "Project representation returned by the API.",

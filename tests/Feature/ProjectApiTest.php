@@ -10,6 +10,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 beforeEach(function (): void {
     $this->artisan('migrate:fresh')->assertExitCode(0);
+    $this->authHeaders = jwtHeaders();
+});
+
+it('rejects unauthenticated project API access', function (): void {
+    $this->getJson('/v1/projects')->assertStatus(Response::HTTP_UNAUTHORIZED)
+        ->assertJsonPath('error.code', 'unauthenticated');
 });
 
 it('creates a project via the API', function (): void {
@@ -22,7 +28,7 @@ it('creates a project via the API', function (): void {
         ],
     ];
 
-    $response = $this->postJson('/v1/projects', $payload);
+    $response = $this->postJson('/v1/projects', $payload, $this->authHeaders);
 
     $response->assertCreated()
         ->assertHeader('Location', route('projects.show', ['project' => 'checkout-service']))
@@ -46,7 +52,7 @@ it('lists projects with pagination metadata', function (): void {
         ]);
     });
 
-    $response = $this->getJson('/v1/projects?per_page=2');
+    $response = $this->getJson('/v1/projects?per_page=2', $this->authHeaders);
 
     $response->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
@@ -70,7 +76,7 @@ it('updates and deletes an existing project', function (): void {
     $updateResponse = $this->patchJson("/v1/projects/{$project->key}", [
         'key' => 'billing-platform',
         'name' => 'Billing Platform',
-    ]);
+    ], $this->authHeaders);
 
     $updateResponse->assertOk()
         ->assertJsonPath('data.name', 'Billing Platform')
@@ -79,7 +85,7 @@ it('updates and deletes an existing project', function (): void {
     expect(Project::query()->where('key', 'billing-service')->exists())->toBeFalse()
         ->and(Project::query()->where('key', 'billing-platform')->exists())->toBeTrue();
 
-    $this->deleteJson('/v1/projects/billing-platform')
+    $this->deleteJson('/v1/projects/billing-platform', [], $this->authHeaders)
         ->assertNoContent();
 
     expect(Project::query()->where('key', 'billing-platform')->exists())->toBeFalse();
@@ -95,7 +101,7 @@ it('validates uniqueness constraints for project keys', function (): void {
     $this->postJson('/v1/projects', [
         'key' => 'analytics',
         'name' => 'Duplicate Analytics',
-    ])->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+    ], $this->authHeaders)->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
         ->assertJson(fn (AssertableJson $json) => $json
             ->where('error.code', 'validation_failed')
             ->where('error.status', Response::HTTP_UNPROCESSABLE_ENTITY)
@@ -115,7 +121,7 @@ it('manages environments for a project', function (): void {
         'key' => 'production',
         'name' => 'Production',
         'is_default' => true,
-    ]);
+    ], $this->authHeaders);
 
     $primaryResponse->assertCreated()
         ->assertJsonPath('data.is_default', true);
@@ -124,7 +130,7 @@ it('manages environments for a project', function (): void {
         'key' => 'staging',
         'name' => 'Staging',
         'is_default' => true,
-    ]);
+    ], $this->authHeaders);
 
     $secondaryResponse->assertCreated()
         ->assertJsonPath('data.key', 'staging')
@@ -137,7 +143,7 @@ it('manages environments for a project', function (): void {
     expect($environments['production'])->toBeFalse()
         ->and($environments['staging'])->toBeTrue();
 
-    $listResponse = $this->getJson("/v1/projects/{$project->key}/environments");
+    $listResponse = $this->getJson("/v1/projects/{$project->key}/environments", $this->authHeaders);
 
     $listResponse->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
@@ -149,20 +155,20 @@ it('manages environments for a project', function (): void {
     $updateResponse = $this->patchJson("/v1/projects/{$project->key}/environments/staging", [
         'name' => 'Staging Updated',
         'is_default' => false,
-    ]);
+    ], $this->authHeaders);
 
     $updateResponse->assertOk()
         ->assertJsonPath('data.name', 'Staging Updated')
         ->assertJsonPath('data.is_default', false);
 
-    $this->deleteJson("/v1/projects/{$project->key}/environments/staging")
+    $this->deleteJson("/v1/projects/{$project->key}/environments/staging", [], $this->authHeaders)
         ->assertNoContent();
 
     expect(Environment::query()->where('project_id', $project->id)->count())->toBe(1);
 });
 
 it('returns a standardized envelope when a project is missing', function (): void {
-    $response = $this->getJson('/v1/projects/missing-project');
+    $response = $this->getJson('/v1/projects/missing-project', $this->authHeaders);
 
     $response->assertStatus(Response::HTTP_NOT_FOUND)
         ->assertJson(fn (AssertableJson $json) => $json
@@ -173,7 +179,7 @@ it('returns a standardized envelope when a project is missing', function (): voi
 });
 
 it('preserves protocol headers for method not allowed responses', function (): void {
-    $response = $this->patchJson('/v1/projects', []);
+    $response = $this->patchJson('/v1/projects', [], $this->authHeaders);
 
     $response->assertStatus(Response::HTTP_METHOD_NOT_ALLOWED)
         ->assertHeader('Allow')
@@ -203,6 +209,7 @@ it('rejects malformed json payloads for API requests', function (): void {
         server: [
             'HTTP_ACCEPT' => 'application/json',
             'CONTENT_TYPE' => 'application/json',
+            'HTTP_AUTHORIZATION' => $this->authHeaders['Authorization'],
         ],
         content: '{"name": "New Name", }'
     );
