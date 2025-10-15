@@ -47,9 +47,35 @@ final class ExceptionSummaryProcessor
         $contextWithoutException = $context;
         unset($contextWithoutException['exception']);
 
+        $stackTrace = $this->stackTrace($exception);
+
+        if ($stackTrace !== null) {
+            $contextWithoutException['stack_trace'] = $stackTrace;
+        }
+
         $record['context'] = $contextWithoutException;
 
         return $record;
+    }
+
+    /**
+     * Build a normalized stack trace without blank lines.
+     */
+    private function stackTrace(Throwable $exception): ?string
+    {
+        $lines = preg_split('/\r?\n/', $exception->getTraceAsString()) ?: [];
+
+        $normalized = array_values(array_filter(array_map(static function (string $line): string {
+            return trim($line);
+        }, $lines), static function (string $line): bool {
+            return $line !== '';
+        }));
+
+        if ($normalized === []) {
+            return null;
+        }
+
+        return implode(PHP_EOL, $normalized);
     }
 
     private function normalizeMessage(?string $message): string
