@@ -412,7 +412,7 @@ Database seeding completed.
 ./scripts/app-cache-warm demo-project production
 ```
 
-Provide the project and environment keys to repopulate Redis after changing flag rules. Pass additional options (for example, `--daemon`) and they are forwarded to the underlying `cache:warm` command.
+Provide the project and environment keys to repopulate Redis after changing flag rules. The warmer regenerates the snapshot stored at `flag:snapshot:{project}:{environment}` and replays historical evaluations to seed the per-user cache keys so the next request hits Redis instead of Postgres. Pass additional options (for example, `--daemon`) and they are forwarded to the underlying `cache:warm` command.
 
 #### Tune Redis cache TTLs
 

@@ -8,6 +8,8 @@ it('resolves configured TTLs from config', function (): void {
     config()->set('flag_cache.snapshot_ttl', 120);
     config()->set('flag_cache.evaluation_ttl', 240);
 
+    app()->forgetInstance(FlagCacheRepository::class);
+
     /** @var FlagCacheRepository $repository */
     $repository = app(FlagCacheRepository::class);
 
