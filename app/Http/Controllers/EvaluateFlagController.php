@@ -6,7 +6,10 @@ namespace Phlag\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
+use Phlag\Evaluations\Cache\FlagCacheRepository;
+use Phlag\Evaluations\Cache\FlagSnapshotFactory;
 use Phlag\Evaluations\EvaluationContext;
+use Phlag\Evaluations\EvaluationResult;
 use Phlag\Evaluations\FlagEvaluator;
 use Phlag\Http\Requests\EvaluateFlagRequest;
 use Phlag\Http\Resources\EvaluationResource;
@@ -19,64 +22,159 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class EvaluateFlagController extends Controller
 {
-    public function __construct(private readonly FlagEvaluator $evaluator) {}
+    public function __construct(
+        private readonly FlagEvaluator $evaluator,
+        private readonly FlagCacheRepository $cacheRepository,
+        private readonly FlagSnapshotFactory $snapshotFactory
+    ) {}
 
     public function __invoke(EvaluateFlagRequest $request): JsonResponse
     {
-        $project = Project::query()->where('key', $request->projectKey())->first();
+        $projectKey = $request->projectKey();
+        $environmentKey = $request->environmentKey();
+        $flagKey = $request->flagKey();
+
+        $attributes = $request->contextAttributes();
+
+        $snapshot = $this->cacheRepository->getSnapshot($projectKey, $environmentKey);
+
+        $project = null;
+        $environment = null;
+        $flag = null;
+        $shouldRefreshSnapshot = $snapshot === null;
+
+        if ($snapshot !== null) {
+            $projectData = $snapshot['project'] ?? null;
+            $environmentData = $snapshot['environment'] ?? null;
+
+            if (is_array($projectData) && is_array($environmentData)) {
+                $project = $this->snapshotFactory->hydrateProject($projectData);
+                $environment = $this->snapshotFactory->hydrateEnvironment($environmentData);
+
+                $flagData = $this->snapshotFactory->findFlag($snapshot, $flagKey);
+
+                if (! is_array($flagData)) {
+                    $shouldRefreshSnapshot = true;
+                }
+            } else {
+                $shouldRefreshSnapshot = true;
+            }
+        }
 
         if ($project === null) {
-            return ApiErrorResponse::make(
-                'resource_not_found',
-                'Project not found.',
-                HttpResponse::HTTP_NOT_FOUND,
-                context: ['project' => $request->projectKey()]
-            );
-        }
+            $project = Project::query()->where('key', $projectKey)->first();
 
-        $environment = Environment::query()
-            ->where('project_id', $project->id)
-            ->where('key', $request->environmentKey())
-            ->first();
+            if ($project === null) {
+                return ApiErrorResponse::make(
+                    'resource_not_found',
+                    'Project not found.',
+                    HttpResponse::HTTP_NOT_FOUND,
+                    context: ['project' => $projectKey]
+                );
+            }
+        }
 
         if ($environment === null) {
-            return ApiErrorResponse::make(
-                'resource_not_found',
-                'Environment not found.',
-                HttpResponse::HTTP_NOT_FOUND,
-                context: [
-                    'project' => $project->key,
-                    'environment' => $request->environmentKey(),
-                ]
-            );
+            $environment = Environment::query()
+                ->where('project_id', $project->id)
+                ->where('key', $environmentKey)
+                ->first();
+
+            if ($environment === null) {
+                return ApiErrorResponse::make(
+                    'resource_not_found',
+                    'Environment not found.',
+                    HttpResponse::HTTP_NOT_FOUND,
+                    context: [
+                        'project' => $project->key,
+                        'environment' => $environmentKey,
+                    ]
+                );
+            }
         }
 
-        $flag = Flag::query()
+        $flagRecord = Flag::query()
             ->where('project_id', $project->id)
-            ->where('key', $request->flagKey())
+            ->where('key', $flagKey)
             ->first();
 
-        if ($flag === null) {
+        if ($flagRecord === null) {
             return ApiErrorResponse::make(
                 'resource_not_found',
                 'Flag not found.',
                 HttpResponse::HTTP_NOT_FOUND,
                 context: [
                     'project' => $project->key,
-                    'flag' => $request->flagKey(),
+                    'flag' => $flagKey,
                 ]
             );
         }
+
+        $flag = $flagRecord;
+
+        if ($shouldRefreshSnapshot) {
+            $flags = Flag::query()
+                ->where('project_id', $project->id)
+                ->get();
+
+            $snapshotPayload = $this->snapshotFactory->make($project, $environment, $flags);
+            $this->cacheRepository->storeSnapshot($project->key, $environment->key, $snapshotPayload);
+        }
+
+        $flagSignature = $this->flagSignature($flag);
 
         $context = new EvaluationContext(
             project: $project,
             environment: $environment,
             flag: $flag,
             userIdentifier: $request->userIdentifier(),
-            attributes: $request->contextAttributes(),
+            attributes: $attributes,
         );
 
-        $result = $this->evaluator->evaluate($context);
+        $cachedEvaluation = $this->cacheRepository->getEvaluation(
+            $project->key,
+            $environment->key,
+            $flag->key,
+            $context->userIdentifier,
+            $attributes,
+            $flagSignature
+        );
+
+        if ($cachedEvaluation !== null) {
+            $result = new EvaluationResult(
+                variant: $cachedEvaluation['variant'],
+                reason: $cachedEvaluation['reason'],
+                rollout: $cachedEvaluation['rollout'],
+                payload: $cachedEvaluation['payload'] ?? null,
+                bucket: $cachedEvaluation['bucket'] ?? null,
+            );
+        } else {
+            $result = $this->evaluator->evaluate($context);
+
+            $cachePayload = [
+                'variant' => $result->variant,
+                'reason' => $result->reason,
+                'rollout' => $result->rollout,
+            ];
+
+            if ($result->payload !== null) {
+                $cachePayload['payload'] = $result->payload;
+            }
+
+            if ($result->bucket !== null) {
+                $cachePayload['bucket'] = $result->bucket;
+            }
+
+            $this->cacheRepository->storeEvaluation(
+                $project->key,
+                $environment->key,
+                $flag->key,
+                $context->userIdentifier,
+                $attributes,
+                $cachePayload,
+                $flagSignature
+            );
+        }
 
         $evaluation = Evaluation::query()->create([
             'id' => (string) Str::uuid(),
@@ -104,5 +202,23 @@ class EvaluateFlagController extends Controller
             ->setStatusCode(HttpResponse::HTTP_OK)
             ->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0')
             ->header('Vary', 'Authorization, Accept-Encoding');
+    }
+
+    private function flagSignature(Flag $flag): string
+    {
+        $payload = [
+            'updated_at' => $flag->updated_at?->toISOString(),
+            'is_enabled' => (bool) $flag->is_enabled,
+            'variants' => $flag->variants,
+            'rules' => $flag->rules,
+        ];
+
+        try {
+            $encoded = json_encode($payload, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return hash('sha1', serialize($payload));
+        }
+
+        return hash('sha1', $encoded);
     }
 }

@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME'),
+    'name' => env('APP_NAME', 'Phlag'),
 
     /*
     |--------------------------------------------------------------------------
@@ -62,5 +62,4 @@ return [
         Phlag\Providers\AppServiceProvider::class,
         Phlag\Providers\RouteServiceProvider::class,
     ],
-
 ];
