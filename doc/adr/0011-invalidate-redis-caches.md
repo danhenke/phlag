@@ -12,11 +12,32 @@ Flag evaluation must stay fast while reflecting project changes within seconds. 
 
 ## Decision
 
--   Model cache entries with deterministic keys: `flag:snapshot:{project}:{environment}` stores the full flag collection for evaluation, and `flag:evaluation:{project}:{environment}:{flag}:{hash}` stores user-specific evaluation results. All structures are JSON-encoded strings with a default TTL of five minutes.
--   Maintain a lightweight index per environment at `flag:evaluation:index:{project}:{environment}` to delete cached evaluations without scanning Redis when mutations occur.
+-   Model cache entries with deterministic keys and shared TTLs. Snapshots live at `flag:snapshot:{project}:{environment}` and user-specific evaluations at `flag:evaluation:{project}:{environment}:{flag}:{signature}:{hash}`. All structures are JSON-encoded strings with a default TTL of five minutes (300 seconds).
+-   Maintain a lightweight index per environment at `flag:evaluation:index:{project}:{environment}` to delete cached evaluations without scanning Redis when mutations occur. The index expires alongside the evaluation entries.
 -   When flags, projects, or environments change, the domain layer publishes an event to the Redis channel `phlag.flags.invalidated` containing the affected project and environment identifiers. Listeners delete matching keys (`DEL`) and optionally trigger eager rebuilds.
 -   The `cache:warm {project} {env}` CLI command subscribes to the same message bus when running in daemon mode. It precomputes snapshots after deploys and offers operators a manual way to refresh caches without restarting services.
 -   HTTP workers subscribe to the invalidation channel during boot. On receipt, they evict in-memory copies and allow the next request to repopulate Redis, ensuring horizontally scaled replicas stay in sync.
+
+### Key schema and payloads
+
+-   Segment encoding: all `{project}`, `{environment}`, `{flag}`, and `{signature}` segments are lower-cased and sanitised by replacing colons, braces, and whitespace with underscores. This keeps keys human-readable while avoiding Redis hash-slot conflicts.
+-   Snapshot entries: `flag:snapshot:{project}:{environment}` stores the JSON produced by `FlagSnapshotFactory::make()`. It includes project metadata, environment metadata, an array of flag definitions, and `generated_at`. TTL: 300 seconds. Snapshot warmers should refresh hot environments on deploy; otherwise cold keys expire naturally.
+-   Evaluation entries: `flag:evaluation:{project}:{environment}:{flag}:{signature}:{hash}` stores JSON with:
+    -   `variant` (`string|null`)
+    -   `reason` (`string`)
+    -   `rollout` (`int`)
+    -   optional `payload` (`array<string, mixed>`)
+    -   optional `bucket` (`int`)
+
+    `{signature}` is a SHA-1 of the flag definition (enabled state, variants, rules, updated_at). `{hash}` is a SHA-1 of the evaluation context (user identifier plus sorted attributes). TTL: 300 seconds. Re-evaluations reuse cached payloads until the flag definition changes or the TTL elapses.
+-   Evaluation index: `flag:evaluation:index:{project}:{environment}` is a Redis set of evaluation keys generated for the environment. The index expires after 300 seconds; any membership left behind by TTL drift is cleared when the index key expires.
+-   Invalidation payload: published messages are JSON objects with `project` and `environment` keys. Consumers use these identifiers to drop the snapshot, delete the evaluation index, and purge any lingering evaluation keys.
+
+### TTL strategy
+
+-   Five-minute TTLs balance freshness with reduced load on Postgres. Operators can shorten or extend TTLs by configuration if high churn or read-heavy workloads demand it.
+-   Hot environments should be warmed immediately after deploys with `cache:warm` to avoid cold-start latency. Cold environments naturally expire and are generated lazily on demand.
+-   Evaluation caches couple TTL with pub/sub invalidations so missed events have a bounded blast radius. Audit metrics should monitor key age and hit rates to refine TTL values over time.
 
 ## Consequences
 
