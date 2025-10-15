@@ -103,14 +103,13 @@ final class FlagEvaluator
 
         $primaryKey = $this->primaryMatchKey($match);
 
-        if ($rollout >= 100 || $context->userIdentifier === null || $context->userIdentifier === '') {
-            $reason = $rollout >= 100
-                ? sprintf('matched_%s', $primaryKey)
-                : sprintf('matched_%s', $primaryKey);
+        if ($rollout >= 100) {
+            $reason = sprintf('matched_%s', $primaryKey);
 
             return $this->makeResult($definition, $variantKey, $reason, $rollout);
         }
 
+        // Ensure partial rollouts still respect bucketing for anonymous contexts.
         $bucket = $this->bucketForRollout($context, $variantKey);
 
         if ($bucket <= $rollout) {
