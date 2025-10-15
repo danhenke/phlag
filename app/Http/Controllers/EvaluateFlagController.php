@@ -36,6 +36,7 @@ class EvaluateFlagController extends Controller
         $environmentKey = $request->environmentKey();
         $flagKey = $request->flagKey();
 
+        $userIdentifier = $request->userIdentifier();
         $attributes = $request->contextAttributes();
 
         $snapshot = $this->cacheRepository->getSnapshot($projectKey, $environmentKey);
@@ -73,7 +74,52 @@ class EvaluateFlagController extends Controller
             }
         }
 
-        if ($project === null) {
+        if (
+            ! $shouldRefreshSnapshot
+            && $project instanceof Project
+            && $environment instanceof Environment
+            && $flag instanceof Flag
+        ) {
+            $flagSignature = $this->signatureHasher->hash($flag);
+
+            $context = new EvaluationContext(
+                project: $project,
+                environment: $environment,
+                flag: $flag,
+                userIdentifier: $userIdentifier,
+                attributes: $attributes,
+            );
+
+            $cachedEvaluation = $this->cacheRepository->getEvaluation(
+                $project->key,
+                $environment->key,
+                $flag->key,
+                $context->userIdentifier,
+                $attributes,
+                $flagSignature
+            );
+
+            if ($cachedEvaluation !== null) {
+                /** @var array{
+                 *     variant: string|null,
+                 *     reason: string,
+                 *     rollout: int,
+                 *     payload?: array<string, mixed>,
+                 *     bucket?: int
+                 * } $cachedEvaluation */
+                $result = new EvaluationResult(
+                    variant: $cachedEvaluation['variant'],
+                    reason: $cachedEvaluation['reason'],
+                    rollout: $cachedEvaluation['rollout'],
+                    payload: $cachedEvaluation['payload'] ?? null,
+                    bucket: $cachedEvaluation['bucket'] ?? null,
+                );
+
+                return $this->respond($context, $result);
+            }
+        }
+
+        if (! $project instanceof Project) {
             $project = Project::query()->where('key', $projectKey)->first();
 
             if ($project === null) {
@@ -86,7 +132,7 @@ class EvaluateFlagController extends Controller
             }
         }
 
-        if ($environment === null) {
+        if (! $environment instanceof Environment) {
             $environment = Environment::query()
                 ->where('project_id', $project->id)
                 ->where('key', $environmentKey)
@@ -157,7 +203,7 @@ class EvaluateFlagController extends Controller
             project: $project,
             environment: $environment,
             flag: $flag,
-            userIdentifier: $request->userIdentifier(),
+            userIdentifier: $userIdentifier,
             attributes: $attributes,
         );
 
@@ -213,12 +259,17 @@ class EvaluateFlagController extends Controller
             );
         }
 
+        return $this->respond($context, $result);
+    }
+
+    private function respond(EvaluationContext $context, EvaluationResult $result): JsonResponse
+    {
         $evaluation = Evaluation::query()->create([
             'id' => (string) Str::uuid(),
-            'project_id' => $project->id,
-            'environment_id' => $environment->id,
-            'flag_id' => $flag->id,
-            'flag_key' => $flag->key,
+            'project_id' => $context->project->id,
+            'environment_id' => $context->environment->id,
+            'flag_id' => $context->flag->id,
+            'flag_key' => $context->flag->key,
             'variant' => $result->variant,
             'evaluation_reason' => $result->reason,
             'user_identifier' => $context->userIdentifier,
