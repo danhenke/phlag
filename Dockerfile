@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
 # check=error=true
+ARG TARGETPLATFORM
 
 FROM composer:2 AS vendor
 WORKDIR /app
@@ -30,7 +31,13 @@ COPY --from=vendor /usr/bin/composer /usr/bin/composer
 COPY --from=vendor /app/vendor ./vendor
 COPY . .
 
-RUN composer dump-autoload --optimize --classmap-authoritative \
+RUN composer dump-autoload \
+    --no-dev \
+    --strict-psr \
+    --strict-ambiguous \
+    --no-ansi \
+    --optimize \
+    --classmap-authoritative \
     && php phlag app:build phlag
 
 FROM base AS runtime
