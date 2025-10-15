@@ -50,7 +50,14 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
 
-            return new FlagCacheRepository($client);
+            $snapshotTtl = config('flag_cache.snapshot_ttl');
+            $evaluationTtl = config('flag_cache.evaluation_ttl');
+
+            return new FlagCacheRepository(
+                redis: $client,
+                snapshotTtlSeconds: is_numeric($snapshotTtl) ? (int) $snapshotTtl : null,
+                evaluationTtlSeconds: is_numeric($evaluationTtl) ? (int) $evaluationTtl : null
+            );
         });
     }
 }

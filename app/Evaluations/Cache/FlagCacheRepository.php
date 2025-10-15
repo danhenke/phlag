@@ -17,15 +17,19 @@ use Phlag\Redis\RedisClient;
  */
 final class FlagCacheRepository
 {
-    private const SNAPSHOT_TTL_SECONDS = 300;
+    private const DEFAULT_SNAPSHOT_TTL_SECONDS = 300;
 
-    private const EVALUATION_TTL_SECONDS = 300;
+    private const DEFAULT_EVALUATION_TTL_SECONDS = 300;
 
     private const INVALIDATION_CHANNEL = 'phlag.flags.invalidated';
 
     private ?RedisClient $redis = null;
 
     private bool $arrayFallback = false;
+
+    private int $snapshotTtlSeconds;
+
+    private int $evaluationTtlSeconds;
 
     /**
      * @var array<string, array{payload: array<string, mixed>, expires_at: int}>
@@ -47,9 +51,11 @@ final class FlagCacheRepository
      */
     private array $arrayEvaluationIndexExpiry = [];
 
-    public function __construct(?RedisClient $redis = null)
+    public function __construct(?RedisClient $redis = null, ?int $snapshotTtlSeconds = null, ?int $evaluationTtlSeconds = null)
     {
         $this->redis = $redis;
+        $this->snapshotTtlSeconds = $this->normalizeTtl($snapshotTtlSeconds, self::DEFAULT_SNAPSHOT_TTL_SECONDS);
+        $this->evaluationTtlSeconds = $this->normalizeTtl($evaluationTtlSeconds, self::DEFAULT_EVALUATION_TTL_SECONDS);
 
         if ($redis === null) {
             $this->enableFallback();
@@ -123,7 +129,7 @@ final class FlagCacheRepository
         try {
             $redis->setex(
                 $this->snapshotKey($projectKey, $environmentKey),
-                self::SNAPSHOT_TTL_SECONDS,
+                $this->snapshotTtlSeconds,
                 $encoded
             );
         } catch (\Throwable) {
@@ -257,14 +263,14 @@ final class FlagCacheRepository
         try {
             $redis->setex(
                 $evaluationKey,
-                self::EVALUATION_TTL_SECONDS,
+                $this->evaluationTtlSeconds,
                 $encoded
             );
 
             $indexKey = $this->evaluationIndexKey($projectKey, $environmentKey);
 
             $redis->sadd($indexKey, [$evaluationKey]);
-            $redis->expire($indexKey, self::EVALUATION_TTL_SECONDS);
+            $redis->expire($indexKey, $this->evaluationTtlSeconds);
         } catch (\Throwable) {
             $this->enableFallback();
             $this->storeEvaluationInArray($projectKey, $environmentKey, $flagKey, $userIdentifier, $attributes, $payload, $flagSignature);
@@ -434,7 +440,7 @@ final class FlagCacheRepository
 
         $this->arraySnapshots[$key] = [
             'payload' => $snapshot,
-            'expires_at' => $this->expiresAt(self::SNAPSHOT_TTL_SECONDS),
+            'expires_at' => $this->expiresAt($this->snapshotTtlSeconds),
         ];
     }
 
@@ -490,7 +496,7 @@ final class FlagCacheRepository
         ?string $flagSignature = null
     ): void {
         $key = $this->evaluationKey($projectKey, $environmentKey, $flagKey, $userIdentifier, $attributes, $flagSignature);
-        $expiresAt = $this->expiresAt(self::EVALUATION_TTL_SECONDS);
+        $expiresAt = $this->expiresAt($this->evaluationTtlSeconds);
 
         $this->arrayEvaluations[$key] = [
             'payload' => $payload,
@@ -561,6 +567,15 @@ final class FlagCacheRepository
     private function expiresAt(int $ttl): int
     {
         return $this->now() + $ttl;
+    }
+
+    private function normalizeTtl(?int $ttl, int $default): int
+    {
+        if ($ttl !== null && $ttl > 0) {
+            return $ttl;
+        }
+
+        return $default;
     }
 
     private function now(): int
