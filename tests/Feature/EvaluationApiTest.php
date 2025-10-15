@@ -10,10 +10,18 @@ use Phlag\Models\Environment;
 use Phlag\Models\Evaluation;
 use Phlag\Models\Flag;
 use Phlag\Models\Project;
+use Symfony\Component\HttpFoundation\Response;
 
 beforeEach(function (): void {
     app()->forgetInstance(FlagCacheRepository::class);
     $this->artisan('migrate:fresh')->assertExitCode(0);
+    $this->authHeaders = jwtHeaders();
+});
+
+it('rejects unauthenticated evaluation requests', function (): void {
+    $this->getJson('/v1/evaluate')
+        ->assertStatus(Response::HTTP_UNAUTHORIZED)
+        ->assertJsonPath('error.code', 'unauthenticated');
 });
 
 it('evaluates a flag using rollout rules and persists the evaluation', function (): void {
@@ -64,7 +72,7 @@ it('evaluates a flag using rollout rules and persists the evaluation', function 
         $environment->key,
         $flag->key,
         $userId
-    ));
+    ), $this->authHeaders);
 
     $response->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
@@ -131,7 +139,7 @@ it('falls back to the default variant when rollout gating is not satisfied', fun
         $environment->key,
         $flag->key,
         $userId
-    ));
+    ), $this->authHeaders);
 
     $response->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
@@ -174,7 +182,7 @@ it('returns a disabled reason when the flag is turned off', function (): void {
         $project->key,
         $environment->key,
         $flag->key
-    ))
+    ), $this->authHeaders)
         ->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
             ->where('data.result.reason', 'flag_disabled')
@@ -215,7 +223,7 @@ it('reuses cached snapshots for repeated evaluations', function (): void {
         $project->key,
         $environment->key,
         $flag->key
-    ))->assertOk();
+    ), $this->authHeaders)->assertOk();
 
     $connection = DB::connection();
     $connection->flushQueryLog();
@@ -229,7 +237,7 @@ it('reuses cached snapshots for repeated evaluations', function (): void {
             $project->key,
             $environment->key,
             $flag->key
-        ))
+        ), $this->authHeaders)
             ->assertOk()
             ->assertJson(fn (AssertableJson $json) => $json
                 ->where('data.flag.key', $flag->key)
@@ -281,7 +289,7 @@ it('invalidates cached evaluations when flag configuration changes', function ()
         $project->key,
         $environment->key,
         $flag->key
-    ))
+    ), $this->authHeaders)
         ->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
             ->where('data.result.variant', 'enabled')
@@ -313,7 +321,7 @@ it('invalidates cached evaluations when flag configuration changes', function ()
         $project->key,
         $environment->key,
         $flag->key
-    ))
+    ), $this->authHeaders)
         ->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
             ->where('data.result.variant', 'enabled')
@@ -371,7 +379,7 @@ it('serves cached evaluations without touching postgres selects', function (): v
         $project->key,
         $environment->key,
         $flag->key
-    ))->assertOk();
+    ), $this->authHeaders)->assertOk();
 
     $attributes = ['locale' => ['en-US']];
 
@@ -390,7 +398,7 @@ it('serves cached evaluations without touching postgres selects', function (): v
             $project->key,
             $environment->key,
             $flag->key
-        ))
+        ), $this->authHeaders)
             ->assertOk()
             ->assertJson(fn (AssertableJson $json) => $json
                 ->where('data.flag.key', $flag->key)
@@ -439,7 +447,7 @@ it('invalidates caches when environment metadata changes', function (): void {
         $project->key,
         $environment->key,
         $flag->key
-    ))->assertOk();
+    ), $this->authHeaders)->assertOk();
 
     expect($this->cachedSnapshot($project->key, $environment->key))->not()->toBeNull();
     expect($this->cachedEvaluation(
@@ -466,7 +474,7 @@ it('invalidates caches when environment metadata changes', function (): void {
         $project->key,
         $environment->key,
         $flag->key
-    ))
+    ), $this->authHeaders)
         ->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
             ->where('data.result.variant', 'enabled')
@@ -516,7 +524,7 @@ it('returns an error when the requested environment does not exist', function ()
         $project->key,
         'non-existent',
         'payments-v2'
-    ))
+    ), $this->authHeaders)
         ->assertNotFound()
         ->assertJson(fn (AssertableJson $json) => $json
             ->where('error.code', 'resource_not_found')

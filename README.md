@@ -379,6 +379,8 @@ curl --request GET \
     ```
     Authorization: Bearer <jwt>
     ```
+-   All `/v1` project, environment, flag, and evaluation endpoints enforce the bearer guard; requests without a valid token receive the standardized `unauthenticated` error envelope.
+-   When invoking helper scripts that hit the HTTP bridge (for example, `curl` or automation workflows warming caches), forward the same bearer token so calls succeed alongside the CLI.
 -   Tokens are scoped to project + environment.
 -   Define `PHLAG_DEMO_API_KEY` before seeding to mint a demo credential for `demo-project` / `production`; rotate or remove it after validation.
 -   Responses include the bearer `token_type` plus the default roles granted to project clients so consumers can reason about access.

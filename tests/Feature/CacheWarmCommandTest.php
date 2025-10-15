@@ -18,6 +18,7 @@ use Symfony\Component\Console\Output\NullOutput;
 beforeEach(function (): void {
     app()->forgetInstance(FlagCacheRepository::class);
     $this->artisan('migrate:fresh')->assertExitCode(0);
+    $this->authHeaders = jwtHeaders();
 });
 
 it('warms snapshot and evaluation caches for a project environment', function (): void {
@@ -52,7 +53,7 @@ it('warms snapshot and evaluation caches for a project environment', function ()
         $project->key,
         $environment->key,
         $flag->key
-    ))->assertOk();
+    ), $this->authHeaders)->assertOk();
 
     /** @var FlagCacheRepository $initialRepository */
     $initialRepository = app(FlagCacheRepository::class);
@@ -106,7 +107,7 @@ it('warms snapshot and evaluation caches for a project environment', function ()
             $project->key,
             $environment->key,
             $flag->key
-        ))
+        ), $this->authHeaders)
             ->assertOk()
             ->assertJson(fn ($json) => $json
                 ->where('data.flag.key', $flag->key)

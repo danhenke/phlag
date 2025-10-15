@@ -21,6 +21,7 @@ Positive
 -   Stateless verification keeps the API horizontally scalable and easy to cache at the edge.
 -   JWT is widely supported by HTTP clients, SDKs, and middleware; integration friction is low.
 -   Encoded claims allow the API to make authorization decisions without additional lookups.
+-   Applying the guard to the `/v1` HTTP bridge keeps project, environment, flag, and evaluation routes aligned with CLI expectations while enforcing bearer authentication everywhere sensitive state mutates.
 
 Negative
 
