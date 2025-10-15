@@ -11,7 +11,14 @@ use Phlag\Models\Environment;
 use Phlag\Models\Project;
 use Phlag\Support\Clock\Clock;
 
+use function array_filter;
+use function array_map;
+use function array_unique;
+use function array_values;
+use function is_array;
+use function is_string;
 use function sprintf;
+use function trim;
 
 final class TokenExchangeService
 {
@@ -99,6 +106,26 @@ final class TokenExchangeService
         }
 
         $roles = self::DEFAULT_ROLES;
+        $credentialScopes = $credential->scopes;
+
+        if (is_array($credentialScopes)) {
+            $normalizedScopes = array_values(array_unique(array_filter(array_map(
+                static function ($scope): ?string {
+                    if (! is_string($scope)) {
+                        return null;
+                    }
+
+                    $trimmed = trim($scope);
+
+                    return $trimmed === '' ? null : $trimmed;
+                },
+                $credentialScopes
+            ))));
+
+            if ($normalizedScopes !== []) {
+                $roles = $normalizedScopes;
+            }
+        }
 
         $token = $this->issuer->issue([
             'sub' => sprintf('api_credential:%s', $credential->id),

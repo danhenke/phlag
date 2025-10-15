@@ -232,6 +232,14 @@ class DatabaseSeeder extends Seeder
         $credential->fill([
             'project_id' => $project->id,
             'environment_id' => $production->id,
+            'name' => 'Demo Production API credential',
+            'scopes' => [
+                'projects.read',
+                'environments.read',
+                'flags.read',
+                'flags.evaluate',
+                'cache.warm',
+            ],
             'key_hash' => ApiCredentialHasher::make($apiKey),
             'is_active' => true,
             'expires_at' => null,

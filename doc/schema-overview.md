@@ -78,7 +78,9 @@ erDiagram
         uuid id PK
         uuid project_id FK
         uuid environment_id FK
+        string name
         string key_hash UK
+        jsonb scopes
         boolean is_active
         timestamptz expires_at
         timestamptz created_at
@@ -103,6 +105,7 @@ erDiagram
 - Evaluations belong to a single environment/flag pair and capture request metadata for debugging.
 - Audit events may reference a project, environment, and/or flag (all optional) to describe the scope of the change.
 - API credentials store SHA-256 hashes of project/environment API keys so only hashed material lands in Postgres. Seeders mint demo credentials only when `PHLAG_DEMO_API_KEY` is defined. Tokens cannot be issued when a credential is inactive or past its optional expiration.
+- API credential records include a human-friendly name and optional scope list, allowing JWT roles to be tailored per credential while still persisting only hashed secrets.
 
 ## Keeping the Diagram Updated
 

@@ -407,6 +407,7 @@ curl --request GET \
 | `app:migrate [--fresh] [--seed]` | Run database migrations |
 | `app:seed [--fresh]`             | Seed demo data          |
 | `app:hello`                      | Print a hello message   |
+| `api-key:create`                 | Generate a project API key |
 
 Run commands through the Laravel Zero binary inside the running container via the helper script:
 
@@ -442,6 +443,14 @@ Database seeding completed.
 ```
 
 > Set `PHLAG_DEMO_API_KEY=<your-demo-api-key>` in `.env.local` before seeding if you want the demo project to include an API credential for immediate JWT issuance.
+
+### Example: Create a project API key
+
+```bash
+./scripts/app-cli api-key:create
+```
+
+Follow the interactive prompts to select the project, environment, credential name, scopes (comma-separated), and an optional expiration timestamp. The command prints a 48-character API key exactly once—copy it to your password manager or secret store. Only the SHA-256 hash, metadata, and expiration live in Postgres (`api_credentials` table); the plaintext key is never persisted.
 
 ### Example: Warm flag caches for a project
 
