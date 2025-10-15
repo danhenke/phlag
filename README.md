@@ -512,7 +512,7 @@ PR descriptions should also mention any migrations, environment variables, or op
 -   Auto-generated from annotations (`swagger-php`)
 -   OpenAPI JSON: `/v1/openapi.json`
 -   Swagger UI: `/docs`
--   Postman Collection: `/postman/FeatureFlagService.postman_collection.json`
+-   Postman Collection: `/v1/postman.json`
 
 Regenerate docs once you have sourced environment variables; the API endpoint will serve the generated artifact and returns a 404 if it is missing:
 

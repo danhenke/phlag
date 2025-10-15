@@ -55,7 +55,7 @@ it('renders Swagger UI backed by the generated spec', function (): void {
 });
 
 it('serves the Postman collection artifact', function (): void {
-    $response = $this->get('/postman/FeatureFlagService.postman_collection.json');
+    $response = $this->get('/v1/postman.json');
 
     $response->assertOk();
     $response->assertHeader('Content-Type', 'application/json');
@@ -76,7 +76,7 @@ it('returns a standardized error when the Postman collection is missing', functi
     File::move($collectionPath, $backupPath);
 
     try {
-        $this->getJson('/postman/FeatureFlagService.postman_collection.json')
+        $this->getJson('/v1/postman.json')
             ->assertStatus(Response::HTTP_NOT_FOUND)
             ->assertJson([
                 'error' => [

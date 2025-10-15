@@ -14,11 +14,6 @@ use Phlag\Http\Controllers\ProjectFlagController;
 
 Route::get('/', HealthCheckController::class);
 Route::get('/docs', [OpenApiController::class, 'ui'])->name('docs.ui');
-Route::get(
-    '/postman/FeatureFlagService.postman_collection.json',
-    PostmanCollectionController::class
-)->name('docs.postman');
-
 Route::prefix('v1')
     ->middleware('api')
     ->scopeBindings()
@@ -38,4 +33,7 @@ Route::prefix('v1')
 
         Route::get('/openapi.json', [OpenApiController::class, 'show'])
             ->name('docs.openapi');
+
+        Route::get('/postman.json', PostmanCollectionController::class)
+            ->name('docs.postman');
     });

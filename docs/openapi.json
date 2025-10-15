@@ -11,11 +11,6 @@
             "description": "Local development server"
         }
     ],
-    "security": [
-        {
-            "BearerAuth": []
-        }
-    ],
     "paths": {
         "/": {
             "get": {
@@ -24,7 +19,6 @@
                 ],
                 "summary": "Retrieve service health status.",
                 "operationId": "getHealthCheck",
-                "security": [],
                 "responses": {
                     "200": {
                         "description": "Service is available.",
@@ -81,7 +75,6 @@
                 "summary": "Issue JWT from API key",
                 "description": "Exchange a project/environment API key for a JWT bearer token.",
                 "operationId": "exchangeApiKeyForJwt",
-                "security": [],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -173,7 +166,6 @@
                 ],
                 "summary": "Retrieve the OpenAPI specification JSON.",
                 "operationId": "getOpenApiDocument",
-                "security": [],
                 "responses": {
                     "200": {
                         "description": "OpenAPI document as JSON.",
@@ -220,6 +212,47 @@
                         "description": "Swagger UI HTML response.",
                         "content": {
                             "text/html": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/postman.json": {
+            "get": {
+                "tags": [
+                    "Documentation"
+                ],
+                "summary": "Retrieve the Postman collection JSON.",
+                "operationId": "getPostmanCollection",
+                "responses": {
+                    "200": {
+                        "description": "Postman collection JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Collection artifact is not available.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Collection artifact could not be parsed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
                         }
                     }
                 }
@@ -1840,14 +1873,6 @@
         }
     },
     "components": {
-        "securitySchemes": {
-            "BearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT",
-                "description": "JWT issued via POST /v1/auth/token."
-            }
-        },
         "schemas": {
             "Project": {
                 "description": "Project representation returned by the API.",

@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 final class PostmanCollectionController extends Controller
 {
     #[OA\Get(
-        path: '/postman/FeatureFlagService.postman_collection.json',
+        path: '/v1/postman.json',
         operationId: 'getPostmanCollection',
         summary: 'Retrieve the Postman collection JSON.',
         tags: ['Documentation'],
