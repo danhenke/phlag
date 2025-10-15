@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 final class OpenApiController extends Controller
 {
     #[OA\Get(
-        path: '/v1/docs/openapi.json',
+        path: '/v1/openapi.json',
         operationId: 'getOpenApiDocument',
         summary: 'Retrieve the OpenAPI specification JSON.',
         tags: ['Documentation'],
@@ -96,7 +96,7 @@ final class OpenApiController extends Controller
     public function ui(): Response
     {
         $specUrl = htmlspecialchars(
-            url('/v1/docs/openapi.json'),
+            url('/v1/openapi.json'),
             ENT_QUOTES | ENT_SUBSTITUTE,
             'UTF-8'
         );

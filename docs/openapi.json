@@ -166,7 +166,7 @@
                 }
             }
         },
-        "/v1/docs/openapi.json": {
+        "/v1/openapi.json": {
             "get": {
                 "tags": [
                     "Documentation"

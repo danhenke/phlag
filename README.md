@@ -242,7 +242,7 @@ The seeders provision a reusable dataset:
 | `PATCH /v1/projects/{project}/flags/{key}`  | Update flag                                     |
 | `DELETE /v1/projects/{project}/flags/{key}` | Delete flag                                     |
 | `GET /v1/evaluate`                          | Evaluate flag (`?project=&env=&flag=&user_id=`) |
-| `GET /v1/docs/openapi.json`                 | OpenAPI JSON spec                               |
+| `GET /v1/openapi.json`                      | OpenAPI JSON spec                               |
 | `GET /docs`                                 | Swagger UI viewer                               |
 
 ### Postman collection
@@ -510,7 +510,7 @@ PR descriptions should also mention any migrations, environment variables, or op
 ## 📘 API Documentation
 
 -   Auto-generated from annotations (`swagger-php`)
--   OpenAPI JSON: `/v1/docs/openapi.json`
+-   OpenAPI JSON: `/v1/openapi.json`
 -   Swagger UI: `/docs`
 -   Postman Collection: `/postman/FeatureFlagService.postman_collection.json`
 

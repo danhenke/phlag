@@ -36,6 +36,6 @@ Route::prefix('v1')
                 ->name('flags.evaluate');
         });
 
-        Route::get('/docs/openapi.json', [OpenApiController::class, 'show'])
+        Route::get('/openapi.json', [OpenApiController::class, 'show'])
             ->name('docs.openapi');
     });

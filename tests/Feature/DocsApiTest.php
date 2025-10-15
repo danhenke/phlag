@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\File;
 use Symfony\Component\HttpFoundation\Response;
 
 it('serves the generated OpenAPI specification as JSON', function (): void {
-    $response = $this->get('/v1/docs/openapi.json');
+    $response = $this->get('/v1/openapi.json');
 
     $response->assertOk();
 
@@ -29,7 +29,7 @@ it('returns a standardized error when the OpenAPI artifact is missing', function
     File::move($specPath, $backupPath);
 
     try {
-        $this->getJson('/v1/docs/openapi.json')
+        $this->getJson('/v1/openapi.json')
             ->assertStatus(Response::HTTP_NOT_FOUND)
             ->assertJson([
                 'error' => [
@@ -48,7 +48,7 @@ it('renders Swagger UI backed by the generated spec', function (): void {
     $response = $this->get('/docs');
 
     $response->assertOk();
-    $response->assertSee('/v1/docs/openapi.json', false);
+    $response->assertSee('/v1/openapi.json', false);
 
     expect($response->headers->get('Content-Type'))
         ->toContain('text/html');
