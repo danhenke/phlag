@@ -123,6 +123,7 @@ DB_PASSWORD=postgres
 DATABASE_URL=pgsql://postgres:postgres@postgres:5432/phlag
 
 REDIS_URL=redis://redis:6379/0
+REDIS_CACHE_DB=1
 JWT_SECRET=$(openssl rand -base64 32)
 EOF
 ```
@@ -136,6 +137,8 @@ set -a
 source .env.local
 set +a
 ```
+
+Evaluation caching stores data in Redis database 1 by default. Override `REDIS_CACHE_DB` if multiple Phlag stacks share the same Redis instance.
 
 ### 3. Start Docker Compose stack
 

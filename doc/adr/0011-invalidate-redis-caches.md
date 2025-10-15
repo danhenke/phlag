@@ -13,6 +13,7 @@ Flag evaluation must stay fast while reflecting project changes within seconds. 
 ## Decision
 
 -   Model cache entries with deterministic keys: `flag:snapshot:{project}:{environment}` stores the full flag collection for evaluation, and `flag:evaluation:{project}:{environment}:{flag}:{hash}` stores user-specific evaluation results. All structures are JSON-encoded strings with a default TTL of five minutes.
+-   Maintain a lightweight index per environment at `flag:evaluation:index:{project}:{environment}` to delete cached evaluations without scanning Redis when mutations occur.
 -   When flags, projects, or environments change, the domain layer publishes an event to the Redis channel `phlag.flags.invalidated` containing the affected project and environment identifiers. Listeners delete matching keys (`DEL`) and optionally trigger eager rebuilds.
 -   The `cache:warm {project} {env}` CLI command subscribes to the same message bus when running in daemon mode. It precomputes snapshots after deploys and offers operators a manual way to refresh caches without restarting services.
 -   HTTP workers subscribe to the invalidation channel during boot. On receipt, they evict in-memory copies and allow the next request to repopulate Redis, ensuring horizontally scaled replicas stay in sync.

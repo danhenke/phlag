@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Phlag\Models\Environment;
@@ -177,6 +178,132 @@ it('returns a disabled reason when the flag is turned off', function (): void {
             ->where('data.result.reason', 'flag_disabled')
             ->where('data.result.variant', 'off')
             ->where('data.result.rollout', 0)
+        );
+});
+
+it('reuses cached snapshots for repeated evaluations', function (): void {
+    $project = Project::query()->create([
+        'id' => (string) Str::uuid(),
+        'key' => 'search',
+        'name' => 'Search',
+    ]);
+
+    $environment = Environment::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $project->id,
+        'key' => 'production',
+        'name' => 'Production',
+        'is_default' => true,
+    ]);
+
+    $flag = Flag::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $project->id,
+        'key' => 'search-ui',
+        'name' => 'Search UI',
+        'is_enabled' => true,
+        'variants' => [
+            ['key' => 'control', 'weight' => 100],
+        ],
+        'rules' => [],
+    ]);
+
+    $this->getJson(sprintf(
+        '/v1/evaluate?project=%s&env=%s&flag=%s&locale=en-US',
+        $project->key,
+        $environment->key,
+        $flag->key
+    ))->assertOk();
+
+    $connection = DB::connection();
+    $connection->flushQueryLog();
+    $connection->enableQueryLog();
+
+    $queries = [];
+
+    try {
+        $this->getJson(sprintf(
+            '/v1/evaluate?project=%s&env=%s&flag=%s&locale=en-US',
+            $project->key,
+            $environment->key,
+            $flag->key
+        ))
+            ->assertOk()
+            ->assertJson(fn (AssertableJson $json) => $json
+                ->where('data.flag.key', $flag->key)
+                ->where('data.environment.key', $environment->key)
+                ->where('data.project.key', $project->key)
+            );
+    } finally {
+        $queries = $connection->getQueryLog();
+        $connection->flushQueryLog();
+        $connection->disableQueryLog();
+    }
+
+    $selectQueries = array_filter($queries, static fn (array $query): bool => str_starts_with(strtolower($query['query'] ?? ''), 'select'));
+
+    $flagSelects = array_filter($selectQueries, static fn (array $query): bool => str_contains(strtolower($query['query'] ?? ''), 'from "flags"'));
+    $projectSelects = array_filter($selectQueries, static fn (array $query): bool => str_contains(strtolower($query['query'] ?? ''), 'from "projects"'));
+    $environmentSelects = array_filter($selectQueries, static fn (array $query): bool => str_contains(strtolower($query['query'] ?? ''), 'from "environments"'));
+
+    expect($flagSelects)->toHaveCount(1);
+    expect($projectSelects)->toBeEmpty();
+    expect($environmentSelects)->toBeEmpty();
+
+    expect(Evaluation::query()->count())->toBe(2);
+});
+
+it('invalidates cached evaluations when flag configuration changes', function (): void {
+    $project = Project::query()->create([
+        'id' => (string) Str::uuid(),
+        'key' => 'notifications',
+        'name' => 'Notifications',
+    ]);
+
+    $environment = Environment::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $project->id,
+        'key' => 'production',
+        'name' => 'Production',
+        'is_default' => true,
+    ]);
+
+    $flag = Flag::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $project->id,
+        'key' => 'push-enabled',
+        'name' => 'Push Notifications',
+        'is_enabled' => true,
+        'variants' => [
+            ['key' => 'enabled', 'weight' => 100],
+        ],
+        'rules' => [],
+    ]);
+
+    $this->getJson(sprintf(
+        '/v1/evaluate?project=%s&env=%s&flag=%s',
+        $project->key,
+        $environment->key,
+        $flag->key
+    ))
+        ->assertOk()
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('data.result.variant', 'enabled')
+            ->where('data.result.reason', 'fallback_default')
+        );
+
+    $flag->update(['is_enabled' => false]);
+
+    $this->getJson(sprintf(
+        '/v1/evaluate?project=%s&env=%s&flag=%s',
+        $project->key,
+        $environment->key,
+        $flag->key
+    ))
+        ->assertOk()
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('data.result.variant', 'enabled')
+            ->where('data.result.reason', 'flag_disabled')
         );
 });
 

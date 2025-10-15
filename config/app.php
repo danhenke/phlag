@@ -62,5 +62,4 @@ return [
         Phlag\Providers\AppServiceProvider::class,
         Phlag\Providers\RouteServiceProvider::class,
     ],
-
 ];
