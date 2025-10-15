@@ -11,6 +11,7 @@ use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Phlag\Http\Middleware\RejectInvalidJson;
 
 final class Kernel extends BaseKernel
 {
@@ -35,6 +36,7 @@ final class Kernel extends BaseKernel
      */
     protected $middlewareGroups = [
         'api' => [
+            RejectInvalidJson::class,
             SubstituteBindings::class,
         ],
     ];
