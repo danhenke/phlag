@@ -21,23 +21,47 @@ Flag evaluation must stay fast while reflecting project changes within seconds. 
 ### Key schema and payloads
 
 -   Segment encoding: all `{project}`, `{environment}`, `{flag}`, and `{signature}` segments are lower-cased and sanitised by replacing colons, braces, and whitespace with underscores. This keeps keys human-readable while avoiding Redis hash-slot conflicts.
--   Snapshot entries: `flag:snapshot:{project}:{environment}` stores the JSON produced by `FlagSnapshotFactory::make()`. It includes project metadata, environment metadata, an array of flag definitions, and `generated_at`. TTL: 300 seconds. Snapshot warmers should refresh hot environments on deploy; otherwise cold keys expire naturally.
--   Evaluation entries: `flag:evaluation:{project}:{environment}:{flag}:{signature}:{hash}` stores JSON with:
-    -   `variant` (`string|null`)
-    -   `reason` (`string`)
-    -   `rollout` (`int`)
-    -   optional `payload` (`array<string, mixed>`)
-    -   optional `bucket` (`int`)
 
-    `{signature}` is a SHA-1 of the flag definition (enabled state, variants, rules, updated_at). `{hash}` is a SHA-1 of the evaluation context (user identifier plus sorted attributes). TTL: 300 seconds. Re-evaluations reuse cached payloads until the flag definition changes or the TTL elapses.
--   Evaluation index: `flag:evaluation:index:{project}:{environment}` is a Redis set of evaluation keys generated for the environment. The index expires after 300 seconds; any membership left behind by TTL drift is cleared when the index key expires.
--   Invalidation payload: published messages are JSON objects with `project` and `environment` keys. Consumers use these identifiers to drop the snapshot, delete the evaluation index, and purge any lingering evaluation keys.
+| Key | Purpose | TTL (default / override) | Example |
+| --- | --- | --- | --- |
+| `flag:snapshot:{project}:{environment}` | Cached snapshot payload produced by `FlagSnapshotFactory::make()`; consumed by evaluators and warmers. | `300s` / `FLAG_CACHE_SNAPSHOT_TTL` (`config('flag_cache.snapshot_ttl')`) | `flag:snapshot:billing:production` |
+| `flag:evaluation:{project}:{environment}:{flag}:{signature}:{hash}` | Cached result of an individual flag evaluation, keyed by the flag signature and caller context hash. | `300s` / `FLAG_CACHE_EVALUATION_TTL` (`config('flag_cache.evaluation_ttl')`) | `flag:evaluation:billing:production:new_banner:9f82...:4a6c...` |
+| `flag:evaluation:index:{project}:{environment}` | Redis set of evaluation keys for the environment, used to bulk delete entries after mutations. | Matches evaluation TTL; refreshed on each write. | `flag:evaluation:index:billing:production` |
+
+Snapshot entries include project metadata, environment metadata, an array of flag definitions, and a `generated_at` timestamp. Snapshot warmers refresh hot environments after deploys; cold keys expire naturally.
+
+Evaluation entries store JSON with the following schema:
+
+```json
+{
+    "variant": "string-or-null",
+    "reason": "string",
+    "rollout": 100,
+    "payload": {
+        "example": "contextual-data"
+    },
+    "bucket": 42
+}
+```
+
+-   `{signature}` is a SHA-1 of the canonicalised flag definition (enabled state, variants, rules, `updated_at`). Any mutation to the flag regenerates this signature so previous cache entries miss naturally.
+-   `{hash}` is a SHA-1 of the evaluation context: the user identifier (or empty string) plus sorted attribute keys and values. Attribute arrays are sorted to guarantee stable hashes regardless of input order.
+-   Optional `payload` and `bucket` keys mirror the runtime `EvaluationResult` contract. Absent keys are omitted from the JSON payload to keep entries compact.
+
+Evaluation indices expire alongside their member evaluations. Writers refresh the index TTL on every `sadd` to avoid stranding keys, and readers clean up empty or expired indices before returning fallback results.
+
+Invalidation payloads are JSON objects containing `project` and `environment`. Listeners use these identifiers to drop both the snapshot key and the evaluation index:
+
+```json
+{"project":"billing","environment":"production"}
+```
 
 ### TTL strategy
 
 -   Five-minute TTLs balance freshness with reduced load on Postgres. Operators can shorten or extend TTLs via the `FLAG_CACHE_SNAPSHOT_TTL` and `FLAG_CACHE_EVALUATION_TTL` environment variables if high churn or read-heavy workloads demand it.
 -   Hot environments should be warmed immediately after deploys with `cache:warm` to avoid cold-start latency. Cold environments naturally expire and are generated lazily on demand.
 -   Evaluation caches couple TTL with pub/sub invalidations so missed events have a bounded blast radius. Audit metrics should monitor key age and hit rates to refine TTL values over time.
+-   Operators can temporarily lower TTLs during large rollouts or flag migrations to guarantee faster recovery while leaving the invalidation pipeline intact. Restoring the default keeps Redis churn manageable once the rollout stabilises.
 
 ## Consequences
 
