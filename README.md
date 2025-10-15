@@ -146,7 +146,7 @@ JWT_SECRET=$(openssl rand -base64 32)
 EOF
 ```
 
-For hosted environments configure RSA signing keys via `JWT_KEY_ID`, `JWT_PRIVATE_KEY`, and `JWT_PUBLIC_KEY` according to [`doc/adr/0010-manage-jwt-signing-keys.md`](./doc/adr/0010-manage-jwt-signing-keys.md). The `JWT_SECRET` value above is a local-only fallback so contributors can start without managing PEM files.
+For hosted environments configure RSA signing keys via `JWT_KEY_ID`, `JWT_PRIVATE_KEY`, and `JWT_PUBLIC_KEY` according to [`doc/adr/0010-manage-jwt-signing-keys.md`](./doc/adr/0010-manage-jwt-signing-keys.md). The `JWT_SECRET` value above is a local-only fallback so contributors can start without managing PEM files. Tune token lifetimes with `JWT_TTL` (seconds, default `3600`) and adjust clock drift tolerance using `JWT_CLOCK_SKEW` (seconds, default `60`).
 
 Load the variables into your shell whenever you start a new terminal:
 
