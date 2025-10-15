@@ -7,12 +7,17 @@ use Phlag\Http\Controllers\AuthTokenController;
 use Phlag\Http\Controllers\EvaluateFlagController;
 use Phlag\Http\Controllers\HealthCheckController;
 use Phlag\Http\Controllers\OpenApiController;
+use Phlag\Http\Controllers\PostmanCollectionController;
 use Phlag\Http\Controllers\ProjectController;
 use Phlag\Http\Controllers\ProjectEnvironmentController;
 use Phlag\Http\Controllers\ProjectFlagController;
 
 Route::get('/', HealthCheckController::class);
 Route::get('/docs', [OpenApiController::class, 'ui'])->name('docs.ui');
+Route::get(
+    '/postman/FeatureFlagService.postman_collection.json',
+    PostmanCollectionController::class
+)->name('docs.postman');
 
 Route::prefix('v1')
     ->middleware('api')

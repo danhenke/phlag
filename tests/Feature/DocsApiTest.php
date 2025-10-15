@@ -53,3 +53,40 @@ it('renders Swagger UI backed by the generated spec', function (): void {
     expect($response->headers->get('Content-Type'))
         ->toContain('text/html');
 });
+
+it('serves the Postman collection artifact', function (): void {
+    $response = $this->get('/postman/FeatureFlagService.postman_collection.json');
+
+    $response->assertOk();
+    $response->assertHeader('Content-Type', 'application/json');
+
+    $collectionPath = base_path('postman/FeatureFlagService.postman_collection.json');
+    $payload = json_decode(File::get($collectionPath), true, flags: JSON_THROW_ON_ERROR);
+
+    expect(json_decode($response->getContent(), true, flags: JSON_THROW_ON_ERROR))
+        ->toEqual($payload);
+});
+
+it('returns a standardized error when the Postman collection is missing', function (): void {
+    $collectionPath = base_path('postman/FeatureFlagService.postman_collection.json');
+    $backupPath = $collectionPath.'.bak';
+
+    expect(File::exists($collectionPath))->toBeTrue();
+
+    File::move($collectionPath, $backupPath);
+
+    try {
+        $this->getJson('/postman/FeatureFlagService.postman_collection.json')
+            ->assertStatus(Response::HTTP_NOT_FOUND)
+            ->assertJson([
+                'error' => [
+                    'code' => 'resource_not_found',
+                    'status' => Response::HTTP_NOT_FOUND,
+                ],
+            ]);
+    } finally {
+        if (File::exists($backupPath)) {
+            File::move($backupPath, $collectionPath);
+        }
+    }
+});
