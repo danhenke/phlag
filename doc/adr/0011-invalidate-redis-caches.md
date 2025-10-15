@@ -35,7 +35,7 @@ Flag evaluation must stay fast while reflecting project changes within seconds. 
 
 ### TTL strategy
 
--   Five-minute TTLs balance freshness with reduced load on Postgres. Operators can shorten or extend TTLs by configuration if high churn or read-heavy workloads demand it.
+-   Five-minute TTLs balance freshness with reduced load on Postgres. Operators can shorten or extend TTLs via the `FLAG_CACHE_SNAPSHOT_TTL` and `FLAG_CACHE_EVALUATION_TTL` environment variables if high churn or read-heavy workloads demand it.
 -   Hot environments should be warmed immediately after deploys with `cache:warm` to avoid cold-start latency. Cold environments naturally expire and are generated lazily on demand.
 -   Evaluation caches couple TTL with pub/sub invalidations so missed events have a bounded blast radius. Audit metrics should monitor key age and hit rates to refine TTL values over time.
 

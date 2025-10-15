@@ -414,6 +414,15 @@ Database seeding completed.
 
 Provide the project and environment keys to repopulate Redis after changing flag rules. Pass additional options (for example, `--daemon`) and they are forwarded to the underlying `cache:warm` command.
 
+#### Tune Redis cache TTLs
+
+Control how long snapshots and evaluations stay in Redis without code changes:
+
+-   `FLAG_CACHE_SNAPSHOT_TTL` — defaults to `300` seconds.
+-   `FLAG_CACHE_EVALUATION_TTL` — defaults to `300` seconds.
+
+Set the environment variables in `.env.local` (or your deployment secrets) to align with the guidance in [`doc/adr/0011-invalidate-redis-caches.md`](./doc/adr/0011-invalidate-redis-caches.md).
+
 ### Example: Tail audit events
 
 ```bash
