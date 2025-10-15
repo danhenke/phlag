@@ -166,7 +166,7 @@ Only the application’s port 80 is published to your LAN (`http://localhost/` b
 
 Need to live-edit code inside the container? Add a local override (for example `compose.override.yaml`) that bind-mounts your working tree into `/app`. Remember this bypasses the packaged PHAR and assets that ship with the image, so disable it when you want to validate what will run in other environments.
 
-Logs remain on stdout; tail them with `docker compose logs -f` when debugging. The Compose file configures the `json-file` driver with `max-size=10m` and `max-file=5`, so each container keeps a rotating local buffer without requiring extra volumes.
+Logs remain on stdout; tail them with `docker compose logs -f` when debugging. Each HTTP request now emits structured entries including the method, request URI, status code, user agent, and duration so you can correlate activity without enabling verbose framework logging. The Compose file configures the `json-file` driver with `max-size=10m` and `max-file=5`, so each container keeps a rotating local buffer without requiring extra volumes.
 
 #### Quick smoke tests without Docker
 
