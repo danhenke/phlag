@@ -34,7 +34,8 @@ final class OpenApiController extends Controller
                 description: 'Specification artifact could not be parsed.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: []
     )]
     public function show(): JsonResponse
     {
@@ -91,7 +92,8 @@ final class OpenApiController extends Controller
                 description: 'Swagger UI HTML response.',
                 content: new OA\MediaType(mediaType: 'text/html')
             ),
-        ]
+        ],
+        security: []
     )]
     public function ui(): Response
     {
@@ -100,6 +102,48 @@ final class OpenApiController extends Controller
             ENT_QUOTES | ENT_SUBSTITUTE,
             'UTF-8'
         );
+
+        $tagOrder = [
+            'System',
+            'Documentation',
+            'Authentication',
+            'Projects',
+            'Environments',
+            'Flags',
+        ];
+
+        $pathOrder = [
+            'System' => [
+                '/',
+            ],
+            'Documentation' => [
+                '/docs',
+                '/v1/openapi.json',
+                '/v1/postman.json',
+            ],
+            'Authentication' => [
+                '/v1/auth/token',
+            ],
+            'Projects' => [
+                '/v1/projects',
+                '/v1/projects/{project}',
+            ],
+            'Environments' => [
+                '/v1/projects/{project}/environments',
+                '/v1/projects/{project}/environments/{environment}',
+            ],
+            'Flags' => [
+                '/v1/projects/{project}/flags',
+                '/v1/projects/{project}/flags/{flag}',
+                '/v1/evaluate',
+            ],
+        ];
+
+        $methodOrder = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head'];
+
+        $tagOrderJson = json_encode($tagOrder, JSON_THROW_ON_ERROR);
+        $pathOrderJson = json_encode($pathOrder, JSON_THROW_ON_ERROR);
+        $methodOrderJson = json_encode($methodOrder, JSON_THROW_ON_ERROR);
 
         $html = <<<HTML
 <!DOCTYPE html>
@@ -116,6 +160,72 @@ final class OpenApiController extends Controller
 <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
 <script>
     window.addEventListener('load', function () {
+        const tagOrder = {$tagOrderJson};
+        const pathOrder = {$pathOrderJson};
+        const methodOrder = {$methodOrderJson};
+
+        function compareTags(tagA, tagB) {
+            const indexA = tagOrder.indexOf(tagA);
+            const indexB = tagOrder.indexOf(tagB);
+
+            if (indexA === -1 && indexB === -1) {
+                return tagA.localeCompare(tagB);
+            }
+
+            if (indexA === -1) {
+                return 1;
+            }
+
+            if (indexB === -1) {
+                return -1;
+            }
+
+            return indexA - indexB;
+        }
+
+        function comparePaths(tag, pathA, pathB) {
+            const order = pathOrder[tag] || [];
+            const indexA = order.indexOf(pathA);
+            const indexB = order.indexOf(pathB);
+
+            if (indexA === -1 && indexB === -1) {
+                return pathA.localeCompare(pathB);
+            }
+
+            if (indexA === -1) {
+                return 1;
+            }
+
+            if (indexB === -1) {
+                return -1;
+            }
+
+            return indexA - indexB;
+        }
+
+        function compareMethods(methodA, methodB) {
+            const indexA = methodOrder.indexOf(methodA);
+            const indexB = methodOrder.indexOf(methodB);
+
+            if (indexA === -1 && indexB === -1) {
+                if (methodA === methodB) {
+                    return 0;
+                }
+
+                return methodA.localeCompare(methodB);
+            }
+
+            if (indexA === -1) {
+                return 1;
+            }
+
+            if (indexB === -1) {
+                return -1;
+            }
+
+            return indexA - indexB;
+        }
+
         window.ui = SwaggerUIBundle({
             dom_id: '#swagger-ui',
             url: '{$specUrl}',
@@ -125,7 +235,38 @@ final class OpenApiController extends Controller
             presets: [
                 SwaggerUIBundle.presets.apis,
                 SwaggerUIStandalonePreset
-            ]
+            ],
+            tagsSorter: function (a, b) {
+                return compareTags(a, b);
+            },
+            operationsSorter: function (opA, opB) {
+                const tagA = (opA.get('tags') || [])[0] || '';
+                const tagB = (opB.get('tags') || [])[0] || '';
+
+                if (tagA !== tagB) {
+                    return compareTags(tagA, tagB);
+                }
+
+                const pathA = opA.get('path');
+                const pathB = opB.get('path');
+
+                const pathComparison = comparePaths(tagA, pathA, pathB);
+
+                if (pathComparison !== 0) {
+                    return pathComparison;
+                }
+
+                const methodA = (opA.get('method') || '').toLowerCase();
+                const methodB = (opB.get('method') || '').toLowerCase();
+
+                const methodComparison = compareMethods(methodA, methodB);
+
+                if (methodComparison !== 0) {
+                    return methodComparison;
+                }
+
+                return pathA.localeCompare(pathB) || methodA.localeCompare(methodB);
+            },
         });
     });
 </script>

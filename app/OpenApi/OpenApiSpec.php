@@ -15,4 +15,16 @@ use OpenApi\Attributes as OA;
     url: 'http://localhost',
     description: 'Local development server'
 )]
+#[OA\SecurityScheme(
+    securityScheme: 'BearerAuth',
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT',
+    description: 'JWT issued via POST /v1/auth/token.'
+)]
+#[OA\OpenApi(
+    security: [
+        ['BearerAuth' => []],
+    ]
+)]
 final class OpenApiSpec {}

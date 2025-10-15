@@ -72,7 +72,8 @@ final class EvaluationPaths
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: [['BearerAuth' => []]]
     )]
     public function evaluate(): void {}
 }

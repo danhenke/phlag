@@ -25,7 +25,8 @@ final class PostmanCollectionController extends Controller
             ),
             new OA\Response(response: HttpResponse::HTTP_NOT_FOUND, description: 'Collection artifact is not available.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
             new OA\Response(response: HttpResponse::HTTP_INTERNAL_SERVER_ERROR, description: 'Collection artifact could not be parsed.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
-        ]
+        ],
+        security: []
     )]
     public function __invoke(): JsonResponse
     {

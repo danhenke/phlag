@@ -19,6 +19,8 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class ProjectController extends Controller
 {
+    private const SECURITY = [['BearerAuth' => []]];
+
     /**
      * List projects with pagination support.
      */
@@ -62,7 +64,8 @@ class ProjectController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -124,7 +127,8 @@ class ProjectController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function store(StoreProjectRequest $request): JsonResponse
     {
@@ -185,7 +189,8 @@ class ProjectController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function show(Project $project): ProjectResource
     {
@@ -245,7 +250,8 @@ class ProjectController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     #[OA\Put(
         path: '/v1/projects/{project}',
@@ -295,7 +301,8 @@ class ProjectController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function update(UpdateProjectRequest $request, Project $project): ProjectResource
     {
@@ -344,7 +351,8 @@ class ProjectController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function destroy(Project $project): Response
     {

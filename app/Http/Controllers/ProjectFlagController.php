@@ -20,6 +20,8 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class ProjectFlagController extends Controller
 {
+    private const SECURITY = [['BearerAuth' => []]];
+
     /**
      * List flags for the given project.
      */
@@ -74,7 +76,8 @@ class ProjectFlagController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function index(Request $request, Project $project): AnonymousResourceCollection
     {
@@ -149,7 +152,8 @@ class ProjectFlagController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function store(StoreFlagRequest $request, Project $project): JsonResponse
     {
@@ -221,7 +225,8 @@ class ProjectFlagController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function show(Project $project, Flag $flag): FlagResource
     {
@@ -285,7 +290,8 @@ class ProjectFlagController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     #[OA\Put(
         path: '/v1/projects/{project}/flags/{flag}',
@@ -341,7 +347,8 @@ class ProjectFlagController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function update(UpdateFlagRequest $request, Project $project, Flag $flag): FlagResource
     {
@@ -399,7 +406,8 @@ class ProjectFlagController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function destroy(Project $project, Flag $flag): Response
     {

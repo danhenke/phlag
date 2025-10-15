@@ -20,6 +20,8 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class ProjectEnvironmentController extends Controller
 {
+    private const SECURITY = [['BearerAuth' => []]];
+
     /**
      * List environments for the given project.
      */
@@ -74,7 +76,8 @@ class ProjectEnvironmentController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function index(Request $request, Project $project): AnonymousResourceCollection
     {
@@ -149,7 +152,8 @@ class ProjectEnvironmentController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function store(StoreEnvironmentRequest $request, Project $project): JsonResponse
     {
@@ -222,7 +226,8 @@ class ProjectEnvironmentController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function show(Project $project, Environment $environment): EnvironmentResource
     {
@@ -286,7 +291,8 @@ class ProjectEnvironmentController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     #[OA\Put(
         path: '/v1/projects/{project}/environments/{environment}',
@@ -342,7 +348,8 @@ class ProjectEnvironmentController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function update(
         UpdateEnvironmentRequest $request,
@@ -405,7 +412,8 @@ class ProjectEnvironmentController extends Controller
                 description: 'Unexpected server error.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
-        ]
+        ],
+        security: self::SECURITY
     )]
     public function destroy(Project $project, Environment $environment): Response
     {
