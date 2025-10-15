@@ -59,6 +59,7 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\Pagination\PaginationServiceProvider::class,
+        Illuminate\Database\DatabaseServiceProvider::class,
         Phlag\Providers\AppServiceProvider::class,
         Phlag\Providers\RouteServiceProvider::class,
     ],

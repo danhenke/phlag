@@ -40,7 +40,7 @@ return [
     */
 
     'add' => [
-        //
+        Illuminate\Database\Console\Seeds\SeedCommand::class,
     ],
 
     /*

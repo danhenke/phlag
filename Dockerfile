@@ -23,6 +23,8 @@ RUN apt-get update \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/* /tmp/pear
 
+RUN printf "log_errors=1\nerror_log=/proc/self/fd/2\ndisplay_errors=0\n" > /usr/local/etc/php/conf.d/log-errors.ini
+
 WORKDIR /app
 
 FROM base AS builder
@@ -38,7 +40,7 @@ RUN composer dump-autoload \
     --no-ansi \
     --optimize \
     --classmap-authoritative \
-    && php phlag app:build phlag
+    && php phlag app:build phlag -v
 
 FROM base AS runtime
 
@@ -49,6 +51,7 @@ ENV PHLAG_PHAR=/app/phlag
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/bootstrap ./bootstrap
 COPY --from=builder /app/config ./config
+COPY --from=builder /app/docs ./docs
 COPY --from=builder /app/routes ./routes
 COPY --from=builder /app/app ./app
 COPY --from=builder /app/vendor ./vendor

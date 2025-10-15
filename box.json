@@ -4,10 +4,13 @@
         "app",
         "bootstrap",
         "config",
+        "routes",
+        "database",
         "vendor"
     ],
     "files": [
-        "composer.json"
+        "composer.json",
+        "docs/openapi.json"
     ],
     "exclude-composer-files": false,
     "compression": "GZ",
