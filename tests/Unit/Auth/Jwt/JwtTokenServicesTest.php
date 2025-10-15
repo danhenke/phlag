@@ -15,8 +15,8 @@ it('issues and verifies RSA tokens with required claims', function (): void {
         'keys' => [
             'active' => [
                 'id' => TestKeys::ACTIVE_KEY_ID,
-                'private_key' => TestKeys::RSA_PRIVATE_KEY,
-                'public_key' => TestKeys::RSA_PUBLIC_KEY,
+                'private_key' => TestKeys::activePrivateKey(),
+                'public_key' => TestKeys::activePublicKey(),
             ],
         ],
         'ttl' => 600,
@@ -90,12 +90,12 @@ it('validates tokens signed with the previous RSA key', function (): void {
         'keys' => [
             'active' => [
                 'id' => TestKeys::ACTIVE_KEY_ID,
-                'private_key' => TestKeys::RSA_PRIVATE_KEY,
-                'public_key' => TestKeys::RSA_PUBLIC_KEY,
+                'private_key' => TestKeys::activePrivateKey(),
+                'public_key' => TestKeys::activePublicKey(),
             ],
             'previous' => [
                 'id' => TestKeys::PREVIOUS_KEY_ID,
-                'public_key' => TestKeys::PREVIOUS_PUBLIC_KEY,
+                'public_key' => TestKeys::previousPublicKey(),
             ],
         ],
         'ttl' => 300,
@@ -113,7 +113,7 @@ it('validates tokens signed with the previous RSA key', function (): void {
 
     $token = JWT::encode(
         $claims,
-        TestKeys::PREVIOUS_RSA_PRIVATE_KEY,
+        TestKeys::previousPrivateKey(),
         Configuration::RSA_ALGORITHM,
         TestKeys::PREVIOUS_KEY_ID
     );

@@ -287,16 +287,24 @@ curl --request POST \
      --data '{
          "project": "demo-project",
          "environment": "production",
-         "api_key": "<project-api-key>"
+         "api_key": "<project-environment-api-key>"
      }'
 ```
 
 ```json
 {
-    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "token": "<jwt-token>",
+    "token_type": "Bearer",
     "expires_in": 3600,
     "project": "demo-project",
-    "environment": "production"
+    "environment": "production",
+    "roles": [
+        "projects.read",
+        "environments.read",
+        "flags.read",
+        "flags.evaluate",
+        "cache.warm"
+    ]
 }
 ```
 
@@ -366,12 +374,14 @@ curl --request GET \
 
 ## 🔐 Authentication
 
--   JWT bearer tokens issued via `/v1/auth/token` using project API key.
+-   JWT bearer tokens issued via `POST /v1/auth/token` using the project/environment API key payload (`project`, `environment`, `api_key`).
 -   Include header:
     ```
     Authorization: Bearer <jwt>
     ```
 -   Tokens are scoped to project + environment.
+-   Define `PHLAG_DEMO_API_KEY` before seeding to mint a demo credential for `demo-project` / `production`; rotate or remove it after validation.
+-   Responses include the bearer `token_type` plus the default roles granted to project clients so consumers can reason about access.
 -   Key rotation expectations and supported environment variables are documented in [`doc/adr/0010-manage-jwt-signing-keys.md`](./doc/adr/0010-manage-jwt-signing-keys.md).
 
 ## 🗂️ Architecture references
@@ -423,6 +433,8 @@ The command drops and recreates the schema before seeding so you always have the
 ```
 Database seeding completed.
 ```
+
+> Set `PHLAG_DEMO_API_KEY=<your-demo-api-key>` in `.env.local` before seeding if you want the demo project to include an API credential for immediate JWT issuance.
 
 ### Example: Warm flag caches for a project
 

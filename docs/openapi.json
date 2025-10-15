@@ -67,6 +67,98 @@
                 }
             }
         },
+        "/v1/auth/token": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Issue JWT from API key",
+                "description": "Exchange a project/environment API key for a JWT bearer token.",
+                "operationId": "exchangeApiKeyForJwt",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthTokenRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "JWT issued successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthTokenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials supplied.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Project or environment not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/docs/openapi.json": {
             "get": {
                 "tags": [
@@ -1737,27 +1829,6 @@
                     }
                 }
             }
-        },
-        "/v1/auth/token": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Issue an authentication token (stub)",
-                "operationId": "issueAuthToken",
-                "responses": {
-                    "501": {
-                        "description": "Endpoint not implemented yet.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     },
     "components": {
@@ -2452,6 +2523,80 @@
                 },
                 "type": "object"
             },
+            "AuthTokenRequest": {
+                "description": "Payload for exchanging a project/environment API key for a JWT.",
+                "required": [
+                    "project",
+                    "environment",
+                    "api_key"
+                ],
+                "properties": {
+                    "project": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "demo-project"
+                    },
+                    "environment": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "production"
+                    },
+                    "api_key": {
+                        "type": "string",
+                        "example": "<project-environment-api-key>"
+                    }
+                },
+                "type": "object"
+            },
+            "AuthTokenResponse": {
+                "description": "JWT issuance response payload.",
+                "required": [
+                    "token",
+                    "token_type",
+                    "expires_in",
+                    "project",
+                    "environment",
+                    "roles"
+                ],
+                "properties": {
+                    "token": {
+                        "description": "Signed JWT bearer token.",
+                        "type": "string"
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "example": "Bearer"
+                    },
+                    "expires_in": {
+                        "description": "Token lifetime in seconds.",
+                        "type": "integer",
+                        "minimum": 0,
+                        "example": 3600
+                    },
+                    "project": {
+                        "type": "string",
+                        "example": "demo-project"
+                    },
+                    "environment": {
+                        "type": "string",
+                        "example": "production"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "projects.read",
+                            "environments.read",
+                            "flags.read",
+                            "flags.evaluate",
+                            "cache.warm"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
             "ErrorViolation": {
                 "description": "Details of a single validation violation.",
                 "required": [
@@ -2541,6 +2686,10 @@
     },
     "tags": [
         {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
             "name": "Documentation",
             "description": "Documentation"
         },
@@ -2559,10 +2708,6 @@
         {
             "name": "System",
             "description": "System"
-        },
-        {
-            "name": "Authentication",
-            "description": "Authentication"
         }
     ]
 }
