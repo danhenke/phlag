@@ -105,6 +105,11 @@ class ProjectController extends Controller
                 content: new OA\JsonContent(ref: '#/components/schemas/ProjectResponse')
             ),
             new OA\Response(
+                response: 400,
+                description: 'Request body contained malformed JSON.',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
+            new OA\Response(
                 response: 401,
                 description: 'Authentication is required.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
@@ -216,6 +221,11 @@ class ProjectController extends Controller
                 content: new OA\JsonContent(ref: '#/components/schemas/ProjectResponse')
             ),
             new OA\Response(
+                response: 400,
+                description: 'Request body contained malformed JSON.',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
+            new OA\Response(
                 response: 401,
                 description: 'Authentication is required.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
@@ -261,6 +271,11 @@ class ProjectController extends Controller
                 content: new OA\JsonContent(ref: '#/components/schemas/ProjectResponse')
             ),
             new OA\Response(
+                response: 400,
+                description: 'Request body contained malformed JSON.',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
+            new OA\Response(
                 response: 401,
                 description: 'Authentication is required.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
@@ -290,7 +305,8 @@ class ProjectController extends Controller
         $project->fill($data);
         $project->save();
 
-        $project->load('environments');
+        /** @var Project $project */
+        $project = $project->fresh(['environments']);
 
         return new ProjectResource($project);
     }

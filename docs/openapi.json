@@ -236,6 +236,16 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Authentication is required.",
                         "content": {
@@ -365,6 +375,16 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ProjectResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         }
@@ -500,6 +520,16 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ProjectResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         }
@@ -688,6 +718,16 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Authentication is required.",
                         "content": {
@@ -849,6 +889,16 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Authentication is required.",
                         "content": {
@@ -998,6 +1048,16 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/EnvironmentResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         }
@@ -1186,6 +1246,16 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Authentication is required.",
                         "content": {
@@ -1347,6 +1417,16 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Authentication is required.",
                         "content": {
@@ -1496,6 +1576,16 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/FlagResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body contained malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         }

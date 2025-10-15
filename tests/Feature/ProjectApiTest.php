@@ -68,16 +68,21 @@ it('updates and deletes an existing project', function (): void {
     ]);
 
     $updateResponse = $this->patchJson("/v1/projects/{$project->key}", [
+        'key' => 'billing-platform',
         'name' => 'Billing Platform',
     ]);
 
     $updateResponse->assertOk()
-        ->assertJsonPath('data.name', 'Billing Platform');
+        ->assertJsonPath('data.name', 'Billing Platform')
+        ->assertJsonPath('data.key', 'billing-platform');
 
-    $this->deleteJson("/v1/projects/{$project->key}")
+    expect(Project::query()->where('key', 'billing-service')->exists())->toBeFalse()
+        ->and(Project::query()->where('key', 'billing-platform')->exists())->toBeTrue();
+
+    $this->deleteJson('/v1/projects/billing-platform')
         ->assertNoContent();
 
-    expect(Project::query()->where('key', 'billing-service')->exists())->toBeFalse();
+    expect(Project::query()->where('key', 'billing-platform')->exists())->toBeFalse();
 });
 
 it('validates uniqueness constraints for project keys', function (): void {
@@ -183,4 +188,32 @@ it('preserves protocol headers for method not allowed responses', function (): v
     expect($allow)->not->toBeNull()
         ->and($allow)->toContain('GET')
         ->and($allow)->toContain('POST');
+});
+
+it('rejects malformed json payloads for API requests', function (): void {
+    $project = Project::query()->create([
+        'id' => (string) Str::uuid(),
+        'key' => 'observability',
+        'name' => 'Observability',
+    ]);
+
+    $response = $this->call(
+        method: 'PATCH',
+        uri: "/v1/projects/{$project->key}",
+        server: [
+            'HTTP_ACCEPT' => 'application/json',
+            'CONTENT_TYPE' => 'application/json',
+        ],
+        content: '{"name": "New Name", }'
+    );
+
+    $response->assertStatus(Response::HTTP_BAD_REQUEST)
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('error.code', 'invalid_json')
+            ->where('error.status', Response::HTTP_BAD_REQUEST)
+        );
+
+    $project->refresh();
+
+    expect($project->name)->toBe('Observability');
 });

@@ -125,6 +125,11 @@ class ProjectFlagController extends Controller
                 content: new OA\JsonContent(ref: '#/components/schemas/FlagResponse')
             ),
             new OA\Response(
+                response: 400,
+                description: 'Request body contained malformed JSON.',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
+            new OA\Response(
                 response: 401,
                 description: 'Authentication is required.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
@@ -256,6 +261,11 @@ class ProjectFlagController extends Controller
                 content: new OA\JsonContent(ref: '#/components/schemas/FlagResponse')
             ),
             new OA\Response(
+                response: 400,
+                description: 'Request body contained malformed JSON.',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+            ),
+            new OA\Response(
                 response: 401,
                 description: 'Authentication is required.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
@@ -305,6 +315,11 @@ class ProjectFlagController extends Controller
                 response: 200,
                 description: 'Flag updated.',
                 content: new OA\JsonContent(ref: '#/components/schemas/FlagResponse')
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Request body contained malformed JSON.',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
             new OA\Response(
                 response: 401,
