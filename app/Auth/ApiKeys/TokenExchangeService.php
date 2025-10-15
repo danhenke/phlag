@@ -109,18 +109,13 @@ final class TokenExchangeService
         $credentialScopes = $credential->scopes;
 
         if (is_array($credentialScopes)) {
-            $normalizedScopes = array_values(array_unique(array_filter(array_map(
-                static function ($scope): ?string {
-                    if (! is_string($scope)) {
-                        return null;
-                    }
-
-                    $trimmed = trim($scope);
-
-                    return $trimmed === '' ? null : $trimmed;
-                },
-                $credentialScopes
-            ))));
+            $normalizedScopes = array_values(array_unique(array_filter(
+                array_map(
+                    static fn (string $scope): string => trim($scope),
+                    $credentialScopes
+                ),
+                static fn (string $scope): bool => $scope !== ''
+            )));
 
             if ($normalizedScopes !== []) {
                 $roles = $normalizedScopes;

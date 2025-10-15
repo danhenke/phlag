@@ -106,13 +106,13 @@ final class CreateCommand extends Command
         $expiresAtInput = $this->ask('Expiration (ISO 8601, leave blank for none)');
         $expiresAt = $this->parseExpiration($expiresAtInput);
 
-        if ($expiresAtInput !== null && trim((string) $expiresAtInput) !== '' && $expiresAt === null) {
+        if ($this->hasNonEmptyString($expiresAtInput) && $expiresAt === null) {
             return self::FAILURE;
         }
 
         $apiKey = $this->generateKey();
 
-        $credential = new ApiCredential();
+        $credential = new ApiCredential;
         $credential->fill([
             'id' => (string) Str::uuid(),
             'project_id' => $project->id,
@@ -219,5 +219,14 @@ final class CreateCommand extends Command
     private function generateKey(): string
     {
         return Str::random(48);
+    }
+
+    private function hasNonEmptyString(mixed $value): bool
+    {
+        if (! is_string($value)) {
+            return false;
+        }
+
+        return trim($value) !== '';
     }
 }
