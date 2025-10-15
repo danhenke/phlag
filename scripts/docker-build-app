@@ -16,7 +16,7 @@ USAGE
 }
 
 TAG=""
-PLATFORM="linux/amd64"
+PLATFORM="$(docker version --format '{{.Server.Os}}/{{.Server.Arch}}')"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
