@@ -90,6 +90,7 @@ final class CreateCommand extends Command
             return self::FAILURE;
         }
 
+        /** @var string|null $scopesInput */
         $scopesInput = $this->ask(
             'Scopes (comma separated, press enter for full access)'
         );
