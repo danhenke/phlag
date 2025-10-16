@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 use Illuminate\Support\Str;
 use Phlag\Auth\ApiKeys\ApiCredentialHasher;
+use Phlag\Auth\ApiKeys\TokenExchangeService;
 use Phlag\Commands\ApiKeys\CreateCommand;
 use Phlag\Models\ApiCredential;
 use Phlag\Models\Environment;
 use Phlag\Models\Project;
 use Symfony\Component\Console\Command\Command;
-use Phlag\Auth\ApiKeys\TokenExchangeService;
 
 beforeEach(function (): void {
     $this->artisan('migrate:fresh')->assertExitCode(0);
