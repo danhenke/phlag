@@ -407,6 +407,7 @@ curl --request GET \
 | `app:migrate [--fresh] [--seed]` | Run database migrations |
 | `app:seed [--fresh]`             | Seed demo data          |
 | `app:hello`                      | Print a hello message   |
+| `api-key:create`                 | Generate a project API key |
 
 Run commands through the Laravel Zero binary inside the running container via the helper script:
 
@@ -442,6 +443,16 @@ Database seeding completed.
 ```
 
 > Set `PHLAG_DEMO_API_KEY=<your-demo-api-key>` in `.env.local` before seeding if you want the demo project to include an API credential for immediate JWT issuance.
+
+### Example: Create a project API key
+
+```bash
+./scripts/api-key-create
+```
+
+The helper wraps `api-key:create` via the Laravel Zero binary. Follow the interactive prompts to select the project, environment, credential name, scopes (comma separated, press enter for full access), and an optional expiration timestamp. The command prints a 48-character API key exactly once—copy it to your password manager or secret store. Only the SHA-256 hash, metadata, and expiration live in Postgres (`api_credentials` table); the plaintext key is never persisted.
+
+Supported scopes mirror the JWT roles issued today: `projects.read`, `projects.manage`, `environments.read`, `environments.manage`, `flags.read`, `flags.manage`, `flags.evaluate`, and `cache.warm`. Provide a comma-separated subset to restrict access; the helper rejects unknown values. Write operations require the corresponding `*.manage` scope.
 
 ### Example: Warm flag caches for a project
 

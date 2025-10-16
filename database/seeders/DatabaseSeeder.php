@@ -8,6 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Phlag\Auth\ApiKeys\ApiCredentialHasher;
+use Phlag\Auth\ApiKeys\TokenExchangeService;
 use Phlag\Models\ApiCredential;
 use Phlag\Models\AuditEvent;
 use Phlag\Models\Environment;
@@ -232,6 +233,8 @@ class DatabaseSeeder extends Seeder
         $credential->fill([
             'project_id' => $project->id,
             'environment_id' => $production->id,
+            'name' => 'Demo Production API credential',
+            'scopes' => TokenExchangeService::DEFAULT_ROLES,
             'key_hash' => ApiCredentialHasher::make($apiKey),
             'is_active' => true,
             'expires_at' => null,

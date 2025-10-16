@@ -7,7 +7,12 @@ namespace Phlag\Auth\Jwt;
 use InvalidArgumentException;
 use stdClass;
 
+use function array_filter;
 use function array_key_exists;
+use function array_map;
+use function array_values;
+use function in_array;
+use function trim;
 
 final class TokenClaims
 {
@@ -77,5 +82,65 @@ final class TokenClaims
         $issuedAt = $this->claims['iat'] ?? null;
 
         return is_int($issuedAt) ? $issuedAt : null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function roles(): array
+    {
+        $roles = $this->claims['roles'] ?? [];
+
+        if (! is_array($roles)) {
+            return [];
+        }
+
+        $normalized = array_values(array_filter(array_map(
+            static function ($role): ?string {
+                if (! is_string($role)) {
+                    return null;
+                }
+
+                $trimmed = trim($role);
+
+                return $trimmed === '' ? null : $trimmed;
+            },
+            $roles
+        )));
+
+        return $normalized;
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return in_array($role, $this->roles(), true);
+    }
+
+    /**
+     * @param  array<int, string>  $roles
+     */
+    public function hasAnyRole(array $roles): bool
+    {
+        foreach ($roles as $role) {
+            if ($this->hasRole($role)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<int, string>  $roles
+     */
+    public function hasAllRoles(array $roles): bool
+    {
+        foreach ($roles as $role) {
+            if (! $this->hasRole($role)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

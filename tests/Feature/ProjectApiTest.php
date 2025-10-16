@@ -18,6 +18,19 @@ it('rejects unauthenticated project API access', function (): void {
         ->assertJsonPath('error.code', 'unauthenticated');
 });
 
+it('rejects project creation without the manage scope', function (): void {
+    $payload = [
+        'key' => 'readonly-project',
+        'name' => 'Read Only Project',
+    ];
+
+    $this->postJson('/v1/projects', $payload, jwtHeaders([
+        'roles' => ['projects.read'],
+    ]))->assertStatus(Response::HTTP_FORBIDDEN)
+        ->assertJsonPath('error.code', 'forbidden')
+        ->assertJsonPath('error.context.required_scopes', ['projects.manage']);
+});
+
 it('creates a project via the API', function (): void {
     $payload = [
         'key' => 'checkout-service',

@@ -52,6 +52,16 @@ beforeEach(function (): void {
     ]);
 
     $this->apiKey = 'test-api-key-123456';
+    $this->credentialScopes = [
+        'projects.read',
+        'projects.manage',
+        'environments.read',
+        'environments.manage',
+        'flags.read',
+        'flags.manage',
+        'flags.evaluate',
+        'cache.warm',
+    ];
 });
 
 it('issues JWTs for valid project credentials', function (): void {
@@ -59,6 +69,8 @@ it('issues JWTs for valid project credentials', function (): void {
         'id' => (string) Str::uuid(),
         'project_id' => $this->project->id,
         'environment_id' => $this->environment->id,
+        'name' => 'Demo Production Credential',
+        'scopes' => $this->credentialScopes,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => true,
     ]);
@@ -75,13 +87,7 @@ it('issues JWTs for valid project credentials', function (): void {
             ->where('environment', $this->environment->key)
             ->where('token_type', 'Bearer')
             ->where('expires_in', 600)
-            ->where('roles', [
-                'projects.read',
-                'environments.read',
-                'flags.read',
-                'flags.evaluate',
-                'cache.warm',
-            ])
+            ->where('roles', $this->credentialScopes)
             ->has('token')
         );
 
@@ -99,13 +105,7 @@ it('issues JWTs for valid project credentials', function (): void {
         ->and($claims->project_key)->toBe($this->project->key)
         ->and($claims->environment_id)->toBe($this->environment->id)
         ->and($claims->environment_key)->toBe($this->environment->key)
-        ->and($claims->roles)->toEqual([
-            'projects.read',
-            'environments.read',
-            'flags.read',
-            'flags.evaluate',
-            'cache.warm',
-        ])
+        ->and($claims->roles)->toEqual($this->credentialScopes)
         ->and($claims->iat)->toBeInt()
         ->and($claims->exp - $claims->iat)->toBe(600);
 
@@ -125,6 +125,8 @@ it('rejects requests with unknown API keys', function (): void {
         'id' => (string) Str::uuid(),
         'project_id' => $this->project->id,
         'environment_id' => $this->environment->id,
+        'name' => 'Demo Production Credential',
+        'scopes' => $this->credentialScopes,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => true,
     ]);
@@ -177,6 +179,8 @@ it('rejects inactive API credentials', function (): void {
         'id' => (string) Str::uuid(),
         'project_id' => $this->project->id,
         'environment_id' => $this->environment->id,
+        'name' => 'Inactive Credential',
+        'scopes' => $this->credentialScopes,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => false,
     ]);
@@ -199,6 +203,8 @@ it('rejects expired API credentials', function (): void {
         'id' => (string) Str::uuid(),
         'project_id' => $this->project->id,
         'environment_id' => $this->environment->id,
+        'name' => 'Expired Credential',
+        'scopes' => $this->credentialScopes,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => true,
         'expires_at' => Carbon::now()->subMinutes(5),

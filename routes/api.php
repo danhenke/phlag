@@ -22,12 +22,32 @@ Route::prefix('v1')
             ->name('auth.token');
 
         Route::middleware('auth.jwt')->group(function (): void {
-            Route::apiResource('projects', ProjectController::class);
-            Route::apiResource('projects.environments', ProjectEnvironmentController::class);
+            Route::apiResource('projects', ProjectController::class)
+                ->only(['index', 'show'])
+                ->middleware('scopes:projects.read');
 
-            Route::apiResource('projects.flags', ProjectFlagController::class);
+            Route::apiResource('projects', ProjectController::class)
+                ->only(['store', 'update', 'destroy'])
+                ->middleware('scopes:projects.manage');
+
+            Route::apiResource('projects.environments', ProjectEnvironmentController::class)
+                ->only(['index', 'show'])
+                ->middleware('scopes:environments.read');
+
+            Route::apiResource('projects.environments', ProjectEnvironmentController::class)
+                ->only(['store', 'update', 'destroy'])
+                ->middleware('scopes:environments.manage');
+
+            Route::apiResource('projects.flags', ProjectFlagController::class)
+                ->only(['index', 'show'])
+                ->middleware('scopes:flags.read');
+
+            Route::apiResource('projects.flags', ProjectFlagController::class)
+                ->only(['store', 'update', 'destroy'])
+                ->middleware('scopes:flags.manage');
 
             Route::get('/evaluate', EvaluateFlagController::class)
+                ->middleware('scopes:flags.evaluate')
                 ->name('flags.evaluate');
         });
 

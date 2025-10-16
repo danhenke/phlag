@@ -15,7 +15,9 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property string $project_id
  * @property string $environment_id
+ * @property string|null $name
  * @property string $key_hash
+ * @property array<int, string>|null $scopes
  * @property bool $is_active
  * @property Carbon|null $expires_at
  * @property Carbon|null $created_at
@@ -43,6 +45,8 @@ class ApiCredential extends Model
         'id',
         'project_id',
         'environment_id',
+        'name',
+        'scopes',
         'key_hash',
         'is_active',
         'expires_at',
@@ -53,6 +57,7 @@ class ApiCredential extends Model
      */
     protected $casts = [
         'is_active' => 'bool',
+        'scopes' => 'array',
         'expires_at' => 'datetime',
     ];
 
