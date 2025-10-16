@@ -40,20 +40,20 @@ This service allows developers to **create**, **manage**, and **evaluate feature
 
 ## 🧩 Tech Stack
 
-| Layer         | Tool                                       |
-| ------------- | ------------------------------------------ |
-| Framework     | Laravel Zero                               |
-| Language      | PHP 8.4                                    |
-| Database      | PostgreSQL (Docker Compose service)        |
-| Cache         | Redis (Docker Compose service)             |
-| Secrets       | `.env`-style environment variables         |
-| Docs          | OpenAPI 3.1 (via swagger-php)              |
-| Tests         | PestPHP                                    |
-| Hosting       | Docker Compose (app + Postgres + Redis)    |
+| Layer         | Tool                                                      |
+| ------------- | --------------------------------------------------------- |
+| Framework     | Laravel Zero                                              |
+| Language      | PHP 8.4                                                   |
+| Database      | PostgreSQL (Docker Compose service)                       |
+| Cache         | Redis (Docker Compose service)                            |
+| Secrets       | `.env`-style environment variables                        |
+| Docs          | OpenAPI 3.1 (via swagger-php)                             |
+| Tests         | PestPHP                                                   |
+| Hosting       | Docker Compose (app + Postgres + Redis)                   |
 | CI/CD         | GitHub Actions QA workflow (lint, static analysis, tests) |
-| Observability | Application + Docker logs via stdout       |
-| Logging       | Monolog                                    |
-| IaC           | Not required for local-only deployments    |
+| Observability | Application + Docker logs via stdout                      |
+| Logging       | Monolog                                                   |
+| IaC           | Not required for local-only deployments                   |
 
 ---
 
@@ -97,9 +97,9 @@ phlag/
 
 ### Prerequisites
 
-- Docker Desktop 4.32.0+ (Engine 26.1.1, Compose 2.27+) on macOS or Windows with virtualization enabled (HyperKit on Apple Silicon, WSL 2 on Windows).
-- Docker Engine 26.0.0+ with the Compose plugin 2.27+ on Linux; install the `docker-compose-plugin` package provided by your distribution.
-- BuildKit enabled for modern Dockerfile syntax. Add the following to `~/.docker/config.json` (see Docker documentation) or export `DOCKER_BUILDKIT=1` before building:
+-   Docker Desktop 4.32.0+ (Engine 26.1.1, Compose 2.27+) on macOS or Windows with virtualization enabled (HyperKit on Apple Silicon, WSL 2 on Windows).
+-   Docker Engine 26.0.0+ with the Compose plugin 2.27+ on Linux; install the `docker-compose-plugin` package provided by your distribution.
+-   BuildKit enabled for modern Dockerfile syntax. Add the following to `~/.docker/config.json` (see Docker documentation) or export `DOCKER_BUILDKIT=1` before building:
 
     ```json
     {
@@ -143,7 +143,8 @@ DATABASE_URL=pgsql://postgres:postgres@postgres:5432/phlag
 
 REDIS_URL=redis://redis:6379/0
 REDIS_CACHE_DB=1
-JWT_SECRET=$(openssl rand -base64 32)
+JWT_SECRET=$(openssl rand -hex 32)
+PHLAG_DEMO_API_KEY=$(openssl rand -hex 32)
 EOF
 ```
 
@@ -225,26 +226,26 @@ The seeders provision a reusable dataset:
 
 ## 🌐 API Overview
 
-| Endpoint                                    | Description                                     |
-| ------------------------------------------- | ----------------------------------------------- |
-| `POST /v1/auth/token`                       | Exchange API key for JWT                        |
-| `GET /v1/projects`                          | List projects                                   |
-| `POST /v1/projects`                         | Create a project                                |
-| `GET /v1/projects/{project}`                | Retrieve a single project                       |
-| `PATCH /v1/projects/{project}`              | Update a project                                |
-| `DELETE /v1/projects/{project}`             | Delete a project                                |
-| `GET /v1/projects/{project}/environments`   | List environments for a project                 |
-| `POST /v1/projects/{project}/environments`  | Create a project environment                    |
-| `GET /v1/projects/{project}/environments/{environment}` | Retrieve a project environment        |
-| `PATCH /v1/projects/{project}/environments/{environment}` | Update a project environment          |
-| `DELETE /v1/projects/{project}/environments/{environment}` | Delete a project environment        |
-| `GET /v1/projects/{project}/flags`          | List flags                                      |
-| `POST /v1/projects/{project}/flags`         | Create flag                                     |
-| `PATCH /v1/projects/{project}/flags/{key}`  | Update flag                                     |
-| `DELETE /v1/projects/{project}/flags/{key}` | Delete flag                                     |
-| `GET /v1/evaluate`                          | Evaluate flag (`?project=&env=&flag=&user_id=`) |
-| `GET /v1/openapi.json`                      | OpenAPI JSON spec                               |
-| `GET /docs`                                 | Swagger UI viewer                               |
+| Endpoint                                                   | Description                                     |
+| ---------------------------------------------------------- | ----------------------------------------------- |
+| `POST /v1/auth/token`                                      | Exchange API key for JWT                        |
+| `GET /v1/projects`                                         | List projects                                   |
+| `POST /v1/projects`                                        | Create a project                                |
+| `GET /v1/projects/{project}`                               | Retrieve a single project                       |
+| `PATCH /v1/projects/{project}`                             | Update a project                                |
+| `DELETE /v1/projects/{project}`                            | Delete a project                                |
+| `GET /v1/projects/{project}/environments`                  | List environments for a project                 |
+| `POST /v1/projects/{project}/environments`                 | Create a project environment                    |
+| `GET /v1/projects/{project}/environments/{environment}`    | Retrieve a project environment                  |
+| `PATCH /v1/projects/{project}/environments/{environment}`  | Update a project environment                    |
+| `DELETE /v1/projects/{project}/environments/{environment}` | Delete a project environment                    |
+| `GET /v1/projects/{project}/flags`                         | List flags                                      |
+| `POST /v1/projects/{project}/flags`                        | Create flag                                     |
+| `PATCH /v1/projects/{project}/flags/{key}`                 | Update flag                                     |
+| `DELETE /v1/projects/{project}/flags/{key}`                | Delete flag                                     |
+| `GET /v1/evaluate`                                         | Evaluate flag (`?project=&env=&flag=&user_id=`) |
+| `GET /v1/openapi.json`                                     | OpenAPI JSON spec                               |
+| `GET /docs`                                                | Swagger UI viewer                               |
 
 ### Postman collection
 
@@ -278,11 +279,11 @@ All API errors return a consistent envelope so clients can display human-friendl
 
 Common `code` values include:
 
-- `validation_failed` – payload validation errors (see `violations`)
-- `resource_not_found` – missing models or routes
-- `method_not_allowed` – unsupported HTTP verbs on the endpoint
-- `unauthorized` / `forbidden` – authentication or authorization failures
-- `server_error` – unexpected exceptions (original message returns in `detail` only when `APP_DEBUG=true`)
+-   `validation_failed` – payload validation errors (see `violations`)
+-   `resource_not_found` – missing models or routes
+-   `method_not_allowed` – unsupported HTTP verbs on the endpoint
+-   `unauthorized` / `forbidden` – authentication or authorization failures
+-   `server_error` – unexpected exceptions (original message returns in `detail` only when `APP_DEBUG=true`)
 
 ### Example: Exchange an API key for a JWT
 
@@ -304,9 +305,7 @@ curl --request POST \
     "expires_in": 3600,
     "project": "demo-project",
     "environment": "production",
-    "roles": [
-        "project.maintainer"
-    ],
+    "roles": ["project.maintainer"],
     "permissions": [
         "projects.read",
         "projects.manage",
@@ -409,11 +408,11 @@ curl --request GET \
 
 ## 🧰 CLI Commands (Laravel Zero)
 
-| Command                          | Purpose                 |
-| -------------------------------- | ----------------------- |
-| `app:migrate [--fresh] [--seed]` | Run database migrations |
-| `app:seed [--fresh]`             | Seed demo data          |
-| `app:hello`                      | Print a hello message   |
+| Command                          | Purpose                    |
+| -------------------------------- | -------------------------- |
+| `app:migrate [--fresh] [--seed]` | Run database migrations    |
+| `app:seed [--fresh]`             | Seed demo data             |
+| `app:hello`                      | Print a hello message      |
 | `api-key:create`                 | Generate a project API key |
 
 Run commands through the Laravel Zero binary inside the running container via the helper script:
@@ -461,11 +460,11 @@ The helper wraps `api-key:create` via the Laravel Zero binary. Follow the intera
 
 Current roles and their bundled permissions:
 
-| Role | Permissions |
-| --- | --- |
-| `project.viewer` | `projects.read`, `environments.read`, `flags.read`, `flags.evaluate`
-| `environment.operator` | `environments.read`, `flags.read`, `flags.evaluate`, `cache.warm`
-| `project.maintainer` (default) | all viewer/operator permissions plus `projects.manage`, `environments.manage`, `flags.manage`
+| Role                           | Permissions                                                                                   |
+| ------------------------------ | --------------------------------------------------------------------------------------------- |
+| `project.viewer`               | `projects.read`, `environments.read`, `flags.read`, `flags.evaluate`                          |
+| `environment.operator`         | `environments.read`, `flags.read`, `flags.evaluate`, `cache.warm`                             |
+| `project.maintainer` (default) | all viewer/operator permissions plus `projects.manage`, `environments.manage`, `flags.manage` |
 
 Specify one or more roles per credential to constrain API tokens. When no roles are entered, credentials receive the `project.maintainer` profile, matching the full-control behavior prior to RBAC.
 
@@ -578,12 +577,12 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Scale the `
 
 ## 🧭 Development Workflow
 
-| Step            | Command                                |
-| --------------- | -------------------------------------- |
-| Lint            | `composer lint`                        |
-| Static analysis | `composer stan`                        |
-| Tests           | `composer test`                        |
-| QA workflow     | `.github/workflows/qa.yml` (lint, stan, tests) |
+| Step            | Command                                              |
+| --------------- | ---------------------------------------------------- |
+| Lint            | `composer lint`                                      |
+| Static analysis | `composer stan`                                      |
+| Tests           | `composer test`                                      |
+| QA workflow     | `.github/workflows/qa.yml` (lint, stan, tests)       |
 | Deploy          | `./scripts/docker-build-app && docker compose up -d` |
 
 ---
