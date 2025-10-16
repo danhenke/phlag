@@ -600,5 +600,3 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Scale the `
 ## 📜 License
 
 MIT © 2025 Dan Henke
-
----
