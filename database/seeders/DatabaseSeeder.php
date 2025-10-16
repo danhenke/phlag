@@ -8,13 +8,13 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Phlag\Auth\ApiKeys\ApiCredentialHasher;
+use Phlag\Auth\ApiKeys\TokenExchangeService;
 use Phlag\Models\ApiCredential;
 use Phlag\Models\AuditEvent;
 use Phlag\Models\Environment;
 use Phlag\Models\Evaluation;
 use Phlag\Models\Flag;
 use Phlag\Models\Project;
-use Phlag\Auth\ApiKeys\TokenExchangeService;
 
 use function is_string;
 use function trim;
