@@ -1,0 +1,1437 @@
+{
+	"info": {
+		"name": "Phlag API",
+		"description": {
+		    "content": "API for managing feature flags, environments, and evaluations within Phlag.",
+		    "type": "text/markdown"
+		},
+		"version": "1.0.0",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+	        {
+	            "name": "Environments",
+	            "item": [
+	                        {
+    "name": "/v1/projects/:project/environments",
+                "description": "Store a newly created environment.",
+                 "item": [
+                            {
+                                "name": "Create an environment for a project",
+                                "request": {
+    "method": "POST",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"key\": \"<string>\",\n \"name\": \"<string>\",\n \"description\": \"<string>\",\n \"is_default\": \"<string>\",\n \"metadata\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/environments",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "environments"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Store a newly created environment."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/environments",
+                "description": "List environments for the given project.",
+                 "item": [
+                            {
+                                "name": "List environments for a project",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/environments",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "environments"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        }
+    ],
+    "query": [
+        {
+        "key": "page",
+        "value": "56",
+        "description": "Page number to retrieve.",
+        "disabled": true
+        },
+        {
+        "key": "perPage",
+        "value": "56",
+        "description": "Number of results per page (1-100).",
+        "disabled": true
+        }
+    ]
+    },
+    "description": "List environments for the given project."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/environments/:environment",
+                "description": "Remove the specified environment.",
+                 "item": [
+                            {
+                                "name": "Delete an environment",
+                                "request": {
+    "method": "DELETE",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/environments/:environment",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "environments",
+        ":environment"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        },
+        {
+        "key": "environment",
+        "value": "",
+        "description": "Environment key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Remove the specified environment."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/environments/:environment",
+                "description": "Display the specified environment.",
+                 "item": [
+                            {
+                                "name": "Fetch an environment",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/environments/:environment",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "environments",
+        ":environment"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        },
+        {
+        "key": "environment",
+        "value": "",
+        "description": "Environment key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Display the specified environment."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/environments/:environment",
+                "description": "",
+                 "item": [
+                            {
+                                "name": "Replace an environment",
+                                "request": {
+    "method": "PUT",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"key\": \"<string>\",\n \"name\": \"<string>\",\n \"description\": \"<string>\",\n \"is_default\": \"<string>\",\n \"metadata\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/environments/:environment",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "environments",
+        ":environment"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        },
+        {
+        "key": "environment",
+        "value": "",
+        "description": "Environment key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": ""
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/environments/:environment",
+                "description": "Update the specified environment.",
+                 "item": [
+                            {
+                                "name": "Update an environment",
+                                "request": {
+    "method": "PATCH",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"key\": \"<string>\",\n \"name\": \"<string>\",\n \"description\": \"<string>\",\n \"is_default\": \"<string>\",\n \"metadata\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/environments/:environment",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "environments",
+        ":environment"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        },
+        {
+        "key": "environment",
+        "value": "",
+        "description": "Environment key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Update the specified environment."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        }
+	                    ]
+	        },
+	        {
+	            "name": "Authentication",
+	            "item": [
+	                        {
+    "name": "/v1/auth/token",
+                "description": "Exchange a project/environment API key for a JWT bearer token.",
+                 "item": [
+                            {
+                                "name": "Issue JWT from API key",
+                                "request": {
+    "method": "POST",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"project\": \"<string>\",\n \"environment\": \"<string>\",\n \"api_key\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/auth/token",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "auth",
+        "token"
+    ],
+    "variable": [
+    ],
+    "query": [
+    ]
+    },
+    "description": "Exchange a project/environment API key for a JWT bearer token."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        }
+	                    ]
+	        },
+	        {
+	            "name": "Documentation",
+	            "item": [
+	                        {
+    "name": "/docs",
+                "description": "",
+                 "item": [
+                            {
+                                "name": "Render Swagger UI backed by the generated OpenAPI spec.",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "text/html",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/docs",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "docs"
+    ],
+    "variable": [
+    ],
+    "query": [
+    ]
+    },
+    "description": ""
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/openapi.json",
+                "description": "",
+                 "item": [
+                            {
+                                "name": "Retrieve the OpenAPI specification JSON.",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/openapi.json",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "openapi.json"
+    ],
+    "variable": [
+    ],
+    "query": [
+    ]
+    },
+    "description": ""
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/postman.json",
+                "description": "",
+                 "item": [
+                            {
+                                "name": "Retrieve the Postman collection JSON.",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/postman.json",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "postman.json"
+    ],
+    "variable": [
+    ],
+    "query": [
+    ]
+    },
+    "description": ""
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        }
+	                    ]
+	        },
+	        {
+	            "name": "Projects",
+	            "item": [
+	                        {
+    "name": "/v1/projects",
+                "description": "Store a newly created project.",
+                 "item": [
+                            {
+                                "name": "Create a project",
+                                "request": {
+    "method": "POST",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"key\": \"<string>\",\n \"name\": \"<string>\",\n \"description\": \"<string>\",\n \"metadata\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects"
+    ],
+    "variable": [
+    ],
+    "query": [
+    ]
+    },
+    "description": "Store a newly created project."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects",
+                "description": "List projects with pagination support.",
+                 "item": [
+                            {
+                                "name": "List projects",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects"
+    ],
+    "variable": [
+    ],
+    "query": [
+        {
+        "key": "page",
+        "value": "56",
+        "description": "Page number to retrieve.",
+        "disabled": true
+        },
+        {
+        "key": "perPage",
+        "value": "56",
+        "description": "Number of results per page (1-100).",
+        "disabled": true
+        }
+    ]
+    },
+    "description": "List projects with pagination support."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project",
+                "description": "Remove the specified project.",
+                 "item": [
+                            {
+                                "name": "Delete a project",
+                                "request": {
+    "method": "DELETE",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Remove the specified project."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project",
+                "description": "Display the specified project.",
+                 "item": [
+                            {
+                                "name": "Fetch a project",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Display the specified project."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project",
+                "description": "",
+                 "item": [
+                            {
+                                "name": "Replace a project",
+                                "request": {
+    "method": "PUT",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"key\": \"<string>\",\n \"name\": \"<string>\",\n \"description\": \"<string>\",\n \"metadata\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": ""
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project",
+                "description": "Update the specified project.",
+                 "item": [
+                            {
+                                "name": "Update a project",
+                                "request": {
+    "method": "PATCH",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"key\": \"<string>\",\n \"name\": \"<string>\",\n \"description\": \"<string>\",\n \"metadata\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Update the specified project."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        }
+	                    ]
+	        },
+	        {
+	            "name": "Flags",
+	            "item": [
+	                        {
+    "name": "/v1/evaluate",
+                "description": "Determines the variant to serve for a project/environment/flag combination using rollout rules and default fallbacks.",
+                 "item": [
+                            {
+                                "name": "Evaluate a feature flag",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/evaluate",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "evaluate"
+    ],
+    "variable": [
+    ],
+    "query": [
+        {
+        "key": "project",
+        "value": "project_example",
+        "description": "Project key that owns the flag.",
+        "disabled": false
+        },
+        {
+        "key": "env",
+        "value": "env_example",
+        "description": "Environment key within the project.",
+        "disabled": false
+        },
+        {
+        "key": "flag",
+        "value": "flag_example",
+        "description": "Flag key to evaluate.",
+        "disabled": false
+        },
+        {
+        "key": "userId",
+        "value": "userId_example",
+        "description": "Optional user identifier used for deterministic rollout bucketing.",
+        "disabled": true
+        },
+        {
+        "key": "context",
+        "value": "",
+        "description": "Additional evaluation context (pass as repeated query parameters such as `?country=US&segment=beta-testers`).",
+        "disabled": true
+        }
+    ]
+    },
+    "description": "Determines the variant to serve for a project/environment/flag combination using rollout rules and default fallbacks."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/flags",
+                "description": "Store a newly created flag.",
+                 "item": [
+                            {
+                                "name": "Create a flag for a project",
+                                "request": {
+    "method": "POST",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"key\": \"<string>\",\n \"name\": \"<string>\",\n \"description\": \"<string>\",\n \"is_enabled\": \"<string>\",\n \"variants\": \"<string>\",\n \"rules\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/flags",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "flags"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Store a newly created flag."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/flags",
+                "description": "List flags for the given project.",
+                 "item": [
+                            {
+                                "name": "List flags for a project",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/flags",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "flags"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        }
+    ],
+    "query": [
+        {
+        "key": "page",
+        "value": "56",
+        "description": "Page number to retrieve.",
+        "disabled": true
+        },
+        {
+        "key": "perPage",
+        "value": "56",
+        "description": "Number of results per page (1-100).",
+        "disabled": true
+        }
+    ]
+    },
+    "description": "List flags for the given project."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/flags/:flag",
+                "description": "Remove the specified flag.",
+                 "item": [
+                            {
+                                "name": "Delete a flag",
+                                "request": {
+    "method": "DELETE",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/flags/:flag",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "flags",
+        ":flag"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        },
+        {
+        "key": "flag",
+        "value": "",
+        "description": "Flag key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Remove the specified flag."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/flags/:flag",
+                "description": "Display the specified flag.",
+                 "item": [
+                            {
+                                "name": "Fetch a flag",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/flags/:flag",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "flags",
+        ":flag"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        },
+        {
+        "key": "flag",
+        "value": "",
+        "description": "Flag key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Display the specified flag."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/flags/:flag",
+                "description": "",
+                 "item": [
+                            {
+                                "name": "Replace a flag",
+                                "request": {
+    "method": "PUT",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"key\": \"<string>\",\n \"name\": \"<string>\",\n \"description\": \"<string>\",\n \"is_enabled\": \"<string>\",\n \"variants\": \"<string>\",\n \"rules\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/flags/:flag",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "flags",
+        ":flag"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        },
+        {
+        "key": "flag",
+        "value": "",
+        "description": "Flag key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": ""
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        },
+	                        {
+    "name": "/v1/projects/:project/flags/:flag",
+                "description": "Update the specified flag.",
+                 "item": [
+                            {
+                                "name": "Update a flag",
+                                "request": {
+    "method": "PATCH",
+    "header": [
+        {
+        "key": "Content-Type",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        },
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "{\n \"key\": \"<string>\",\n \"name\": \"<string>\",\n \"description\": \"<string>\",\n \"is_enabled\": \"<string>\",\n \"variants\": \"<string>\",\n \"rules\": \"<string>\"\n}",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/v1/projects/:project/flags/:flag",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        "v1",
+        "projects",
+        ":project",
+        "flags",
+        ":flag"
+    ],
+    "variable": [
+        {
+        "key": "project",
+        "value": "",
+        "description": "Project key."
+        },
+        {
+        "key": "flag",
+        "value": "",
+        "description": "Flag key."
+        }
+    ],
+    "query": [
+    ]
+    },
+    "description": "Update the specified flag."
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        }
+	                    ]
+	        },
+	        {
+	            "name": "System",
+	            "item": [
+	                        {
+    "name": "/",
+                "description": "",
+                 "item": [
+                            {
+                                "name": "Retrieve service health status.",
+                                "request": {
+    "method": "GET",
+    "header": [
+        {
+        "key": "Accept",
+        "value": "application/json",
+        "description": "",
+        "disabled": false
+        }
+    ],
+    "body": {
+    "mode": "raw",
+    "raw": "",
+    "options": {
+    "raw": {
+    "language": "json"
+    }
+    }
+    },
+    "url": {
+    "raw": "{{baseUrl}}/",
+    "host": [
+    "{{baseUrl}}"
+    ],
+    "path": [
+        ""
+    ],
+    "variable": [
+    ],
+    "query": [
+    ]
+    },
+    "description": ""
+}
+                                ,"response": [
+                            ]
+                            }
+                            ]
+                        }
+	                    ]
+	        }
+    ],
+    
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost",
+			"type": "string"
+        }
+	]
+}
+

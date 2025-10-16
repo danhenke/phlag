@@ -248,7 +248,7 @@ The seeders provision a reusable dataset:
 
 ### Postman collection
 
-1. Import `postman/FeatureFlagService.postman_collection.json` into Postman (Collections → Import → File) to load ready-made requests for each API.
+1. Import `postman/postman.json` into Postman (Collections → Import → File) to load ready-made requests for each API.
 2. Review the collection variables. `baseUrl` defaults to `http://localhost`, `projectKey`, `environmentKey`, and `flagKey` point at the demo seed data, and `apiKey` must be set to the credential you minted via `PHLAG_DEMO_API_KEY`.
 3. Send `Authentication → Exchange API key for JWT` to populate the `bearerToken` variable automatically; subsequent requests reuse it for Authorization headers.
 4. Work through the domain folders (Projects, Environments, Flags, Evaluations, Audit) to exercise CRUD flows and flag evaluation. The Audit folder documents the planned `GET /v1/audit-events` endpoint and will respond once that API ships.

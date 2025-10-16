@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 final class PostmanCollectionController extends Controller
 {
+    private const COLLECTION_RELATIVE_PATH = 'postman/postman.json';
+
     #[OA\Get(
         path: '/v1/postman.json',
         operationId: 'getPostmanCollection',
@@ -30,14 +32,14 @@ final class PostmanCollectionController extends Controller
     )]
     public function __invoke(): JsonResponse
     {
-        $collectionPath = base_path('postman/FeatureFlagService.postman_collection.json');
+        $collectionPath = base_path(self::COLLECTION_RELATIVE_PATH);
 
         if (! File::exists($collectionPath)) {
             return ApiErrorResponse::make(
                 'resource_not_found',
                 'Postman collection has not been generated yet.',
                 HttpResponse::HTTP_NOT_FOUND,
-                context: ['path' => 'postman/FeatureFlagService.postman_collection.json']
+                context: ['path' => self::COLLECTION_RELATIVE_PATH]
             );
         }
 
@@ -49,13 +51,13 @@ final class PostmanCollectionController extends Controller
                 'server_error',
                 'Failed to read the Postman collection artifact.',
                 HttpResponse::HTTP_INTERNAL_SERVER_ERROR,
-                context: ['path' => 'postman/FeatureFlagService.postman_collection.json'],
+                context: ['path' => self::COLLECTION_RELATIVE_PATH],
                 detail: json_last_error_msg()
             );
         }
 
         $response = response()->json($collection, HttpResponse::HTTP_OK, [
-            'Content-Disposition' => 'inline; filename="FeatureFlagService.postman_collection.json"',
+            'Content-Disposition' => 'inline; filename="postman.json"',
         ]);
 
         $response->headers->set(

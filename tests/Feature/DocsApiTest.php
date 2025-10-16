@@ -60,7 +60,7 @@ it('serves the Postman collection artifact', function (): void {
     $response->assertOk();
     $response->assertHeader('Content-Type', 'application/json');
 
-    $collectionPath = base_path('postman/FeatureFlagService.postman_collection.json');
+    $collectionPath = base_path('postman/postman.json');
     $payload = json_decode(File::get($collectionPath), true, flags: JSON_THROW_ON_ERROR);
 
     expect(json_decode($response->getContent(), true, flags: JSON_THROW_ON_ERROR))
@@ -68,7 +68,7 @@ it('serves the Postman collection artifact', function (): void {
 });
 
 it('returns a standardized error when the Postman collection is missing', function (): void {
-    $collectionPath = base_path('postman/FeatureFlagService.postman_collection.json');
+    $collectionPath = base_path('postman/postman.json');
     $backupPath = $collectionPath.'.bak';
 
     expect(File::exists($collectionPath))->toBeTrue();
