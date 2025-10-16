@@ -111,9 +111,41 @@ final class TokenClaims
         return $normalized;
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public function permissions(): array
+    {
+        $permissions = $this->claims['permissions'] ?? [];
+
+        if (! is_array($permissions)) {
+            return [];
+        }
+
+        $normalized = array_values(array_filter(array_map(
+            static function ($permission): ?string {
+                if (! is_string($permission)) {
+                    return null;
+                }
+
+                $trimmed = trim($permission);
+
+                return $trimmed === '' ? null : $trimmed;
+            },
+            $permissions
+        )));
+
+        return $normalized;
+    }
+
     public function hasRole(string $role): bool
     {
         return in_array($role, $this->roles(), true);
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return in_array($permission, $this->permissions(), true);
     }
 
     /**
@@ -137,6 +169,34 @@ final class TokenClaims
     {
         foreach ($roles as $role) {
             if (! $this->hasRole($role)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param  array<int, string>  $permissions
+     */
+    public function hasAnyPermission(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($this->hasPermission($permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<int, string>  $permissions
+     */
+    public function hasAllPermissions(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if (! $this->hasPermission($permission)) {
                 return false;
             }
         }

@@ -304,9 +304,15 @@ curl --request POST \
     "project": "demo-project",
     "environment": "production",
     "roles": [
+        "project.maintainer"
+    ],
+    "permissions": [
         "projects.read",
+        "projects.manage",
         "environments.read",
+        "environments.manage",
         "flags.read",
+        "flags.manage",
         "flags.evaluate",
         "cache.warm"
     ]
@@ -450,9 +456,17 @@ Database seeding completed.
 ./scripts/api-key-create
 ```
 
-The helper wraps `api-key:create` via the Laravel Zero binary. Follow the interactive prompts to select the project, environment, credential name, scopes (comma separated, press enter for full access), and an optional expiration timestamp. The command prints a 48-character API key exactly once—copy it to your password manager or secret store. Only the SHA-256 hash, metadata, and expiration live in Postgres (`api_credentials` table); the plaintext key is never persisted.
+The helper wraps `api-key:create` via the Laravel Zero binary. Follow the interactive prompts to select the project, environment, credential name, roles (comma separated, press enter for the default assignment), and an optional expiration timestamp. The command prints a 48-character API key exactly once—copy it to your password manager or secret store. Only the SHA-256 hash, metadata, and expiration live in Postgres (`api_credentials` table); the plaintext key is never persisted.
 
-Supported scopes mirror the JWT roles issued today: `projects.read`, `projects.manage`, `environments.read`, `environments.manage`, `flags.read`, `flags.manage`, `flags.evaluate`, and `cache.warm`. Provide a comma-separated subset to restrict access; the helper rejects unknown values. Write operations require the corresponding `*.manage` scope.
+Current roles and their bundled permissions:
+
+| Role | Permissions |
+| --- | --- |
+| `project.viewer` | `projects.read`, `environments.read`, `flags.read`, `flags.evaluate`
+| `environment.operator` | `environments.read`, `flags.read`, `flags.evaluate`, `cache.warm`
+| `project.maintainer` (default) | all viewer/operator permissions plus `projects.manage`, `environments.manage`, `flags.manage`
+
+Specify one or more roles per credential to constrain API tokens. When no roles are entered, credentials receive the `project.maintainer` profile, matching the full-control behavior prior to RBAC.
 
 ### Example: Warm flag caches for a project
 
@@ -573,7 +587,7 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Scale the `
 
 ## 🧩 Roadmap
 
--   [ ] Role-based access control (RBAC)
+-   [x] Role-based access control (RBAC)
 -   [ ] SDKs (PHP + JS)
 -   [ ] UI dashboard for managing flags
 -   [ ] Rate limiting per project

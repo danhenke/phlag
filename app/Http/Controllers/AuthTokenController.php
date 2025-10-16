@@ -94,6 +94,7 @@ final class AuthTokenController extends Controller
             'project' => $project?->key,
             'environment' => $environment?->key,
             'roles' => $result->roles(),
+            'permissions' => $result->permissions(),
         ], HttpResponse::HTTP_OK);
     }
 

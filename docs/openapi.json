@@ -2695,7 +2695,8 @@
                     "expires_in",
                     "project",
                     "environment",
-                    "roles"
+                    "roles",
+                    "permissions"
                 ],
                 "properties": {
                     "token": {
@@ -2726,10 +2727,21 @@
                             "type": "string"
                         },
                         "example": [
+                            "project.maintainer"
+                        ]
+                    },
+                    "permissions": {
+                        "description": "Flattened permissions derived from the assigned roles.",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
                             "projects.read",
+                            "projects.manage",
                             "environments.read",
-                            "flags.read",
-                            "flags.evaluate",
+                            "environments.manage",
+                            "flags.manage",
                             "cache.warm"
                         ]
                     }

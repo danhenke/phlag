@@ -9,12 +9,13 @@ use Exception;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
 use Phlag\Auth\ApiKeys\ApiCredentialHasher;
-use Phlag\Auth\ApiKeys\TokenExchangeService;
+use Phlag\Auth\Rbac\RoleRegistry;
 use Phlag\Models\ApiCredential;
 use Phlag\Models\Environment;
 use Phlag\Models\Project;
 use Phlag\Support\Clock\Clock;
 
+use function array_diff;
 use function array_filter;
 use function array_map;
 use function array_unique;
@@ -37,18 +38,9 @@ final class CreateCommand extends Command
      */
     protected $description = 'Provision a new API key for a project environment.';
 
-    /**
-     * @var array<int, string>
-     */
-    private const ALLOWED_SCOPES = TokenExchangeService::DEFAULT_ROLES;
-
-    /**
-     * @var array<int, string>
-     */
-    private const DEFAULT_SCOPES = self::ALLOWED_SCOPES;
-
     public function __construct(
-        private readonly Clock $clock
+        private readonly Clock $clock,
+        private readonly RoleRegistry $roleRegistry,
     ) {
         parent::__construct();
     }
@@ -98,24 +90,30 @@ final class CreateCommand extends Command
             return self::FAILURE;
         }
 
-        /** @var string|null $scopesInput */
-        $scopesInput = $this->ask(
-            'Scopes (comma separated, press enter for full access)'
+        $allowedRoles = array_keys($this->roleRegistry->definitions());
+        $defaultRoles = $this->roleRegistry->defaultRoles();
+
+        /** @var string|null $rolesInput */
+        $rolesInput = $this->ask(
+            'Roles (comma separated, press enter for default access)'
         );
 
-        $scopes = $this->normalizeScopes($scopesInput);
+        $roles = $this->normalizeRoles($rolesInput);
 
-        if ($scopes === []) {
-            $this->comment('No scopes provided; granting full access token roles.');
-            $scopes = self::DEFAULT_SCOPES;
+        if ($roles === []) {
+            $this->comment(sprintf(
+                'No roles provided; granting default roles: %s.',
+                implode(', ', $defaultRoles)
+            ));
+            $roles = $defaultRoles;
         } else {
-            $invalidScopes = array_values(array_diff($scopes, self::ALLOWED_SCOPES));
+            $invalidRoles = array_values(array_diff($roles, $allowedRoles));
 
-            if ($invalidScopes !== []) {
+            if ($invalidRoles !== []) {
                 $this->error(sprintf(
-                    'Unknown scope(s): %s. Allowed scopes: %s',
-                    implode(', ', $invalidScopes),
-                    implode(', ', self::ALLOWED_SCOPES)
+                    'Unknown role(s): %s. Allowed roles: %s',
+                    implode(', ', $invalidRoles),
+                    implode(', ', $allowedRoles)
                 ));
 
                 return self::FAILURE;
@@ -137,7 +135,7 @@ final class CreateCommand extends Command
             'project_id' => $project->id,
             'environment_id' => $environment->id,
             'name' => $credentialName,
-            'scopes' => $scopes,
+            'roles' => $roles,
             'key_hash' => ApiCredentialHasher::make($apiKey),
             'is_active' => true,
             'expires_at' => $expiresAt,
@@ -156,7 +154,7 @@ final class CreateCommand extends Command
                 ['Project', $project->key],
                 ['Environment', $environment->key],
                 ['Name', $credentialName],
-                ['Scopes', implode(', ', $scopes)],
+                ['Roles', implode(', ', $roles)],
                 ['Expires At', $expiresAt?->toIso8601String() ?? 'None'],
             ]
         );
@@ -192,18 +190,18 @@ final class CreateCommand extends Command
     /**
      * @return array<int, string>
      */
-    private function normalizeScopes(?string $scopes): array
+    private function normalizeRoles(?string $roles): array
     {
-        if (! is_string($scopes)) {
+        if (! is_string($roles)) {
             return [];
         }
 
         $segments = array_map(
-            static fn (string $scope): string => trim($scope),
-            explode(',', $scopes)
+            static fn (string $role): string => trim($role),
+            explode(',', $roles)
         );
 
-        $filtered = array_values(array_filter($segments, static fn (string $scope): bool => $scope !== ''));
+        $filtered = array_values(array_filter($segments, static fn (string $role): bool => $role !== ''));
 
         return array_values(array_unique($filtered));
     }

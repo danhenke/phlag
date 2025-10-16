@@ -28,16 +28,19 @@ final class TokenExchangeResult
         private readonly ?int $expiresIn = null,
         /** @var array<int, string>|null */
         private readonly ?array $roles = null,
+        /** @var array<int, string>|null */
+        private readonly ?array $permissions = null,
         private readonly ?string $errorCode = null,
         private readonly ?string $errorMessage = null,
     ) {}
 
     /**
      * @param  array<int, string>  $roles
+     * @param  array<int, string>  $permissions
      */
-    public static function success(Project $project, Environment $environment, Token $token, int $expiresIn, array $roles): self
+    public static function success(Project $project, Environment $environment, Token $token, int $expiresIn, array $roles, array $permissions = []): self
     {
-        return new self(true, $token, $project, $environment, $expiresIn, $roles);
+        return new self(true, $token, $project, $environment, $expiresIn, $roles, $permissions);
     }
 
     public static function failure(string $code, string $message): self
@@ -76,6 +79,14 @@ final class TokenExchangeResult
     public function roles(): array
     {
         return $this->roles ?? [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function permissions(): array
+    {
+        return $this->permissions ?? [];
     }
 
     public function errorCode(): ?string

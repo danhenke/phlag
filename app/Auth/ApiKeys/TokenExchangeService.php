@@ -6,41 +6,22 @@ namespace Phlag\Auth\ApiKeys;
 
 use Phlag\Auth\Jwt\Configuration as JwtConfiguration;
 use Phlag\Auth\Jwt\JwtTokenIssuer;
+use Phlag\Auth\Rbac\RoleRegistry;
 use Phlag\Models\ApiCredential;
 use Phlag\Models\Environment;
 use Phlag\Models\Project;
 use Phlag\Support\Clock\Clock;
 
-use function array_filter;
-use function array_map;
-use function array_unique;
-use function array_values;
 use function is_array;
 use function sprintf;
-use function trim;
 
 final class TokenExchangeService
 {
-    /**
-     * Default roles assigned to issued tokens. Update once RBAC is introduced.
-     *
-     * @var array<int, string>
-     */
-    public const DEFAULT_ROLES = [
-        'projects.read',
-        'projects.manage',
-        'environments.read',
-        'environments.manage',
-        'flags.read',
-        'flags.manage',
-        'flags.evaluate',
-        'cache.warm',
-    ];
-
     public function __construct(
         private readonly JwtTokenIssuer $issuer,
         private readonly JwtConfiguration $configuration,
         private readonly Clock $clock,
+        private readonly RoleRegistry $roleRegistry,
     ) {}
 
     public function exchange(string $projectKey, string $environmentKey, string $apiKey): TokenExchangeResult
@@ -107,22 +88,15 @@ final class TokenExchangeService
             }
         }
 
-        $roles = self::DEFAULT_ROLES;
-        $credentialScopes = $credential->scopes;
+        $roles = $credential->roles;
 
-        if (is_array($credentialScopes)) {
-            $normalizedScopes = array_values(array_unique(array_filter(
-                array_map(
-                    static fn (string $scope): string => trim($scope),
-                    $credentialScopes
-                ),
-                static fn (string $scope): bool => $scope !== ''
-            )));
-
-            if ($normalizedScopes !== []) {
-                $roles = $normalizedScopes;
-            }
+        if (! is_array($roles) || $roles === []) {
+            $roles = $this->roleRegistry->defaultRoles();
+        } else {
+            $roles = $this->roleRegistry->resolveRoles($roles);
         }
+
+        $permissions = $this->roleRegistry->permissionsForRoles($roles);
 
         $token = $this->issuer->issue([
             'sub' => sprintf('api_credential:%s', $credential->id),
@@ -131,6 +105,7 @@ final class TokenExchangeService
             'environment_id' => $environment->id,
             'environment_key' => $environment->key,
             'roles' => $roles,
+            'permissions' => $permissions,
         ]);
 
         $ttl = $this->configuration->ttl();
@@ -140,7 +115,8 @@ final class TokenExchangeService
             $environment,
             $token,
             $ttl > 0 ? $ttl : 0,
-            $roles
+            $roles,
+            $permissions
         );
     }
 }

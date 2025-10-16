@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Phlag\Auth\Jwt\Configuration as JwtConfiguration;
 use Phlag\Auth\Jwt\JwtTokenIssuer;
 use Phlag\Auth\Jwt\JwtTokenVerifier;
+use Phlag\Auth\Rbac\RoleRegistry;
 use Phlag\Evaluations\Cache\FlagCacheRepository;
 use Phlag\Http\Kernel as HttpKernel;
 use Phlag\Models\Environment;
@@ -55,6 +56,8 @@ class AppServiceProvider extends ServiceProvider
                 clock: $this->app->make(Clock::class)
             );
         });
+
+        $this->app->singleton(RoleRegistry::class, static fn (): RoleRegistry => RoleRegistry::make());
 
         $this->app->singleton(JwtTokenVerifier::class, function (): JwtTokenVerifier {
             return new JwtTokenVerifier(
