@@ -94,6 +94,18 @@ it('creates an API credential with provided scopes when supplied', function (): 
     expect(ApiCredentialHasher::verify($storedCredential, 'custom-key-987654321'))->toBeTrue();
 });
 
+it('rejects credentials when scopes include unsupported values', function (): void {
+    $this->artisan(CreateCommand::class)
+        ->expectsQuestion('Project key', $this->project->key)
+        ->expectsQuestion('Environment key', $this->environment->key)
+        ->expectsQuestion('Credential name', 'Invalid Scope Credential')
+        ->expectsQuestion('Scopes (comma separated, press enter for full access)', 'projects.read,invalid.scope')
+        ->expectsOutputToContain('Unknown scope(s): invalid.scope. Allowed scopes: '.implode(', ', TokenExchangeService::DEFAULT_ROLES))
+        ->assertExitCode(Command::FAILURE);
+
+    expect(ApiCredential::query()->where('name', 'Invalid Scope Credential')->exists())->toBeFalse();
+});
+
 it('fails when the project cannot be found', function (): void {
     $this->artisan(CreateCommand::class)
         ->expectsQuestion('Project key', 'unknown-project')

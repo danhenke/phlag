@@ -37,7 +37,15 @@ final class CreateCommand extends Command
      */
     protected $description = 'Provision a new API key for a project environment.';
 
-    private const DEFAULT_SCOPES = TokenExchangeService::DEFAULT_ROLES;
+    /**
+     * @var array<int, string>
+     */
+    private const ALLOWED_SCOPES = TokenExchangeService::DEFAULT_ROLES;
+
+    /**
+     * @var array<int, string>
+     */
+    private const DEFAULT_SCOPES = self::ALLOWED_SCOPES;
 
     public function __construct(
         private readonly Clock $clock
@@ -100,6 +108,18 @@ final class CreateCommand extends Command
         if ($scopes === []) {
             $this->comment('No scopes provided; granting full access token roles.');
             $scopes = self::DEFAULT_SCOPES;
+        } else {
+            $invalidScopes = array_values(array_diff($scopes, self::ALLOWED_SCOPES));
+
+            if ($invalidScopes !== []) {
+                $this->error(sprintf(
+                    'Unknown scope(s): %s. Allowed scopes: %s',
+                    implode(', ', $invalidScopes),
+                    implode(', ', self::ALLOWED_SCOPES)
+                ));
+
+                return self::FAILURE;
+            }
         }
 
         $expiresAtInput = $this->ask('Expiration (ISO 8601, leave blank for none)');
