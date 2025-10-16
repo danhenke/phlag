@@ -63,8 +63,11 @@ function jwtHeaders(array $claims = []): array
         'sub' => 'test-suite',
         'roles' => [
             'projects.read',
+            'projects.manage',
             'environments.read',
+            'environments.manage',
             'flags.read',
+            'flags.manage',
             'flags.evaluate',
             'cache.warm',
         ],

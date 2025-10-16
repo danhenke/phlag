@@ -14,6 +14,7 @@ use Phlag\Models\Environment;
 use Phlag\Models\Evaluation;
 use Phlag\Models\Flag;
 use Phlag\Models\Project;
+use Phlag\Auth\ApiKeys\TokenExchangeService;
 
 use function is_string;
 use function trim;
@@ -233,13 +234,7 @@ class DatabaseSeeder extends Seeder
             'project_id' => $project->id,
             'environment_id' => $production->id,
             'name' => 'Demo Production API credential',
-            'scopes' => [
-                'projects.read',
-                'environments.read',
-                'flags.read',
-                'flags.evaluate',
-                'cache.warm',
-            ],
+            'scopes' => TokenExchangeService::DEFAULT_ROLES,
             'key_hash' => ApiCredentialHasher::make($apiKey),
             'is_active' => true,
             'expires_at' => null,

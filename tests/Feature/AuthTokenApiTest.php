@@ -54,8 +54,11 @@ beforeEach(function (): void {
     $this->apiKey = 'test-api-key-123456';
     $this->credentialScopes = [
         'projects.read',
+        'projects.manage',
         'environments.read',
+        'environments.manage',
         'flags.read',
+        'flags.manage',
         'flags.evaluate',
         'cache.warm',
     ];

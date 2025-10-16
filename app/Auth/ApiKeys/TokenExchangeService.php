@@ -28,8 +28,11 @@ final class TokenExchangeService
      */
     public const DEFAULT_ROLES = [
         'projects.read',
+        'projects.manage',
         'environments.read',
+        'environments.manage',
         'flags.read',
+        'flags.manage',
         'flags.evaluate',
         'cache.warm',
     ];
