@@ -16,7 +16,6 @@ use function array_map;
 use function array_unique;
 use function array_values;
 use function is_array;
-use function is_string;
 use function sprintf;
 use function trim;
 
@@ -27,7 +26,7 @@ final class TokenExchangeService
      *
      * @var array<int, string>
      */
-    private const DEFAULT_ROLES = [
+    public const DEFAULT_ROLES = [
         'projects.read',
         'environments.read',
         'flags.read',

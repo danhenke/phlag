@@ -9,6 +9,7 @@ use Exception;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
 use Phlag\Auth\ApiKeys\ApiCredentialHasher;
+use Phlag\Auth\ApiKeys\TokenExchangeService;
 use Phlag\Models\ApiCredential;
 use Phlag\Models\Environment;
 use Phlag\Models\Project;
@@ -35,6 +36,8 @@ final class CreateCommand extends Command
      * @var string
      */
     protected $description = 'Provision a new API key for a project environment.';
+
+    private const DEFAULT_SCOPES = TokenExchangeService::DEFAULT_ROLES;
 
     public function __construct(
         private readonly Clock $clock
@@ -87,20 +90,14 @@ final class CreateCommand extends Command
             return self::FAILURE;
         }
 
-        $scopesInput = $this->promptForRequiredString(
-            'Scopes (comma separated, e.g. projects.read,environments.read)'
+        $scopesInput = $this->ask(
+            'Scopes (comma separated, leave blank for full access)'
         );
-
-        if ($scopesInput === null) {
-            return self::FAILURE;
-        }
 
         $scopes = $this->normalizeScopes($scopesInput);
 
         if ($scopes === []) {
-            $this->error('At least one scope must be provided.');
-
-            return self::FAILURE;
+            $scopes = self::DEFAULT_SCOPES;
         }
 
         $expiresAtInput = $this->ask('Expiration (ISO 8601, leave blank for none)');
@@ -173,8 +170,12 @@ final class CreateCommand extends Command
     /**
      * @return array<int, string>
      */
-    private function normalizeScopes(string $scopes): array
+    private function normalizeScopes(?string $scopes): array
     {
+        if (! is_string($scopes)) {
+            return [];
+        }
+
         $segments = array_map(
             static fn (string $scope): string => trim($scope),
             explode(',', $scopes)

@@ -450,7 +450,7 @@ Database seeding completed.
 ./scripts/app-cli api-key:create
 ```
 
-Follow the interactive prompts to select the project, environment, credential name, scopes (comma-separated), and an optional expiration timestamp. The command prints a 48-character API key exactly once—copy it to your password manager or secret store. Only the SHA-256 hash, metadata, and expiration live in Postgres (`api_credentials` table); the plaintext key is never persisted.
+Follow the interactive prompts to select the project, environment, credential name, scopes (comma-separated — press enter for full access), and an optional expiration timestamp. The command prints a 48-character API key exactly once—copy it to your password manager or secret store. Only the SHA-256 hash, metadata, and expiration live in Postgres (`api_credentials` table); the plaintext key is never persisted.
 
 ### Example: Warm flag caches for a project
 
