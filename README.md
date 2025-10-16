@@ -602,7 +602,3 @@ Need to scale HTTP workers or spawn dedicated CLI worker containers? Scale the `
 MIT © 2025 Dan Henke
 
 ---
-
-### 🧠 Summary
-
-This project showcases a **real-world PHP architecture** suitable for production-style APIs while remaining lightweight. With the move to Docker Compose, you can spin it up locally in minutes to explore clean design, testing, validation, and deployment discipline without relying on external cloud accounts.
