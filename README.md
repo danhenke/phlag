@@ -468,6 +468,8 @@ Current roles and their bundled permissions:
 
 Specify one or more roles per credential to constrain API tokens. When no roles are entered, credentials receive the `project.maintainer` profile, matching the full-control behavior prior to RBAC.
 
+If an existing credential requires more granular access than the predefined roles, the migration preserves those scopes as explicit permissions. New role assignments will continue to work the same way—JWTs always include the effective permission list so downstream services can enforce the exact capabilities that were granted.
+
 ### Example: Warm flag caches for a project
 
 ```bash

@@ -17,7 +17,7 @@ The platform previously treated JWT “roles” as ad-hoc scopes stored on each 
 -   Replace the scope-checking middleware with `AuthorizeTokenPermissions`, which derives granted permissions from JWT claims (and the registry) before enforcing access on routes, ensuring future role updates automatically flow through.
 -   Update the token exchange service so issued JWTs include both role identifiers and a flattened permission list, keeping downstream clients aware of their capabilities.
 -   Tweak the `api-key:create` command and seeders to work with roles, providing friendlier prompts, validation, and default assignments that align with the new RBAC model.
--   Add a migration that copies existing `scopes` values into the new `roles` column, infers appropriate role bundles, and removes the obsolete column to keep the schema consistent going forward.
+-   Add a migration that copies existing `scopes` values into the new `roles` column, preserves original scope granularity as explicit permissions, infers role bundles without widening access, and removes the obsolete column to keep the schema consistent going forward.
 
 ## Consequences
 

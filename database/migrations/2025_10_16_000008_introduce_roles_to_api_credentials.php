@@ -17,6 +17,7 @@ return new class extends Migration
     {
         Schema::table('api_credentials', function (Blueprint $table): void {
             $table->jsonb('roles')->nullable()->after('name');
+            $table->jsonb('permissions')->nullable()->after('roles');
         });
 
         $registry = RoleRegistry::make();
@@ -28,11 +29,15 @@ return new class extends Migration
         foreach ($credentials as $credential) {
             /** @var mixed $scopes */
             $scopes = $credential->scopes;
-            $roles = $this->mapScopesToRoles($registry, $scopes);
+            $normalizedPermissions = $this->normalizedPermissions($scopes);
+            $roles = $this->mapScopesToRoles($registry, $normalizedPermissions);
 
             DB::table('api_credentials')
                 ->where('id', $credential->id)
-                ->update(['roles' => $roles]);
+                ->update([
+                    'roles' => $roles,
+                    'permissions' => $normalizedPermissions,
+                ]);
         }
 
         Schema::table('api_credentials', function (Blueprint $table): void {
@@ -52,13 +57,15 @@ return new class extends Migration
         $registry = RoleRegistry::make();
 
         $credentials = DB::table('api_credentials')
-            ->select('id', 'roles')
+            ->select('id', 'roles', 'permissions')
             ->get();
 
         foreach ($credentials as $credential) {
             /** @var mixed $roles */
             $roles = $credential->roles;
-            $scopes = $this->mapRolesToScopes($registry, $roles);
+            /** @var mixed $permissions */
+            $permissions = $credential->permissions;
+            $scopes = $this->mapRolesToScopes($registry, $roles, $permissions);
 
             DB::table('api_credentials')
                 ->where('id', $credential->id)
@@ -66,7 +73,7 @@ return new class extends Migration
         }
 
         Schema::table('api_credentials', function (Blueprint $table): void {
-            $table->dropColumn('roles');
+            $table->dropColumn(['permissions', 'roles']);
         });
     }
 
@@ -75,58 +82,35 @@ return new class extends Migration
      */
     private function mapScopesToRoles(RoleRegistry $registry, mixed $scopes): array
     {
-        if (! is_array($scopes)) {
-            return $registry->defaultRoles();
-        }
-
-        $normalizedScopes = array_values(array_unique(array_filter(array_map(
-            static function ($scope): ?string {
-                if (! is_string($scope)) {
-                    return null;
-                }
-
-                $value = trim($scope);
-
-                return $value === '' ? null : $value;
-            },
-            $scopes
-        ))));
+        $normalizedScopes = $this->normalizedPermissions($scopes);
 
         if ($normalizedScopes === []) {
             return $registry->defaultRoles();
         }
 
-        $manageScopes = [
-            'projects.manage',
-            'environments.manage',
-            'flags.manage',
-        ];
+        $roles = [];
+        $definitions = $registry->definitions();
 
-        foreach ($manageScopes as $manageScope) {
-            if (in_array($manageScope, $normalizedScopes, true)) {
-                return $registry->normalizeRoles(['project.maintainer']);
+        foreach ($definitions as $role => $definition) {
+            if (! is_array($definition)) {
+                continue;
+            }
+
+            $rolePermissions = $this->normalizedPermissions($definition['permissions'] ?? []);
+
+            if ($rolePermissions === []) {
+                continue;
+            }
+
+            $isSubset = empty(array_diff($rolePermissions, $normalizedScopes));
+
+            if ($isSubset) {
+                $roles[] = $role;
             }
         }
 
-        $viewerScopes = [
-            'projects.read',
-            'environments.read',
-            'flags.read',
-            'flags.evaluate',
-        ];
-
-        $roles = [];
-
-        if ($this->containsAny($normalizedScopes, $viewerScopes)) {
-            $roles[] = 'project.viewer';
-        }
-
-        if (in_array('cache.warm', $normalizedScopes, true)) {
-            $roles[] = 'environment.operator';
-        }
-
         if ($roles === []) {
-            return $registry->defaultRoles();
+            return [];
         }
 
         return $registry->normalizeRoles($roles);
@@ -135,7 +119,7 @@ return new class extends Migration
     /**
      * @return array<int, string>
      */
-    private function mapRolesToScopes(RoleRegistry $registry, mixed $roles): array
+    private function mapRolesToScopes(RoleRegistry $registry, mixed $roles, mixed $permissions): array
     {
         $roleList = [];
 
@@ -147,23 +131,39 @@ return new class extends Migration
         }
 
         /** @var array<int, string> $normalizedRoles */
-        $normalizedRoles = $registry->resolveRoles($roleList);
+        $normalizedRoles = $registry->normalizeRoles($roleList);
+        $explicitPermissions = $this->normalizedPermissions($permissions);
 
-        return $registry->permissionsForRoles($normalizedRoles);
+        if ($normalizedRoles === [] && $explicitPermissions === []) {
+            $normalizedRoles = $registry->defaultRoles();
+        }
+
+        $rolePermissions = $registry->permissionsForRoles($normalizedRoles);
+
+        return array_values(array_unique(array_merge($rolePermissions, $explicitPermissions)));
     }
 
     /**
-     * @param  array<int, string>  $haystack
-     * @param  array<int, string>  $needles
+     * @param  array<int, string>|mixed  $permissions
+     * @return array<int, string>
      */
-    private function containsAny(array $haystack, array $needles): bool
+    private function normalizedPermissions(mixed $permissions): array
     {
-        foreach ($needles as $needle) {
-            if (in_array($needle, $haystack, true)) {
-                return true;
-            }
+        if (! is_array($permissions)) {
+            return [];
         }
 
-        return false;
+        return array_values(array_unique(array_filter(array_map(
+            static function ($permission): ?string {
+                if (! is_string($permission)) {
+                    return null;
+                }
+
+                $value = trim($permission);
+
+                return $value === '' ? null : $value;
+            },
+            $permissions
+        ))));
     }
 };

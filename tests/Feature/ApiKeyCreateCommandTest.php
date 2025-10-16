@@ -64,6 +64,7 @@ it('creates an API credential with default roles when none are supplied', functi
     expect($storedCredential->environment_id)->toBe($this->environment->id);
     expect($storedCredential->name)->toBe('CLI Credential');
     expect($storedCredential->roles)->toEqual($defaultRoles);
+    expect($storedCredential->permissions)->toBeNull();
     expect($storedCredential->expires_at)->toBeNull();
     expect($storedCredential->is_active)->toBeTrue();
     expect($storedCredential->key_hash)->toBeString();
@@ -96,6 +97,7 @@ it('creates an API credential with provided roles when supplied', function (): v
     $storedCredential = $storedCredential;
 
     expect($storedCredential->roles)->toEqual(['project.viewer', 'environment.operator']);
+    expect($storedCredential->permissions)->toBeNull();
     expect(ApiCredentialHasher::verify($storedCredential, 'custom-key-987654321'))->toBeTrue();
 });
 

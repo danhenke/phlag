@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $name
  * @property string $key_hash
  * @property array<int, string>|null $roles
+ * @property array<int, string>|null $permissions
  * @property bool $is_active
  * @property Carbon|null $expires_at
  * @property Carbon|null $created_at
@@ -47,6 +48,7 @@ class ApiCredential extends Model
         'environment_id',
         'name',
         'roles',
+        'permissions',
         'key_hash',
         'is_active',
         'expires_at',
@@ -58,6 +60,7 @@ class ApiCredential extends Model
     protected $casts = [
         'is_active' => 'bool',
         'roles' => 'array',
+        'permissions' => 'array',
         'expires_at' => 'datetime',
     ];
 

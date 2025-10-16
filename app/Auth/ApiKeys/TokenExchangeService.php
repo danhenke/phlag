@@ -12,8 +12,14 @@ use Phlag\Models\Environment;
 use Phlag\Models\Project;
 use Phlag\Support\Clock\Clock;
 
+use function array_filter;
+use function array_map;
+use function array_merge;
+use function array_unique;
+use function array_values;
 use function is_array;
 use function sprintf;
+use function trim;
 
 final class TokenExchangeService
 {
@@ -88,15 +94,26 @@ final class TokenExchangeService
             }
         }
 
-        $roles = $credential->roles;
+        $roles = [];
 
-        if (! is_array($roles) || $roles === []) {
+        /** @var array<int, string>|null $credentialRoles */
+        $credentialRoles = $credential->roles;
+
+        if (is_array($credentialRoles)) {
+            $roles = $this->roleRegistry->normalizeRoles($credentialRoles);
+        }
+
+        /** @var array<int, string>|null $storedPermissions */
+        $storedPermissions = $credential->permissions;
+
+        $explicitPermissions = $this->normalizePermissions($storedPermissions);
+
+        if ($roles === [] && $explicitPermissions === []) {
             $roles = $this->roleRegistry->defaultRoles();
-        } else {
-            $roles = $this->roleRegistry->resolveRoles($roles);
         }
 
         $permissions = $this->roleRegistry->permissionsForRoles($roles);
+        $permissions = array_values(array_unique(array_merge($permissions, $explicitPermissions)));
 
         $token = $this->issuer->issue([
             'sub' => sprintf('api_credential:%s', $credential->id),
@@ -118,5 +135,21 @@ final class TokenExchangeService
             $roles,
             $permissions
         );
+    }
+
+    /**
+     * @param  array<int, string>|null  $permissions
+     * @return array<int, string>
+     */
+    private function normalizePermissions(?array $permissions): array
+    {
+        if (! is_array($permissions)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn (string $permission): string => trim($permission),
+            $permissions
+        ), static fn (string $permission): bool => $permission !== '')));
     }
 }

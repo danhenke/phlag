@@ -68,6 +68,7 @@ it('issues JWTs for valid project credentials', function (): void {
         'environment_id' => $this->environment->id,
         'name' => 'Demo Production Credential',
         'roles' => $this->credentialRoles,
+        'permissions' => $this->credentialPermissions,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => true,
     ]);
@@ -126,6 +127,7 @@ it('rejects requests with unknown API keys', function (): void {
         'environment_id' => $this->environment->id,
         'name' => 'Demo Production Credential',
         'roles' => $this->credentialRoles,
+        'permissions' => $this->credentialPermissions,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => true,
     ]);
@@ -180,6 +182,7 @@ it('rejects inactive API credentials', function (): void {
         'environment_id' => $this->environment->id,
         'name' => 'Inactive Credential',
         'roles' => $this->credentialRoles,
+        'permissions' => $this->credentialPermissions,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => false,
     ]);
@@ -204,6 +207,7 @@ it('rejects expired API credentials', function (): void {
         'environment_id' => $this->environment->id,
         'name' => 'Expired Credential',
         'roles' => $this->credentialRoles,
+        'permissions' => $this->credentialPermissions,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => true,
         'expires_at' => Carbon::now()->subMinutes(5),
@@ -220,4 +224,41 @@ it('rejects expired API credentials', function (): void {
             ->where('error.code', 'unauthorized')
             ->where('error.message', 'The API key has expired.')
         );
+});
+
+it('issues JWTs with explicit permissions when no roles are assigned', function (): void {
+    $credential = ApiCredential::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $this->project->id,
+        'environment_id' => $this->environment->id,
+        'name' => 'Evaluate Only Credential',
+        'roles' => [],
+        'permissions' => ['flags.evaluate'],
+        'key_hash' => ApiCredentialHasher::make($this->apiKey),
+        'is_active' => true,
+    ]);
+
+    $response = $this->postJson('/v1/auth/token', [
+        'project' => $this->project->key,
+        'environment' => $this->environment->key,
+        'api_key' => $this->apiKey,
+    ]);
+
+    $response->assertOk()
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('roles', [])
+            ->where('permissions', ['flags.evaluate'])
+            ->etc()
+        );
+
+    $token = $response->json('token');
+
+    $claims = JWT::decode(
+        $token,
+        new Key(TestKeys::activePublicKey(), Configuration::RSA_ALGORITHM)
+    );
+
+    expect($claims->roles)->toEqual([])
+        ->and($claims->permissions)->toEqual(['flags.evaluate'])
+        ->and($claims->sub)->toBe('api_credential:'.$credential->id);
 });

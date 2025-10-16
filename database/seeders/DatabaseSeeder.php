@@ -239,6 +239,7 @@ class DatabaseSeeder extends Seeder
             'environment_id' => $production->id,
             'name' => 'Demo Production API credential',
             'roles' => $roleRegistry->defaultRoles(),
+            'permissions' => null,
             'key_hash' => ApiCredentialHasher::make($apiKey),
             'is_active' => true,
             'expires_at' => null,

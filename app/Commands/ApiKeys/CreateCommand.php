@@ -136,6 +136,7 @@ final class CreateCommand extends Command
             'environment_id' => $environment->id,
             'name' => $credentialName,
             'roles' => $roles,
+            'permissions' => null,
             'key_hash' => ApiCredentialHasher::make($apiKey),
             'is_active' => true,
             'expires_at' => $expiresAt,
