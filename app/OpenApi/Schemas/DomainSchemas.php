@@ -391,7 +391,7 @@ use OpenApi\Attributes as OA;
 )]
 #[OA\Schema(
     schema: 'AuthTokenResponse',
-    required: ['token', 'token_type', 'expires_in', 'project', 'environment', 'roles'],
+    required: ['token', 'token_type', 'expires_in', 'project', 'environment', 'roles', 'permissions'],
     properties: [
         new OA\Property(property: 'token', type: 'string', description: 'Signed JWT bearer token.'),
         new OA\Property(property: 'token_type', type: 'string', example: 'Bearer'),
@@ -402,7 +402,14 @@ use OpenApi\Attributes as OA;
             property: 'roles',
             type: 'array',
             items: new OA\Items(type: 'string'),
-            example: ['projects.read', 'environments.read', 'flags.read', 'flags.evaluate', 'cache.warm']
+            example: ['project.maintainer']
+        ),
+        new OA\Property(
+            property: 'permissions',
+            type: 'array',
+            items: new OA\Items(type: 'string'),
+            example: ['projects.read', 'projects.manage', 'environments.read', 'environments.manage', 'flags.manage', 'cache.warm'],
+            description: 'Flattened permissions derived from the assigned roles.'
         ),
     ],
     description: 'JWT issuance response payload.'

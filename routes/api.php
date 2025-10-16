@@ -24,30 +24,30 @@ Route::prefix('v1')
         Route::middleware('auth.jwt')->group(function (): void {
             Route::apiResource('projects', ProjectController::class)
                 ->only(['index', 'show'])
-                ->middleware('scopes:projects.read');
+                ->middleware('permissions:projects.read');
 
             Route::apiResource('projects', ProjectController::class)
                 ->only(['store', 'update', 'destroy'])
-                ->middleware('scopes:projects.manage');
+                ->middleware('permissions:projects.manage');
 
             Route::apiResource('projects.environments', ProjectEnvironmentController::class)
                 ->only(['index', 'show'])
-                ->middleware('scopes:environments.read');
+                ->middleware('permissions:environments.read');
 
             Route::apiResource('projects.environments', ProjectEnvironmentController::class)
                 ->only(['store', 'update', 'destroy'])
-                ->middleware('scopes:environments.manage');
+                ->middleware('permissions:environments.manage');
 
             Route::apiResource('projects.flags', ProjectFlagController::class)
                 ->only(['index', 'show'])
-                ->middleware('scopes:flags.read');
+                ->middleware('permissions:flags.read');
 
             Route::apiResource('projects.flags', ProjectFlagController::class)
                 ->only(['store', 'update', 'destroy'])
-                ->middleware('scopes:flags.manage');
+                ->middleware('permissions:flags.manage');
 
             Route::get('/evaluate', EvaluateFlagController::class)
-                ->middleware('scopes:flags.evaluate')
+                ->middleware('permissions:flags.evaluate')
                 ->name('flags.evaluate');
         });
 

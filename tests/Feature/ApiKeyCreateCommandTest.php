@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Str;
 use Phlag\Auth\ApiKeys\ApiCredentialHasher;
-use Phlag\Auth\ApiKeys\TokenExchangeService;
+use Phlag\Auth\Rbac\RoleRegistry;
 use Phlag\Commands\ApiKeys\CreateCommand;
 use Phlag\Models\ApiCredential;
 use Phlag\Models\Environment;
@@ -33,15 +33,20 @@ afterEach(function (): void {
     Str::createRandomStringsNormally();
 });
 
-it('creates an API credential with default scopes when none are supplied', function (): void {
+it('creates an API credential with default roles when none are supplied', function (): void {
     Str::createRandomStringsUsing(static fn (): string => 'test-generated-key-123456789');
+
+    /** @var RoleRegistry $registry */
+    $registry = app(RoleRegistry::class);
+    $defaultRoles = $registry->defaultRoles();
+    $defaultRoleList = implode(', ', $defaultRoles);
 
     $this->artisan(CreateCommand::class)
         ->expectsQuestion('Project key', $this->project->key)
         ->expectsQuestion('Environment key', $this->environment->key)
         ->expectsQuestion('Credential name', 'CLI Credential')
-        ->expectsQuestion('Scopes (comma separated, press enter for full access)', '')
-        ->expectsOutputToContain('No scopes provided; granting full access token roles.')
+        ->expectsQuestion('Roles (comma separated, press enter for default access)', '')
+        ->expectsOutputToContain('No roles provided; granting default roles: '.$defaultRoleList)
         ->expectsQuestion('Expiration (ISO 8601, leave blank for none)', '')
         ->expectsOutputToContain('API key created successfully.')
         ->expectsOutputToContain('Store this API key securely:')
@@ -58,7 +63,8 @@ it('creates an API credential with default scopes when none are supplied', funct
     expect($storedCredential->project_id)->toBe($this->project->id);
     expect($storedCredential->environment_id)->toBe($this->environment->id);
     expect($storedCredential->name)->toBe('CLI Credential');
-    expect($storedCredential->scopes)->toEqual(TokenExchangeService::DEFAULT_ROLES);
+    expect($storedCredential->roles)->toEqual($defaultRoles);
+    expect($storedCredential->permissions)->toBeNull();
     expect($storedCredential->expires_at)->toBeNull();
     expect($storedCredential->is_active)->toBeTrue();
     expect($storedCredential->key_hash)->toBeString();
@@ -66,14 +72,14 @@ it('creates an API credential with default scopes when none are supplied', funct
     expect(ApiCredentialHasher::verify($storedCredential, 'test-generated-key-123456789'))->toBeTrue();
 });
 
-it('creates an API credential with provided scopes when supplied', function (): void {
+it('creates an API credential with provided roles when supplied', function (): void {
     Str::createRandomStringsUsing(static fn (): string => 'custom-key-987654321');
 
     $this->artisan(CreateCommand::class)
         ->expectsQuestion('Project key', $this->project->key)
         ->expectsQuestion('Environment key', $this->environment->key)
-        ->expectsQuestion('Credential name', 'Custom Scope Credential')
-        ->expectsQuestion('Scopes (comma separated, press enter for full access)', 'projects.read,flags.evaluate')
+        ->expectsQuestion('Credential name', 'Custom Role Credential')
+        ->expectsQuestion('Roles (comma separated, press enter for default access)', 'project.viewer,environment.operator')
         ->expectsQuestion('Expiration (ISO 8601, leave blank for none)', '')
         ->expectsOutputToContain('API key created successfully.')
         ->expectsOutputToContain('Store this API key securely:')
@@ -82,7 +88,7 @@ it('creates an API credential with provided scopes when supplied', function (): 
 
     /** @var ApiCredential|null $storedCredential */
     $storedCredential = ApiCredential::query()
-        ->where('name', 'Custom Scope Credential')
+        ->where('name', 'Custom Role Credential')
         ->first();
 
     expect($storedCredential)->toBeInstanceOf(ApiCredential::class);
@@ -90,20 +96,25 @@ it('creates an API credential with provided scopes when supplied', function (): 
     /** @var ApiCredential $storedCredential */
     $storedCredential = $storedCredential;
 
-    expect($storedCredential->scopes)->toEqual(['projects.read', 'flags.evaluate']);
+    expect($storedCredential->roles)->toEqual(['project.viewer', 'environment.operator']);
+    expect($storedCredential->permissions)->toBeNull();
     expect(ApiCredentialHasher::verify($storedCredential, 'custom-key-987654321'))->toBeTrue();
 });
 
-it('rejects credentials when scopes include unsupported values', function (): void {
+it('rejects credentials when roles include unsupported values', function (): void {
+    /** @var RoleRegistry $registry */
+    $registry = app(RoleRegistry::class);
+    $allowedRolesList = implode(', ', array_keys($registry->definitions()));
+
     $this->artisan(CreateCommand::class)
         ->expectsQuestion('Project key', $this->project->key)
         ->expectsQuestion('Environment key', $this->environment->key)
-        ->expectsQuestion('Credential name', 'Invalid Scope Credential')
-        ->expectsQuestion('Scopes (comma separated, press enter for full access)', 'projects.read,invalid.scope')
-        ->expectsOutputToContain('Unknown scope(s): invalid.scope. Allowed scopes: '.implode(', ', TokenExchangeService::DEFAULT_ROLES))
+        ->expectsQuestion('Credential name', 'Invalid Role Credential')
+        ->expectsQuestion('Roles (comma separated, press enter for default access)', 'project.viewer,invalid.role')
+        ->expectsOutputToContain('Unknown role(s): invalid.role. Allowed roles: '.$allowedRolesList)
         ->assertExitCode(Command::FAILURE);
 
-    expect(ApiCredential::query()->where('name', 'Invalid Scope Credential')->exists())->toBeFalse();
+    expect(ApiCredential::query()->where('name', 'Invalid Role Credential')->exists())->toBeFalse();
 });
 
 it('fails when the project cannot be found', function (): void {

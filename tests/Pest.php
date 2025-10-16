@@ -44,6 +44,7 @@ expect()->extend('toBeOne', function () {
 */
 
 use Phlag\Auth\Jwt\JwtTokenIssuer;
+use Phlag\Auth\Rbac\RoleRegistry;
 
 function something(): void
 {
@@ -59,21 +60,28 @@ function jwtHeaders(array $claims = []): array
     /** @var JwtTokenIssuer $issuer */
     $issuer = app(JwtTokenIssuer::class);
 
+    /** @var RoleRegistry $roleRegistry */
+    $roleRegistry = app(RoleRegistry::class);
+
+    $defaultRoles = $roleRegistry->defaultRoles();
+    $defaultPermissions = $roleRegistry->permissionsForRoles($defaultRoles);
+
     $defaultClaims = [
         'sub' => 'test-suite',
-        'roles' => [
-            'projects.read',
-            'projects.manage',
-            'environments.read',
-            'environments.manage',
-            'flags.read',
-            'flags.manage',
-            'flags.evaluate',
-            'cache.warm',
-        ],
+        'roles' => $defaultRoles,
+        'permissions' => $defaultPermissions,
     ];
 
-    $token = $issuer->issue(array_merge($defaultClaims, $claims));
+    $mergedClaims = array_merge($defaultClaims, $claims);
+
+    if (array_key_exists('roles', $claims) && ! array_key_exists('permissions', $claims)) {
+        $roles = $mergedClaims['roles'] ?? [];
+        $mergedClaims['permissions'] = $roleRegistry->permissionsForRoles(
+            is_array($roles) ? $roles : []
+        );
+    }
+
+    $token = $issuer->issue($mergedClaims);
 
     return [
         'Authorization' => 'Bearer '.$token->value(),

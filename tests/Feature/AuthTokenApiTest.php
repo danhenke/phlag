@@ -11,6 +11,7 @@ use Phlag\Auth\ApiKeys\ApiCredentialHasher;
 use Phlag\Auth\Jwt\Configuration;
 use Phlag\Auth\Jwt\JwtTokenIssuer;
 use Phlag\Auth\Jwt\JwtTokenVerifier;
+use Phlag\Auth\Rbac\RoleRegistry;
 use Phlag\Models\ApiCredential;
 use Phlag\Models\Environment;
 use Phlag\Models\Project;
@@ -52,16 +53,12 @@ beforeEach(function (): void {
     ]);
 
     $this->apiKey = 'test-api-key-123456';
-    $this->credentialScopes = [
-        'projects.read',
-        'projects.manage',
-        'environments.read',
-        'environments.manage',
-        'flags.read',
-        'flags.manage',
-        'flags.evaluate',
-        'cache.warm',
-    ];
+
+    /** @var RoleRegistry $roleRegistry */
+    $roleRegistry = app(RoleRegistry::class);
+
+    $this->credentialRoles = $roleRegistry->defaultRoles();
+    $this->credentialPermissions = $roleRegistry->permissionsForRoles($this->credentialRoles);
 });
 
 it('issues JWTs for valid project credentials', function (): void {
@@ -70,7 +67,8 @@ it('issues JWTs for valid project credentials', function (): void {
         'project_id' => $this->project->id,
         'environment_id' => $this->environment->id,
         'name' => 'Demo Production Credential',
-        'scopes' => $this->credentialScopes,
+        'roles' => $this->credentialRoles,
+        'permissions' => $this->credentialPermissions,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => true,
     ]);
@@ -87,7 +85,8 @@ it('issues JWTs for valid project credentials', function (): void {
             ->where('environment', $this->environment->key)
             ->where('token_type', 'Bearer')
             ->where('expires_in', 600)
-            ->where('roles', $this->credentialScopes)
+            ->where('roles', $this->credentialRoles)
+            ->where('permissions', $this->credentialPermissions)
             ->has('token')
         );
 
@@ -105,7 +104,8 @@ it('issues JWTs for valid project credentials', function (): void {
         ->and($claims->project_key)->toBe($this->project->key)
         ->and($claims->environment_id)->toBe($this->environment->id)
         ->and($claims->environment_key)->toBe($this->environment->key)
-        ->and($claims->roles)->toEqual($this->credentialScopes)
+        ->and($claims->roles)->toEqual($this->credentialRoles)
+        ->and($claims->permissions)->toEqual($this->credentialPermissions)
         ->and($claims->iat)->toBeInt()
         ->and($claims->exp - $claims->iat)->toBe(600);
 
@@ -126,7 +126,8 @@ it('rejects requests with unknown API keys', function (): void {
         'project_id' => $this->project->id,
         'environment_id' => $this->environment->id,
         'name' => 'Demo Production Credential',
-        'scopes' => $this->credentialScopes,
+        'roles' => $this->credentialRoles,
+        'permissions' => $this->credentialPermissions,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => true,
     ]);
@@ -180,7 +181,8 @@ it('rejects inactive API credentials', function (): void {
         'project_id' => $this->project->id,
         'environment_id' => $this->environment->id,
         'name' => 'Inactive Credential',
-        'scopes' => $this->credentialScopes,
+        'roles' => $this->credentialRoles,
+        'permissions' => $this->credentialPermissions,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => false,
     ]);
@@ -204,7 +206,8 @@ it('rejects expired API credentials', function (): void {
         'project_id' => $this->project->id,
         'environment_id' => $this->environment->id,
         'name' => 'Expired Credential',
-        'scopes' => $this->credentialScopes,
+        'roles' => $this->credentialRoles,
+        'permissions' => $this->credentialPermissions,
         'key_hash' => ApiCredentialHasher::make($this->apiKey),
         'is_active' => true,
         'expires_at' => Carbon::now()->subMinutes(5),
@@ -221,4 +224,41 @@ it('rejects expired API credentials', function (): void {
             ->where('error.code', 'unauthorized')
             ->where('error.message', 'The API key has expired.')
         );
+});
+
+it('issues JWTs with explicit permissions when no roles are assigned', function (): void {
+    $credential = ApiCredential::query()->create([
+        'id' => (string) Str::uuid(),
+        'project_id' => $this->project->id,
+        'environment_id' => $this->environment->id,
+        'name' => 'Evaluate Only Credential',
+        'roles' => [],
+        'permissions' => ['flags.evaluate'],
+        'key_hash' => ApiCredentialHasher::make($this->apiKey),
+        'is_active' => true,
+    ]);
+
+    $response = $this->postJson('/v1/auth/token', [
+        'project' => $this->project->key,
+        'environment' => $this->environment->key,
+        'api_key' => $this->apiKey,
+    ]);
+
+    $response->assertOk()
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('roles', [])
+            ->where('permissions', ['flags.evaluate'])
+            ->etc()
+        );
+
+    $token = $response->json('token');
+
+    $claims = JWT::decode(
+        $token,
+        new Key(TestKeys::activePublicKey(), Configuration::RSA_ALGORITHM)
+    );
+
+    expect($claims->roles)->toEqual([])
+        ->and($claims->permissions)->toEqual(['flags.evaluate'])
+        ->and($claims->sub)->toBe('api_credential:'.$credential->id);
 });

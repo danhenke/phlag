@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Phlag\Auth\ApiKeys\ApiCredentialHasher;
-use Phlag\Auth\ApiKeys\TokenExchangeService;
+use Phlag\Auth\Rbac\RoleRegistry;
 use Phlag\Models\ApiCredential;
 use Phlag\Models\AuditEvent;
 use Phlag\Models\Environment;
@@ -16,6 +16,7 @@ use Phlag\Models\Evaluation;
 use Phlag\Models\Flag;
 use Phlag\Models\Project;
 
+use function app;
 use function is_string;
 use function trim;
 
@@ -230,11 +231,15 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
+        /** @var RoleRegistry $roleRegistry */
+        $roleRegistry = app(RoleRegistry::class);
+
         $credential->fill([
             'project_id' => $project->id,
             'environment_id' => $production->id,
             'name' => 'Demo Production API credential',
-            'scopes' => TokenExchangeService::DEFAULT_ROLES,
+            'roles' => $roleRegistry->defaultRoles(),
+            'permissions' => null,
             'key_hash' => ApiCredentialHasher::make($apiKey),
             'is_active' => true,
             'expires_at' => null,
