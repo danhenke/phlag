@@ -26,6 +26,7 @@ final class AuthTokenController extends Controller
         operationId: 'exchangeApiKeyForJwt',
         summary: 'Issue JWT from API key',
         tags: ['Authentication'],
+        security: [],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(ref: '#/components/schemas/AuthTokenRequest')

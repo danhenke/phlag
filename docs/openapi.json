@@ -64,7 +64,8 @@
                             }
                         }
                     }
-                }
+                },
+                "security": []
             }
         },
         "/v1/auth/token": {
@@ -156,7 +157,8 @@
                             }
                         }
                     }
-                }
+                },
+                "security": []
             }
         },
         "/v1/openapi.json": {

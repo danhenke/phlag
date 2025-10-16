@@ -14,6 +14,7 @@ final class HealthCheck
         operationId: 'getHealthCheck',
         summary: 'Retrieve service health status.',
         tags: ['System'],
+        security: [],
         responses: [
             new OA\Response(
                 response: 200,

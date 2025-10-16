@@ -26,6 +26,7 @@ This service allows developers to **create**, **manage**, and **evaluate feature
 | Category                    | Description                                                    |
 | --------------------------- | -------------------------------------------------------------- |
 | **Authentication**          | JWT-based bearer tokens per project/environment                |
+| **Public endpoints**        | `GET /` health check, `POST /v1/auth/token` for JWT issuance   |
 | **Projects / Environments** | CRUD endpoints for logical grouping and context separation     |
 | **Feature Flags**           | CRUD for flags with JSON rule sets                             |
 | **Evaluation**              | Percentage rollouts & user targeting                           |
