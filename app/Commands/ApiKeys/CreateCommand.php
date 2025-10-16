@@ -91,12 +91,13 @@ final class CreateCommand extends Command
         }
 
         $scopesInput = $this->ask(
-            'Scopes (comma separated, leave blank for full access)'
+            'Scopes (comma separated, press enter for full access)'
         );
 
         $scopes = $this->normalizeScopes($scopesInput);
 
         if ($scopes === []) {
+            $this->comment('No scopes provided; granting full access token roles.');
             $scopes = self::DEFAULT_SCOPES;
         }
 
